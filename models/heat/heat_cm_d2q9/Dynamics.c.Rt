@@ -1,0 +1,323 @@
+<?R
+	source("conf.R") 
+	source("lib/boundary.R")
+	c_header();
+
+# Creating variables for symbolic computations
+	f = PV(DensityAll$name[DensityAll$group=="f"])
+	h = PV(DensityAll$name[DensityAll$group=="h"])
+	rho =  PV("rho")
+	u = PV(c("ux","uy"))
+	rhoT = PV("rhoT")
+
+# Extracting velocity set
+	U = d2q9
+
+?>
+
+CudaDeviceFunction real_t getRho(){
+	return <?R C(sum(f)) ?>;
+}
+
+CudaDeviceFunction real_t getT(){
+	return (<?R C(sum(h)) ?>)/(<?R C(sum(f)) ?>);
+}
+    
+CudaDeviceFunction vector_t getRawU(){
+	real_t d = getRho();
+	vector_t u;
+<?R C(PV(c("u.x","u.y", "u.z")), f %*% U) ?>
+	u.x /= d;
+	u.y /= d;
+	u.z = 0;
+	return u;
+}
+
+CudaDeviceFunction float2 Color() {
+	float2 ret;
+	vector_t u = getRawU();
+
+	ret.x = getT();
+	ret.y = ret.x;
+
+	// ret.y = sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
+
+	// if (NodeType == NODE_Solid){
+	//         ret.y = 0;
+	// } else {
+	//         ret.y = 1;
+	// }
+	return ret;
+}
+
+
+CudaDeviceFunction void BounceBack()
+{
+	<?R FullBounceBack() ?>
+}
+
+CudaDeviceFunction void EVelocity()
+{
+
+}
+
+CudaDeviceFunction void WPressure()
+{
+}
+
+
+
+CudaDeviceFunction void WVelocity()
+{
+
+}
+
+CudaDeviceFunction void EPressure()
+{
+
+}
+
+
+CudaDeviceFunction void Run() {
+    switch (NodeType & NODE_BOUNDARY) {
+	case NODE_EVelocity:
+		EVelocity();
+		break;
+	case NODE_WPressure:
+		WPressure();
+		break;
+	case NODE_WVelocity:
+		WVelocity();
+		break;
+	case NODE_EPressure:
+		EPressure();
+		break;
+	case NODE_Wall:
+	case NODE_Solid:
+		BounceBack();
+        break;
+	}
+	
+    switch (NodeType & NODE_COLLISION) {
+	case NODE_BGK:
+		Collision();
+		break;
+	case NODE_MRT:
+		CollisionMRT();
+		break;
+	case NODE_CM:
+		CollisionCM();
+		break;
+    }
+}
+
+
+CudaDeviceFunction void set_eq(real_t x_in[9], real_t H, vector_t u) 
+{
+	real_t uxuy = u.x*u.y;
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+
+	real_t m00 = H;
+	real_t temp[9];
+
+
+	//equilibrium in central moments space
+	x_in[0] = m00;
+	x_in[1] = 0;
+	x_in[2] = 0;
+	x_in[3] = 1/3.*m00;
+	x_in[4] = 1/3.*m00;
+	x_in[5] = 0;
+	x_in[6] = 0;
+	x_in[7] = 0;
+	x_in[8] = 1/9.*m00;
+
+	//back to raw moments
+	temp[0] = x_in[0];
+	temp[1] = u.x*x_in[0] + x_in[1];
+	temp[2] = u.y*x_in[0] + x_in[2];
+	temp[3] = ux2*x_in[0] + 2.*u.x*x_in[1] + x_in[3];
+	temp[4] = uy2*x_in[0] + 2.*u.y*x_in[2] + x_in[4];
+	temp[5] = uxuy*x_in[0] + u.x*x_in[2] + u.y*x_in[1] + x_in[5];
+	temp[6] = ux2*u.y*x_in[0] + ux2*x_in[2] + 2.*uxuy*x_in[1] + 2.*u.x*x_in[5] + u.y*x_in[3] + x_in[6];
+	temp[7] = u.x*uy2*x_in[0] + 2.*uxuy*x_in[2] + u.x*x_in[4] + uy2*x_in[1] + 2.*u.y*x_in[5] + x_in[7];
+	temp[8] = ux2*uy2*x_in[0] + 2.*ux2*u.y*x_in[2] + ux2*x_in[4] + 2.*u.x*uy2*x_in[1] + 4.*uxuy*x_in[5] + 2.*u.x*x_in[7] + uy2*x_in[3] + 2.*u.y*x_in[6] + x_in[8];
+
+	//back to density-probability functions
+	x_in[0] = temp[0] - temp[3] - temp[4] + temp[8];
+	x_in[1] = 1/2.*temp[1] + 1/2.*temp[3] - 1/2.*temp[7] - 1/2.*temp[8];
+	x_in[2] = 1/2.*temp[2] + 1/2.*temp[4] - 1/2.*temp[6] - 1/2.*temp[8];
+	x_in[3] = -1/2.*temp[1] + 1/2.*temp[3] + 1/2.*temp[7] - 1/2.*temp[8];
+	x_in[4] = -1/2.*temp[2] + 1/2.*temp[4] + 1/2.*temp[6] - 1/2.*temp[8];
+	x_in[5] = 1/4.*temp[5] + 1/4.*temp[6] + 1/4.*temp[7] + 1/4.*temp[8];
+	x_in[6] = -1/4.*temp[5] + 1/4.*temp[6] - 1/4.*temp[7] + 1/4.*temp[8];
+	x_in[7] = 1/4.*temp[5] - 1/4.*temp[6] - 1/4.*temp[7] + 1/4.*temp[8];
+	x_in[8] = -1/4.*temp[5] - 1/4.*temp[6] + 1/4.*temp[7] + 1/4.*temp[8];
+
+}
+
+
+CudaDeviceFunction void Init() {
+	real_t rho = 1.0;
+	real_t T = InitTemperature;
+	vector_t u; u.x = VelocityX; u.y = 0; u.z = 0;
+
+	set_eq(f,rho,u);
+	set_eq(h,T,u);
+}
+
+CudaDeviceFunction void relax_and_collide_hydro_with_F(real_t x_in[9], real_t omega_nu, vector_t u, vector_t F) 
+{
+	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
+	real_t uxuy = u.x*u.y;
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+real_t m00 = x_in[0] + x_in[1] + x_in[2] + x_in[3] + x_in[4] + x_in[5] + x_in[6] + x_in[7] + x_in[8];
+	real_t temp[9];
+	for (int i = 0; i < 9; i++) {
+		temp[i] = x_in[i];}
+	//raw moments from density-probability functions
+	x_in[0] = temp[0] + temp[1] + temp[2] + temp[3] + temp[4] + temp[5] + temp[6] + temp[7] + temp[8];
+	x_in[1] = temp[1] - temp[3] + temp[5] - temp[6] - temp[7] + temp[8];
+	x_in[2] = temp[2] - temp[4] + temp[5] + temp[6] - temp[7] - temp[8];
+	x_in[3] = temp[1] + temp[3] + temp[5] + temp[6] + temp[7] + temp[8];
+	x_in[4] = temp[2] + temp[4] + temp[5] + temp[6] + temp[7] + temp[8];
+	x_in[5] = temp[5] - temp[6] + temp[7] - temp[8];
+	x_in[6] = temp[5] + temp[6] - temp[7] - temp[8];
+	x_in[7] = temp[5] - temp[6] - temp[7] + temp[8];
+	x_in[8] = temp[5] + temp[6] + temp[7] + temp[8];
+	//central moments from raw moments
+	temp[0] = x_in[0];
+	temp[1] = -u.x*x_in[0] + x_in[1];
+	temp[2] = -u.y*x_in[0] + x_in[2];
+	temp[3] = ux2*x_in[0] - 2.*u.x*x_in[1] + x_in[3];
+	temp[4] = uy2*x_in[0] - 2.*u.y*x_in[2] + x_in[4];
+	temp[5] = uxuy*x_in[0] - u.x*x_in[2] - u.y*x_in[1] + x_in[5];
+	temp[6] = -ux2*u.y*x_in[0] + ux2*x_in[2] + 2.*uxuy*x_in[1] - 2.*u.x*x_in[5] - u.y*x_in[3] + x_in[6];
+	temp[7] = -u.x*uy2*x_in[0] + 2.*uxuy*x_in[2] - u.x*x_in[4] + uy2*x_in[1] - 2.*u.y*x_in[5] + x_in[7];
+	temp[8] = ux2*uy2*x_in[0] - 2.*ux2*u.y*x_in[2] + ux2*x_in[4] - 2.*u.x*uy2*x_in[1] + 4.*uxuy*x_in[5] - 2.*u.x*x_in[7] + uy2*x_in[3] - 2.*u.y*x_in[6] + x_in[8];
+	//collision in central moments space
+	//collide
+	x_in[0] = m00;
+	x_in[1] = 1/2.*F.x;
+	x_in[2] = 1/2.*F.y;
+	x_in[3] = 1/3.*m00*omega_bulk - 1/2.*omega_bulk*temp[3] - 1/2.*omega_bulk*temp[4] - 1/2.*omega_nu*temp[3] + 1/2.*omega_nu*temp[4] + temp[3];
+	x_in[4] = 1/3.*m00*omega_bulk - 1/2.*omega_bulk*temp[3] - 1/2.*omega_bulk*temp[4] + 1/2.*omega_nu*temp[3] - 1/2.*omega_nu*temp[4] + temp[4];
+	x_in[5] = -temp[5]*(omega_nu - 1.);
+	x_in[6] = 1/6.*F.y;
+	x_in[7] = 1/6.*F.x;
+	x_in[8] = 1/9.*m00;
+	//back to raw moments
+	temp[0] = x_in[0];
+	temp[1] = u.x*x_in[0] + x_in[1];
+	temp[2] = u.y*x_in[0] + x_in[2];
+	temp[3] = ux2*x_in[0] + 2.*u.x*x_in[1] + x_in[3];
+	temp[4] = uy2*x_in[0] + 2.*u.y*x_in[2] + x_in[4];
+	temp[5] = uxuy*x_in[0] + u.x*x_in[2] + u.y*x_in[1] + x_in[5];
+	temp[6] = ux2*u.y*x_in[0] + ux2*x_in[2] + 2.*uxuy*x_in[1] + 2.*u.x*x_in[5] + u.y*x_in[3] + x_in[6];
+	temp[7] = u.x*uy2*x_in[0] + 2.*uxuy*x_in[2] + u.x*x_in[4] + uy2*x_in[1] + 2.*u.y*x_in[5] + x_in[7];
+	temp[8] = ux2*uy2*x_in[0] + 2.*ux2*u.y*x_in[2] + ux2*x_in[4] + 2.*u.x*uy2*x_in[1] + 4.*uxuy*x_in[5] + 2.*u.x*x_in[7] + uy2*x_in[3] + 2.*u.y*x_in[6] + x_in[8];
+	//back to density-probability functions
+	x_in[0] = temp[0] - temp[3] - temp[4] + temp[8];
+	x_in[1] = 1/2.*temp[1] + 1/2.*temp[3] - 1/2.*temp[7] - 1/2.*temp[8];
+	x_in[2] = 1/2.*temp[2] + 1/2.*temp[4] - 1/2.*temp[6] - 1/2.*temp[8];
+	x_in[3] = -1/2.*temp[1] + 1/2.*temp[3] + 1/2.*temp[7] - 1/2.*temp[8];
+	x_in[4] = -1/2.*temp[2] + 1/2.*temp[4] + 1/2.*temp[6] - 1/2.*temp[8];
+	x_in[5] = 1/4.*temp[5] + 1/4.*temp[6] + 1/4.*temp[7] + 1/4.*temp[8];
+	x_in[6] = -1/4.*temp[5] + 1/4.*temp[6] - 1/4.*temp[7] + 1/4.*temp[8];
+	x_in[7] = 1/4.*temp[5] - 1/4.*temp[6] - 1/4.*temp[7] + 1/4.*temp[8];
+	x_in[8] = -1/4.*temp[5] - 1/4.*temp[6] + 1/4.*temp[7] + 1/4.*temp[8];
+}
+
+CudaDeviceFunction void relax_and_collide_ADE(real_t x_in[9], real_t omega_ade, vector_t u) 
+{
+	//=== THIS IS AUTOMATICALLY GENERATED CODE: relax and collide ===
+	real_t uxuy = u.x*u.y;
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+	real_t m00 = x_in[0] + x_in[1] + x_in[2] + x_in[3] + x_in[4] + x_in[5] + x_in[6] + x_in[7] + x_in[8];
+	real_t temp[9];
+	for (int i = 0; i < 9; i++) {
+		temp[i] = x_in[i];}
+	//raw moments from density-probability functions
+	x_in[0] = temp[0] + temp[1] + temp[2] + temp[3] + temp[4] + temp[5] + temp[6] + temp[7] + temp[8];
+	x_in[1] = temp[1] - temp[3] + temp[5] - temp[6] - temp[7] + temp[8];
+	x_in[2] = temp[2] - temp[4] + temp[5] + temp[6] - temp[7] - temp[8];
+	x_in[3] = temp[1] + temp[3] + temp[5] + temp[6] + temp[7] + temp[8];
+	x_in[4] = temp[2] + temp[4] + temp[5] + temp[6] + temp[7] + temp[8];
+	x_in[5] = temp[5] - temp[6] + temp[7] - temp[8];
+	x_in[6] = temp[5] + temp[6] - temp[7] - temp[8];
+	x_in[7] = temp[5] - temp[6] - temp[7] + temp[8];
+	x_in[8] = temp[5] + temp[6] + temp[7] + temp[8];
+	//central moments from raw moments
+	temp[0] = x_in[0];
+	temp[1] = -u.x*x_in[0] + x_in[1];
+	temp[2] = -u.y*x_in[0] + x_in[2];
+	temp[3] = ux2*x_in[0] - 2.*u.x*x_in[1] + x_in[3];
+	temp[4] = uy2*x_in[0] - 2.*u.y*x_in[2] + x_in[4];
+	temp[5] = uxuy*x_in[0] - u.x*x_in[2] - u.y*x_in[1] + x_in[5];
+	temp[6] = -ux2*u.y*x_in[0] + ux2*x_in[2] + 2.*uxuy*x_in[1] - 2.*u.x*x_in[5] - u.y*x_in[3] + x_in[6];
+	temp[7] = -u.x*uy2*x_in[0] + 2.*uxuy*x_in[2] - u.x*x_in[4] + uy2*x_in[1] - 2.*u.y*x_in[5] + x_in[7];
+	temp[8] = ux2*uy2*x_in[0] - 2.*ux2*u.y*x_in[2] + ux2*x_in[4] - 2.*u.x*uy2*x_in[1] + 4.*uxuy*x_in[5] - 2.*u.x*x_in[7] + uy2*x_in[3] - 2.*u.y*x_in[6] + x_in[8];
+	//collision in central moments space
+	//collide
+	x_in[0] = m00;
+	x_in[1] = -temp[1]*(omega_ade - 1.);
+	x_in[2] = -temp[2]*(omega_ade - 1.);
+	x_in[3] = 1/3.*m00;
+	x_in[4] = 1/3.*m00;
+	x_in[5] = 0;
+	x_in[6] = 0;
+	x_in[7] = 0;
+	x_in[8] = 1/9.*m00;
+	//back to raw moments
+	temp[0] = x_in[0];
+	temp[1] = u.x*x_in[0] + x_in[1];
+	temp[2] = u.y*x_in[0] + x_in[2];
+	temp[3] = ux2*x_in[0] + 2.*u.x*x_in[1] + x_in[3];
+	temp[4] = uy2*x_in[0] + 2.*u.y*x_in[2] + x_in[4];
+	temp[5] = uxuy*x_in[0] + u.x*x_in[2] + u.y*x_in[1] + x_in[5];
+	temp[6] = ux2*u.y*x_in[0] + ux2*x_in[2] + 2.*uxuy*x_in[1] + 2.*u.x*x_in[5] + u.y*x_in[3] + x_in[6];
+	temp[7] = u.x*uy2*x_in[0] + 2.*uxuy*x_in[2] + u.x*x_in[4] + uy2*x_in[1] + 2.*u.y*x_in[5] + x_in[7];
+	temp[8] = ux2*uy2*x_in[0] + 2.*ux2*u.y*x_in[2] + ux2*x_in[4] + 2.*u.x*uy2*x_in[1] + 4.*uxuy*x_in[5] + 2.*u.x*x_in[7] + uy2*x_in[3] + 2.*u.y*x_in[6] + x_in[8];
+	//back to density-probability functions
+	x_in[0] = temp[0] - temp[3] - temp[4] + temp[8];
+	x_in[1] = 1/2.*temp[1] + 1/2.*temp[3] - 1/2.*temp[7] - 1/2.*temp[8];
+	x_in[2] = 1/2.*temp[2] + 1/2.*temp[4] - 1/2.*temp[6] - 1/2.*temp[8];
+	x_in[3] = -1/2.*temp[1] + 1/2.*temp[3] + 1/2.*temp[7] - 1/2.*temp[8];
+	x_in[4] = -1/2.*temp[2] + 1/2.*temp[4] + 1/2.*temp[6] - 1/2.*temp[8];
+	x_in[5] = 1/4.*temp[5] + 1/4.*temp[6] + 1/4.*temp[7] + 1/4.*temp[8];
+	x_in[6] = -1/4.*temp[5] + 1/4.*temp[6] - 1/4.*temp[7] + 1/4.*temp[8];
+	x_in[7] = 1/4.*temp[5] - 1/4.*temp[6] - 1/4.*temp[7] + 1/4.*temp[8];
+	x_in[8] = -1/4.*temp[5] - 1/4.*temp[6] + 1/4.*temp[7] + 1/4.*temp[8];
+}
+
+
+CudaDeviceFunction vector_t getBoussinesqForce(real_t localTemp)
+{
+	real_t refTemperature = 0;
+	real_t BoussinesqForce = GravitationY - GravitationY*BoussinesqCoeff*(localTemp - refTemperature);
+
+	vector_t Force; 
+	Force.x = 0; 
+	Force.y = BoussinesqForce; 
+	Force.z = 0;
+
+	return Force;
+}
+
+CudaDeviceFunction void CollisionCM()
+{
+	real_t localTemperature = getT();
+	vector_t Force = getBoussinesqForce(localTemperature);
+	vector_t u = getRawU();
+
+	real_t m00 = getRho();
+	u.x += Force.x/(2*m00);
+	u.y += Force.y/(2*m00);
+	// u.x = VelocityX; u.y = 0; u.z = 0;
+	
+	relax_and_collide_hydro_with_F(f, omega_nu, u, Force);
+	relax_and_collide_ADE(h, omega_k, u);
+}

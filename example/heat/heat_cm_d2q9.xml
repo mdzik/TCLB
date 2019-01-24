@@ -1,0 +1,50 @@
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/">
+      <Geometry nx="400" ny="100" >
+      <CM><Box /></CM>    
+      <!-- <Smoothing><Box /></Smoothing>  -->
+        <None name="heated_region">
+            <Sphere dx="175" nx="50" dy="25" ny="50" /> 
+        </None>        
+
+<!--         <Wall mask="ALL" name="border" >
+          <Box dx="320" fy="64" nx="16" />
+     
+          <Box nx="2"/>
+          <Box dx="-2"/>
+          <Box ny="2"/>
+          <Box dy="-2"/>
+        </Wall> -->
+
+  </Geometry>
+    <Model>
+    <Params
+        k="0.1666666" 
+        cp="1.0"
+
+
+        InitTemperature="0.0"
+        InitTemperature-heated_region="1.0"
+
+        />
+    <Params  />
+    <Params GravitationY="-1.0E-05" />
+    <Params BoussinesqCoeff="1"/>
+    <Params VelocityX="-1.0E-01" />
+
+    </Model> 
+<!-- 
+    <Solve Iterations="25" output="output/"> <VTK Iterations="10"/> </Solve>
+<Geometry>
+  <None mask="ADDITIONALS">
+    <Box nx="512" ny="100" nz="100"/>
+  </None>
+</Geometry> -->
+
+<Solve Iterations="10" output="output/"> <VTK Iterations="1"/> </Solve>
+<Failcheck Iterations="10" nx="400" ny="100" />
+<Log Iterations="100"/>
+<Solve Iterations="1000" output="output/"> <VTK Iterations="100"/> </Solve>
+</CLBConfig>
+
