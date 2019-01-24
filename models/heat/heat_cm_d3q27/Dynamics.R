@@ -73,6 +73,9 @@ AddSetting(name="BoussinesqCoeff", default=0.0, comment='Boussinesq force: coeff
 # AddNodeType(name="NVelocity", group="BOUNDARY")
 # AddNodeType(name="WVelocity", group="BOUNDARY")
 
+
+AddNodeType("HeaterDirichletTemperature","ADDITIONALS")
+AddNodeType("HeaterNeumannHeatFlux","ADDITIONALS")
 AddNodeType(name="Smoothing", group="ADDITIONALS")
 AddNodeType("Body", "BODY")
 

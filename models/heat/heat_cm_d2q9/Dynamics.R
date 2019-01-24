@@ -48,6 +48,7 @@ AddDensity(
 AddQuantity( name="Rho" )
 AddQuantity( name="T" )
 AddQuantity( name="RawU", vector=T )
+AddQuantity( name="U", vector=T )
 
 #	Inputs: Flow Properties
 AddSetting(name="VelocityX", default=0.0, comment='inlet/outlet/init x-velocity component', zonal=TRUE)
@@ -65,4 +66,6 @@ AddSetting(name="BoussinesqCoeff", default=0.0, comment='Boussinesq force: coeff
 
 
 #	Boundary things
-AddNodeType("Heater","ADDITIONALS")
+AddNodeType(name="Smoothing", group="ADDITIONALS")
+AddNodeType(name="HeaterDirichletTemperature", group="ADDITIONALS")
+AddNodeType(name="HeaterNeumannHeatFlux", group="ADDITIONALS")

@@ -1,11 +1,11 @@
 
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/">
-      <Geometry nx="400" ny="100" nz="100">
-      <CM><Box /></CM>    
+      <Geometry nx="100" ny="100" nz="100">
+      <CM><Box/></CM>    
       <!-- <Smoothing><Box /></Smoothing>  -->
         <None name="heated_region">
-            <Sphere dx="175" nx="50" dy="25" ny="50" dz="25" nz="50"/> 
+            <Sphere dx="75" nx="50" dy="25" ny="50" dz="25" nz="50"/> 
         </None>        
 
 <!--         <Wall mask="ALL" name="border" >
@@ -29,7 +29,7 @@
 
         />
     <Params  />
-    <Params GravitationY="-1.0E-05" />
+    <!-- <Params GravitationY="-1.0E-05" /> -->
     <Params BoussinesqCoeff="1"/>
     <Params VelocityX="-1.0E-01" />
 
@@ -43,7 +43,7 @@
 </Geometry> -->
 
 <Solve Iterations="1" output="output/"> <VTK Iterations="1"/> </Solve>
-<Failcheck Iterations="10" nx="512" ny="100" nz="100"/>
+<Failcheck Iterations="10" nx="400" ny="100" nz="100"/>
 <Log Iterations="100"/>
 <Solve Iterations="1000" output="output/"> <VTK Iterations="100"/> </Solve>
 </CLBConfig>

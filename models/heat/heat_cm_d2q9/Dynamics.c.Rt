@@ -33,6 +33,20 @@ CudaDeviceFunction vector_t getRawU(){
 	return u;
 }
 
+CudaDeviceFunction vector_t getU()
+{
+	real_t localTemperature = getT();
+	vector_t Force = getBoussinesqForce(localTemperature);
+	vector_t u = getRawU();
+	
+	real_t m00 = getRho();
+	u.x += Force.x/(2*m00);
+	u.y += Force.y/(2*m00);
+	u.z = 0;
+	return u;
+}
+
+
 CudaDeviceFunction float2 Color() {
 	float2 ret;
 	vector_t u = getRawU();
@@ -53,29 +67,71 @@ CudaDeviceFunction float2 Color() {
 
 CudaDeviceFunction void BounceBack()
 {
-	<?R FullBounceBack() ?>
+	<?R 
+		#FullBounceBack() 
+	?>
+
+	real_t tmp;
+	tmp = f[6];
+	f[6] = f[8];
+	f[8] = tmp;
+	tmp = f[2];
+	f[2] = f[4];
+	f[4] = tmp;
+	tmp = f[1];
+	f[1] = f[3];
+	f[3] = tmp;
+	tmp = f[5];
+	f[5] = f[7];
+	f[7] = tmp;
+
+
+
+	// equilibrium scheme for BC
+	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+
+	if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterDirichletTemperature) 
+	{
+		real_t rho = getRho();
+		real_t localTemperature = getT();
+		real_t dQ = rho*(InitTemperature - localTemperature);
+		// dQ = 0.5;
+		vector_t u = getU();
+		real_t h_source[9];
+		set_eq(h_source, dQ, u); // TODO: X vs rho*X
+
+		for (int i = 0; i < 9; i++) {
+			h[i] += h_source[i];}
+	}
+	else // TODO: why BB can't be coupled with Dirichlet BC?
+	{
+		tmp = h[6];
+		h[6] = h[8];
+		h[8] = tmp;
+		tmp = h[2];
+		h[2] = h[4];
+		h[4] = tmp;
+		tmp = h[1];
+		h[1] = h[3];
+		h[3] = tmp;
+		tmp = h[5];
+		h[5] = h[7];
+		h[7] = tmp;
+	}
 }
 
 CudaDeviceFunction void EVelocity()
-{
-
-}
+{}
 
 CudaDeviceFunction void WPressure()
-{
-}
-
-
+{}
 
 CudaDeviceFunction void WVelocity()
-{
-
-}
+{}
 
 CudaDeviceFunction void EPressure()
-{
-
-}
+{}
 
 
 CudaDeviceFunction void Run() {
@@ -100,25 +156,21 @@ CudaDeviceFunction void Run() {
 	
     switch (NodeType & NODE_COLLISION) {
 	case NODE_BGK:
-		Collision();
-		break;
 	case NODE_MRT:
-		CollisionMRT();
-		break;
 	case NODE_CM:
 		CollisionCM();
 		break;
     }
 }
 
-
-CudaDeviceFunction void set_eq(real_t x_in[9], real_t H, vector_t u) 
+// TODO: X vs rho*X
+CudaDeviceFunction void set_eq(real_t x_in[9], real_t Xeq, vector_t u, real_t rho=1.) 
 {
 	real_t uxuy = u.x*u.y;
 	real_t ux2 = u.x*u.x;
 	real_t uy2 = u.y*u.y;
 
-	real_t m00 = H;
+	real_t m00 = Xeq/rho;
 	real_t temp[9];
 
 
@@ -291,6 +343,20 @@ CudaDeviceFunction void relax_and_collide_ADE(real_t x_in[9], real_t omega_ade, 
 	x_in[6] = -1/4.*temp[5] + 1/4.*temp[6] - 1/4.*temp[7] + 1/4.*temp[8];
 	x_in[7] = 1/4.*temp[5] - 1/4.*temp[6] - 1/4.*temp[7] + 1/4.*temp[8];
 	x_in[8] = -1/4.*temp[5] - 1/4.*temp[6] + 1/4.*temp[7] + 1/4.*temp[8];
+
+	if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterDirichletTemperature) 
+	{
+		real_t rho = getRho();
+		real_t localTemperature = getT();
+		real_t dQ = rho*(InitTemperature - localTemperature);
+
+		vector_t u = getU();
+		real_t h_source[9];
+		set_eq(h_source, dQ, u); // TODO: X vs rho*X
+
+		for (int i = 0; i < 9; i++) {
+			x_in[i] += h_source[i];}
+	}
 }
 
 
