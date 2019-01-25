@@ -8,27 +8,22 @@
             <Sphere dx="175" nx="50" dy="25" ny="50" /> 
         </None>        
 
-
-
-
         <Wall mask="ALL" name="box" >     
            <Box dx="100" dy="25" nx="20" ny="50"/>
         </Wall>
+
         <HeaterDirichletTemperature  name="dirichlet_region"> 
-          <Box dx="100" dy="25" nx="20" ny="25"/>
+          <!-- <Box dx="100" dy="25" nx="20" ny="25"/> -->
           <Box dx="200" dy="50" nx="20" ny="25"/>
         </HeaterDirichletTemperature>
-      
+        
+            <HeaterNeumannHeatFlux  name="neumann_heater_region"> 
+          <Box dx="300" dy="25" nx="20" ny="25"/>
+        </HeaterNeumannHeatFlux>
+        <HeaterNeumannHeatFlux  name="neumann_cool_region"> 
+          <Box dx="350" dy="50" nx="20" ny="25"/>
+        </HeaterNeumannHeatFlux>
 
-
-<!--         <Wall mask="ALL" name="border" >
-          <Box dx="320" fy="64" nx="16" />
-     
-          <Box nx="2"/>
-          <Box dx="-2"/>
-          <Box ny="2"/>
-          <Box dy="-2"/>
-        </Wall> -->
 
   </Geometry>
     <Model>
@@ -38,14 +33,17 @@
 
 
         InitTemperature="0.0"
-        InitTemperature-heated_region="0.1"
+        InitTemperature-heated_region="10"
         InitTemperature-dirichlet_region="100.0"
 
+        InitTemperature-neumann_heater_region="1E0"
+        InitTemperature-neumann_cool_region="-1E0"
         />
     <Params  />
-    <!-- <Params GravitationY="-1.0E-05" /> -->
-    <Params BoussinesqCoeff="1"/>
-    <Params VelocityX="-1.0E-01" />
+    <Params GravitationX="-1.0E-5" />
+    <!-- <Params GravitationY="-1.0E-7" /> -->
+    <!-- <Params BoussinesqCoeff="1"/> -->
+    <!-- <Params VelocityX="-1.0E-1" /> -->
 
     </Model> 
 <!-- 

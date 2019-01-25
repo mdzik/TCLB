@@ -36,10 +36,9 @@ CudaDeviceFunction vector_t getRawU(){
 CudaDeviceFunction vector_t getU()
 {
 	real_t localTemperature = getT();
-	vector_t Force = getBoussinesqForce(localTemperature);
 	vector_t u = getRawU();
-	
 	real_t m00 = getRho();
+	vector_t Force = getForce(localTemperature, m00);
 	u.x += Force.x/(2*m00);
 	u.y += Force.y/(2*m00);
 	u.z = 0;
@@ -68,36 +67,8 @@ CudaDeviceFunction float2 Color() {
 CudaDeviceFunction void BounceBack()
 {
 	<?R 
-		#FullBounceBack() 
+		FullBounceBack() 
 	?>
-
-	real_t tmp;
-	tmp = f[6];
-	f[6] = f[8];
-	f[8] = tmp;
-	tmp = f[2];
-	f[2] = f[4];
-	f[4] = tmp;
-	tmp = f[1];
-	f[1] = f[3];
-	f[3] = tmp;
-	tmp = f[5];
-	f[5] = f[7];
-	f[7] = tmp;
-
-	tmp = h[6];
-	h[6] = h[8];
-	h[8] = tmp;
-	tmp = h[2];
-	h[2] = h[4];
-	h[4] = tmp;
-	tmp = h[1];
-	h[1] = h[3];
-	h[3] = tmp;
-	tmp = h[5];
-	h[5] = h[7];
-	h[7] = tmp;
-
 
 	// Anti-Bounce-Back Scheme
 	// see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
@@ -160,14 +131,15 @@ CudaDeviceFunction void Run() {
     }
 }
 
-// TODO: X vs rho*X
+
+// zeroth moment is rho*X 
 CudaDeviceFunction void set_eq(real_t x_in[9], real_t Xeq, vector_t u, real_t rho=1.) 
 {
 	real_t uxuy = u.x*u.y;
 	real_t ux2 = u.x*u.x;
 	real_t uy2 = u.y*u.y;
 
-	real_t m00 = Xeq;
+	real_t m00 = Xeq; 
 	real_t temp[9];
 
 
@@ -343,14 +315,19 @@ CudaDeviceFunction void relax_and_collide_ADE(real_t x_in[9], real_t omega_ade, 
 }
 
 
-CudaDeviceFunction vector_t getBoussinesqForce(real_t localTemp)
+CudaDeviceFunction vector_t getForce(real_t localTemp, real_t rho)
 {
+	// Boussinesq approximation
+	// rho(T) ~ rho_0*(1-thermal_exp_coeff*(Temp-Temp_0))
+	// F_b = (rho(T) - rho_0)*Grav_Y = -Grav_Y*rho_0*thermal_exp_coeff*(Temp-Temp_0)
+	// see chapter 8.4.1, eq 8.44, p313 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 	real_t refTemperature = 0;
-	real_t BoussinesqForce = GravitationY - GravitationY*BoussinesqCoeff*(localTemp - refTemperature);
+	real_t BoussinesqForce = -GravitationY*BoussinesqCoeff*(localTemp - refTemperature); // BoussinesqCoeff=rho_0*thermal_exp_coeff
 
 	vector_t Force; 
-	Force.x = 0; 
-	Force.y = BoussinesqForce; 
+	Force.x = GravitationX*rho; 
+	Force.y = GravitationY*rho+BoussinesqForce; 
 	Force.z = 0;
 
 	return Force;
@@ -359,25 +336,19 @@ CudaDeviceFunction vector_t getBoussinesqForce(real_t localTemp)
 CudaDeviceFunction void CollisionCM()
 {
 	real_t localTemperature = getT();
-	vector_t Force = getBoussinesqForce(localTemperature);
-	vector_t u = getRawU();
-
 	real_t m00 = getRho();
+
+	vector_t Force = getForce(localTemperature, m00);
+	vector_t u = getRawU();
 	u.x += Force.x/(2*m00);
 	u.y += Force.y/(2*m00);
-	// u.x = VelocityX; u.y = 0; u.z = 0;
 	
-	relax_and_collide_hydro_with_F(f, omega_nu, u, Force);
-
-	
+	relax_and_collide_hydro_with_F(f, omega_nu, u, Force);	
 	// if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterDirichletTemperature) {
-	// 	// case I - skip collision, just impose Teq
-	// 	real_t rho = getRho();
-	// 	real_t localTemperature = getT();
-	// 	real_t dQ = rho*InitTemperature;
-	// 	vector_t u = getU();
+	// 	// case I - skip collision, just impose d_rhoTeq
+	// 	real_t d_rhoT = m00*InitTemperature;
 	// 	real_t h_source[9];
-	// 	set_eq(h_source, dQ, u); 
+	// 	set_eq(h_source, d_rhoT, u); 
 
 	// 	for (int i = 0; i < 9; i++) {
 	// 		h[i] = h_source[i];
@@ -387,23 +358,35 @@ CudaDeviceFunction void CollisionCM()
 	// 	relax_and_collide_ADE(h, omega_k, u);
 	// }
 
+
 	// equilibrium scheme for BC
 	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+
 	relax_and_collide_ADE(h, omega_k, u);
+
 	if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterDirichletTemperature) 
 	{
 		// we are after collision in this if-scope {}
-		// case II - dla omega_T = 1 tozsame z case I, dla innych omega_T powinno być trochę lepsze
-		real_t rho = getRho();
-		real_t localTemperature = getT();
-		real_t d_rhoT = rho*(InitTemperature - localTemperature);
-		vector_t u = getU();
+		// case II - for omega_k = 1 is the same as case I, however for different omega_k shall be a bit better
+		real_t d_rhoT = m00*(InitTemperature - localTemperature);
 		real_t h_source[9];
 		set_eq(h_source, d_rhoT, u);
 
 		for (int i = 0; i < 9; i++) {
 			h[i] += h_source[i];
 		}
+	}
+
+	if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterNeumannHeatFlux) 
+	{
+		// TCLB is smart enough to distiguish values prescribed it batch.xml like
+		// InitTemperature-dirichlet_region="123"
+		// InitTemperature-neumann_heater_region="456"
+		real_t d_rhoT = m00*InitTemperature;  
+		real_t h_source[9];
+		set_eq(h_source, d_rhoT, u); 
+		for (int i = 0; i < 9; i++) {
+			h[i] += h_source[i];}
 	}
 }
