@@ -85,39 +85,36 @@ CudaDeviceFunction void BounceBack()
 	f[5] = f[7];
 	f[7] = tmp;
 
+	tmp = h[6];
+	h[6] = h[8];
+	h[8] = tmp;
+	tmp = h[2];
+	h[2] = h[4];
+	h[4] = tmp;
+	tmp = h[1];
+	h[1] = h[3];
+	h[3] = tmp;
+	tmp = h[5];
+	h[5] = h[7];
+	h[7] = tmp;
 
 
-	// equilibrium scheme for BC
-	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// Anti-Bounce-Back Scheme
+	// see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
-
 	if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterDirichletTemperature) 
 	{
+		for (int i = 0; i < 9; i++) {
+			h[i] = -h[i];} // reverse to obtain zero temperature
+		
 		real_t rho = getRho();
-		real_t localTemperature = getT();
-		real_t dQ = rho*(InitTemperature - localTemperature);
-		// dQ = 0.5;
+		real_t rhoT = 2*rho*InitTemperature; // anti bounce-back - prescribe temperature
 		vector_t u = getU();
 		real_t h_source[9];
-		set_eq(h_source, dQ, u); // TODO: X vs rho*X
+		set_eq(h_source, rhoT, u);
 
 		for (int i = 0; i < 9; i++) {
 			h[i] += h_source[i];}
-	}
-	else // TODO: why BB can't be coupled with Dirichlet BC?
-	{
-		tmp = h[6];
-		h[6] = h[8];
-		h[8] = tmp;
-		tmp = h[2];
-		h[2] = h[4];
-		h[4] = tmp;
-		tmp = h[1];
-		h[1] = h[3];
-		h[3] = tmp;
-		tmp = h[5];
-		h[5] = h[7];
-		h[7] = tmp;
 	}
 }
 
@@ -170,7 +167,7 @@ CudaDeviceFunction void set_eq(real_t x_in[9], real_t Xeq, vector_t u, real_t rh
 	real_t ux2 = u.x*u.x;
 	real_t uy2 = u.y*u.y;
 
-	real_t m00 = Xeq/rho;
+	real_t m00 = Xeq;
 	real_t temp[9];
 
 
@@ -343,20 +340,6 @@ CudaDeviceFunction void relax_and_collide_ADE(real_t x_in[9], real_t omega_ade, 
 	x_in[6] = -1/4.*temp[5] + 1/4.*temp[6] - 1/4.*temp[7] + 1/4.*temp[8];
 	x_in[7] = 1/4.*temp[5] - 1/4.*temp[6] - 1/4.*temp[7] + 1/4.*temp[8];
 	x_in[8] = -1/4.*temp[5] - 1/4.*temp[6] + 1/4.*temp[7] + 1/4.*temp[8];
-
-	if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterDirichletTemperature) 
-	{
-		real_t rho = getRho();
-		real_t localTemperature = getT();
-		real_t dQ = rho*(InitTemperature - localTemperature);
-
-		vector_t u = getU();
-		real_t h_source[9];
-		set_eq(h_source, dQ, u); // TODO: X vs rho*X
-
-		for (int i = 0; i < 9; i++) {
-			x_in[i] += h_source[i];}
-	}
 }
 
 
@@ -385,5 +368,42 @@ CudaDeviceFunction void CollisionCM()
 	// u.x = VelocityX; u.y = 0; u.z = 0;
 	
 	relax_and_collide_hydro_with_F(f, omega_nu, u, Force);
+
+	
+	// if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterDirichletTemperature) {
+	// 	// case I - skip collision, just impose Teq
+	// 	real_t rho = getRho();
+	// 	real_t localTemperature = getT();
+	// 	real_t dQ = rho*InitTemperature;
+	// 	vector_t u = getU();
+	// 	real_t h_source[9];
+	// 	set_eq(h_source, dQ, u); 
+
+	// 	for (int i = 0; i < 9; i++) {
+	// 		h[i] = h_source[i];
+	// 	}
+	// }
+	// else{
+	// 	relax_and_collide_ADE(h, omega_k, u);
+	// }
+
+	// equilibrium scheme for BC
+	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 	relax_and_collide_ADE(h, omega_k, u);
+	if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterDirichletTemperature) 
+	{
+		// we are after collision in this if-scope {}
+		// case II - dla omega_T = 1 tozsame z case I, dla innych omega_T powinno być trochę lepsze
+		real_t rho = getRho();
+		real_t localTemperature = getT();
+		real_t d_rhoT = rho*(InitTemperature - localTemperature);
+		vector_t u = getU();
+		real_t h_source[9];
+		set_eq(h_source, d_rhoT, u);
+
+		for (int i = 0; i < 9; i++) {
+			h[i] += h_source[i];
+		}
+	}
 }
