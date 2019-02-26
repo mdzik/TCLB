@@ -1,29 +1,35 @@
 
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/">
-      <Geometry nx="400" ny="100" >
+      <Geometry nx="500" ny="100" >
       <CM><Box /></CM>    
       <!-- <Smoothing><Box /></Smoothing>  -->
         <None name="heated_region">
             <Sphere dx="175" nx="50" dy="25" ny="50" /> 
         </None>        
 
+        <Solid name="solid_region">
+          <Box dx="100" dy="50" nx="20" ny="25"/>
+        </Solid>
+
         <Wall mask="ALL" name="box" >     
-           <Box dx="100" dy="25" nx="20" ny="50"/>
+           <Box dx="100" dy="25" nx="20" ny="25"/>
         </Wall>
 
         <HeaterDirichletTemperature  name="dirichlet_region"> 
-          <!-- <Box dx="100" dy="25" nx="20" ny="25"/> -->
           <Box dx="200" dy="50" nx="20" ny="25"/>
         </HeaterDirichletTemperature>
         
-            <HeaterNeumannHeatFlux  name="neumann_heater_region"> 
+        <HeaterNeumannHeatFlux  name="neumann_heater_region"> 
           <Box dx="300" dy="25" nx="20" ny="25"/>
         </HeaterNeumannHeatFlux>
         <HeaterNeumannHeatFlux  name="neumann_cool_region"> 
           <Box dx="350" dy="50" nx="20" ny="25"/>
         </HeaterNeumannHeatFlux>
 
+      	<Solid name="solid_region">
+      	  <Box dx="400" dy="10" nx="20" ny="40"/>
+      	</Solid>
 
   </Geometry>
     <Model>
@@ -55,8 +61,8 @@
 </Geometry> -->
 
 <Solve Iterations="10" output="output/"> <VTK Iterations="1"/> </Solve>
-<Failcheck Iterations="10" nx="400" ny="100" />
-<Log Iterations="100"/>
-<Solve Iterations="10000" output="output/"> <VTK Iterations="500"/> </Solve>
+<Failcheck Iterations="10" nx="500" ny="100" />
+<Log Iterations="1000"/>
+<Solve Iterations="20000" output="output/"> <VTK Iterations="250"/> </Solve>
 </CLBConfig>
 

@@ -45,6 +45,14 @@ CudaDeviceFunction vector_t getU()
 	return u;
 }
 
+CudaDeviceFunction vector_t get_uDarcyStoper(real_t rho, vector_t u)
+{
+	vector_t fDarcy;
+	fDarcy.x = -2*rho*(u.x);
+	fDarcy.y = -2*rho*(u.y);
+	fDarcy.z = 0;
+	return fDarcy;
+}
 
 CudaDeviceFunction float2 Color() {
 	float2 ret;
@@ -342,7 +350,15 @@ CudaDeviceFunction void CollisionCM()
 	vector_t u = getRawU();
 	u.x += Force.x/(2*m00);
 	u.y += Force.y/(2*m00);
-	
+
+	// add Darcy force to stop flow within solid regions
+	if ((NodeType & NODE_ADDITIONALS) == NODE_Solid) 
+	{
+		vector_t uDarcyStoper = get_uDarcyStoper(m00,  u);
+		Force.x += uDarcyStoper.x;
+		Force.y += uDarcyStoper.y;
+	} 
+
 	relax_and_collide_hydro_with_F(f, omega_nu, u, Force);	
 	// if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterDirichletTemperature) {
 	// 	// case I - skip collision, just impose d_rhoTeq
