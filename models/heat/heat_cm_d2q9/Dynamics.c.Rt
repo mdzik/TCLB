@@ -56,7 +56,7 @@ CudaDeviceFunction vector_t get_uDarcyStoper(real_t rho, vector_t u)
 
 CudaDeviceFunction float2 Color() {
 	float2 ret;
-	vector_t u = getRawU();
+	//vector_t u = getRawU();
 
 	ret.x = getT();
 	ret.y = ret.x;
@@ -90,7 +90,7 @@ CudaDeviceFunction void BounceBack()
 		real_t rhoT = 2*rho*InitTemperature; // anti bounce-back - prescribe temperature
 		vector_t u = getU();
 		real_t h_source[9];
-		set_eq(h_source, rhoT, u);
+		SetEquilibrium(h_source, rhoT, u);
 
 		for (int i = 0; i < 9; i++) {
 			h[i] += h_source[i];}
@@ -132,6 +132,8 @@ CudaDeviceFunction void Run() {
 	
     switch (NodeType & NODE_COLLISION) {
 	case NODE_BGK:
+		CollisionBGK();
+		break;
 	case NODE_MRT:
 	case NODE_CM:
 		CollisionCM();
@@ -141,13 +143,13 @@ CudaDeviceFunction void Run() {
 
 
 // zeroth moment is rho*X 
-CudaDeviceFunction void set_eq(real_t x_in[9], real_t Xeq, vector_t u, real_t rho=1.) 
+CudaDeviceFunction void SetEquilibrium(real_t x_in[9], real_t rho_Xeq, vector_t u, real_t rho=1.) 
 {
 	real_t uxuy = u.x*u.y;
 	real_t ux2 = u.x*u.x;
 	real_t uy2 = u.y*u.y;
 
-	real_t m00 = Xeq; 
+	real_t m00 = rho_Xeq; 
 	real_t temp[9];
 
 
@@ -192,8 +194,8 @@ CudaDeviceFunction void Init() {
 	real_t T = InitTemperature;
 	vector_t u; u.x = VelocityX; u.y = 0; u.z = 0;
 
-	set_eq(f,rho,u);
-	set_eq(h,T,u);
+	SetEquilibrium(f,rho,u);
+	SetEquilibrium(h,T,u);
 }
 
 CudaDeviceFunction void relax_and_collide_hydro_with_F(real_t x_in[9], real_t omega_nu, vector_t u, vector_t F) 
@@ -364,7 +366,7 @@ CudaDeviceFunction void CollisionCM()
 	// 	// case I - skip collision, just impose d_rhoTeq
 	// 	real_t d_rhoT = m00*InitTemperature;
 	// 	real_t h_source[9];
-	// 	set_eq(h_source, d_rhoT, u); 
+	// 	SetEquilibrium(h_source, d_rhoT, u); 
 
 	// 	for (int i = 0; i < 9; i++) {
 	// 		h[i] = h_source[i];
@@ -387,7 +389,7 @@ CudaDeviceFunction void CollisionCM()
 		// case II - for omega_k = 1 is the same as case I, however for different omega_k shall be a bit better
 		real_t d_rhoT = m00*(InitTemperature - localTemperature);
 		real_t h_source[9];
-		set_eq(h_source, d_rhoT, u);
+		SetEquilibrium(h_source, d_rhoT, u);
 
 		for (int i = 0; i < 9; i++) {
 			h[i] += h_source[i];
@@ -401,7 +403,7 @@ CudaDeviceFunction void CollisionCM()
 		// InitTemperature-neumann_heater_region="456"
 		real_t d_rhoT = m00*InitTemperature;  
 		real_t h_source[9];
-		set_eq(h_source, d_rhoT, u); 
+		SetEquilibrium(h_source, d_rhoT, u); 
 		for (int i = 0; i < 9; i++) {
 			h[i] += h_source[i];}
 	}

@@ -1,0 +1,213 @@
+
+CudaDeviceFunction void Init() {
+    real_t rho = 1.0;
+    real_t T = InitTemperature;
+    vector_t u; u.x = VelocityX; u.y = 0; u.z = 0;
+
+    SetEquilibrium(f,rho,u);
+    SetEquilibrium(h,T,u);
+}
+
+CudaDeviceFunction float2 Color() {
+    float2 ret;
+    ret.x = getT();
+    ret.y = ret.x;
+    return ret;
+}
+
+CudaDeviceFunction void SetEquilibrium(real_t x_eq[9], real_t rhoX, vector_t u){
+    // modify the SetEquilibrium function from previous tutorials so that it can be used for both f and h populations (distributions).
+    x_eq[0] = ( 2. + ( -u.y*u.y - u.x*u.x )*3. )*rhoX*2./9.;
+    x_eq[1] = ( 2. + ( -u.y*u.y + ( 1 + u.x )*u.x*2. )*3. )*rhoX/18.;
+    x_eq[2] = ( 2. + ( -u.x*u.x + ( 1 + u.y )*u.y*2. )*3. )*rhoX/18.;
+    x_eq[3] = ( 2. + ( -u.y*u.y + ( -1 + u.x )*u.x*2. )*3. )*rhoX/18.;
+    x_eq[4] = ( 2. + ( -u.x*u.x + ( -1 + u.y )*u.y*2. )*3. )*rhoX/18.;
+    x_eq[5] = ( 1. + ( ( 1 + u.y )*u.y + ( 1 + u.x + u.y*3. )*u.x )*3. )*rhoX/36.;
+    x_eq[6] = ( 1. + ( ( 1 + u.y )*u.y + ( -1 + u.x - u.y*3. )*u.x )*3. )*rhoX/36.;
+    x_eq[7] = ( 1. + ( ( -1 + u.y )*u.y + ( -1 + u.x + u.y*3. )*u.x )*3. )*rhoX/36.;
+    x_eq[8] = ( 1. + ( ( -1 + u.y )*u.y + ( 1 + u.x - u.y*3. )*u.x )*3. )*rhoX/36.;
+}
+
+CudaDeviceFunction real_t getRho() {
+    // This function defines the macroscopic density at the current node.
+        return f[8]+f[7]+f[6]+f[5]+f[4]+f[3]+f[2]+f[1]+f[0];
+    }
+    
+CudaDeviceFunction vector_t getRawU() {
+// This function defines the macroscopic velocity at the current node.
+    real_t rho;
+    // implement rho as sum(f[i]).
+    // rho = ... ;
+    rho = f[8]+f[7]+f[6]+f[5]+f[4]+f[3]+f[2]+f[1]+f[0];
+    vector_t u;
+    // the sum(f[i]*ex[i]) is interpreted as x-component of momentum, i.e., rho*u_x.
+    // implement u.x as sum(f[i]*ex[i]) divided by rho. Similarly for u.y. See previous tutorials.
+    // u.x = ... ;
+    // u.y = ... ;
+    u.x = ( f[8]-f[7]-f[6]+f[5]-f[3]+f[1] )/rho ;
+	u.y = (-f[8]-f[7]+f[6]+f[5]-f[4]+f[2] )/rho ;
+    u.z = 0;
+    return u;
+}
+
+CudaDeviceFunction real_t getT(){
+    real_t T = (h[8]+h[7]+h[6]+h[5]+h[4]+h[3]+h[2]+h[1]+h[0])/(f[8]+f[7]+f[6]+f[5]+f[4]+f[3]+f[2]+f[1]+f[0]);
+    // implement T as sum(h[i]) divided by rho.
+    return T; 
+}
+
+CudaDeviceFunction vector_t getU()
+{
+	real_t localTemperature = getT();
+	vector_t u = getRawU();
+	real_t m00 = getRho();
+	vector_t Force = getForce(localTemperature, m00);
+	u.x += Force.x/(2*m00);
+	u.y += Force.y/(2*m00);
+	u.z = 0;
+	return u;
+}
+
+CudaDeviceFunction vector_t getForce(real_t localTemp, real_t rho)
+{
+	// Boussinesq approximation
+	// rho(T) ~ rho_0*(1-thermal_exp_coeff*(Temp-Temp_0))
+	// F_b = (rho(T) - rho_0)*Grav_Y = -Grav_Y*rho_0*thermal_exp_coeff*(Temp-Temp_0)
+	// see chapter 8.4.1, eq 8.44, p313 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+	real_t refTemperature = 0;
+	real_t BoussinesqForce = -GravitationY*BoussinesqCoeff*(localTemp - refTemperature); // BoussinesqCoeff=rho_0*thermal_exp_coeff
+
+	vector_t Force; 
+	Force.x = GravitationX*rho; 
+	Force.y = GravitationY*rho+BoussinesqForce; 
+	Force.z = 0;
+
+	return Force;
+}
+
+CudaDeviceFunction void Run() {
+    // This defines the dynamics that we run at each node in the domain.
+    switch (NodeType & NODE_BOUNDARY) {
+        case NODE_Wall:
+        case NODE_Solid:
+            BounceBack();
+            break;
+    }
+
+    switch (NodeType & NODE_COLLISION) {
+        case NODE_BGK:
+            CollisionBGK();
+            break;
+        case NODE_MRT:
+        case NODE_CM:
+            //CollisionCM();
+            break;
+    }
+}
+
+
+CudaDeviceFunction void BounceBack()
+{
+    // at the wall
+    real_t tmp;
+    tmp = f[6];
+    f[6] = f[8];
+    f[8] = tmp;
+    tmp = f[2];
+    f[2] = f[4];
+    f[4] = tmp;
+    tmp = f[1];
+    f[1] = f[3];
+    f[3] = tmp;
+    tmp = f[5];
+    f[5] = f[7];
+    f[7] = tmp;
+    tmp = h[6];
+    h[6] = h[8];
+    h[8] = tmp;
+    tmp = h[2];
+    h[2] = h[4];
+    h[4] = tmp;
+    tmp = h[1];
+    h[1] = h[3];
+    h[3] = tmp;
+    tmp = h[5];
+    h[5] = h[7];
+    h[7] = tmp;
+
+    // Anti-Bounce-Back Scheme
+    // see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
+    // by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+    if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterDirichletTemperature)
+    {
+        for (int i = 0; i < 9; i++) {
+            h[i] = -h[i];} // reverse to obtain zero temperature
+
+        real_t rho = getRho();
+        real_t rhoT = 2*rho*InitTemperature; // anti bounce-back - prescribe temperature
+        vector_t u = getU();
+        real_t h_source[9];
+        SetEquilibrium(h_source, rhoT, u);
+
+        for (int i = 0; i < 9; i++) {
+            h[i] += h_source[i];}
+    }
+}
+
+CudaDeviceFunction void CollisionBGK() {
+// Here we perform a single relaxation time collision operation.
+
+    real_t localTemperature = getT();
+    real_t m00 = getRho();
+
+    vector_t Force = getForce(localTemperature, m00);
+    vector_t u = getRawU();
+    u.x += Force.x/(2*m00);
+    u.y += Force.y/(2*m00);
+
+    real_t f_eq[9];
+    SetEquilibrium(f_eq, m00, u); //stores equilibrium distribution in feq[0]-feq[8]
+
+    real_t h_eq[9];
+    SetEquilibrium(h_eq, m00*localTemperature, u); //stores equilibrium distribution in heq[0]-heq[8]
+
+    real_t S[9];
+    for (int i=0; i< 9; i++) {
+        S[i] = 3.0* f_eq[i]* (Force.x*(d2q9_ex[i] - u.x) + Force.y*(d2q9_ey[i] - u.y))/m00;
+        f[i] = f[i] + omega_nu*(f_eq[i]-f[i]) + (1 - 0.5*omega_nu)*S[i];	
+    }
+
+    for (int i=0; i< 9; i++) {
+        h[i] = h[i] + omega_k*(h_eq[i]-h[i]);
+    }
+
+    // equilibrium scheme for BC
+	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+
+    if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterDirichletTemperature) 
+	{
+		// we are after collision in this if-scope {}
+		// case II - for omega_k = 1 is the same as case I, however for different omega_k shall be a bit better
+		real_t d_rhoT = m00*(InitTemperature - localTemperature);
+		real_t h_source[9];
+		SetEquilibrium(h_source, d_rhoT, u);
+
+		for (int i = 0; i < 9; i++) {
+			h[i] += h_source[i];
+		}
+	}
+
+	if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterNeumannHeatFlux) 
+	{
+		// TCLB is smart enough to distiguish values prescribed it batch.xml like
+		// InitTemperature-dirichlet_region="123"
+		// InitTemperature-neumann_heater_region="456"
+		real_t d_rhoT = m00*InitTemperature;  
+		real_t h_source[9];
+		SetEquilibrium(h_source, d_rhoT, u); 
+		for (int i = 0; i < 9; i++) {
+			h[i] += h_source[i];}
+	}
+}
