@@ -142,9 +142,11 @@ CudaDeviceFunction void Run() {
 }
 
 
-// zeroth moment is rho*X 
+
 CudaDeviceFunction void SetEquilibrium(real_t x_in[9], real_t rho_Xeq, vector_t u, real_t rho=1.) 
 {
+// zeroth moment is rho*X 
+
 	real_t uxuy = u.x*u.y;
 	real_t ux2 = u.x*u.x;
 	real_t uy2 = u.y*u.y;
@@ -185,7 +187,6 @@ CudaDeviceFunction void SetEquilibrium(real_t x_in[9], real_t rho_Xeq, vector_t 
 	x_in[6] = -1/4.*temp[5] + 1/4.*temp[6] - 1/4.*temp[7] + 1/4.*temp[8];
 	x_in[7] = 1/4.*temp[5] - 1/4.*temp[6] - 1/4.*temp[7] + 1/4.*temp[8];
 	x_in[8] = -1/4.*temp[5] - 1/4.*temp[6] + 1/4.*temp[7] + 1/4.*temp[8];
-
 }
 
 
