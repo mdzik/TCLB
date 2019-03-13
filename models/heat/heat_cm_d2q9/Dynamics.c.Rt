@@ -87,7 +87,7 @@ CudaDeviceFunction void BounceBack()
 			h[i] = -h[i];} // reverse to obtain zero temperature
 		
 		real_t rho = getRho();
-		real_t rhoT = 1*rho*InitTemperature; // anti bounce-back - prescribe temperature  # TODO: 1* czy 2* ?
+		real_t rhoT = 2*rho*InitTemperature; // anti bounce-back - prescribe temperature
 		vector_t u = getU();
 		real_t h_source[9];
 		SetEquilibrium(h_source, rhoT, u);
