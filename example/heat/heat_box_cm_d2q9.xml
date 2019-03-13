@@ -17,11 +17,11 @@
         </None>        
 
         <HeaterDirichletTemperature  name="dirichlet_hot"> 
-          <Box dx="-1"/>
+          <Box nx="1" dx="-3"/>
         </HeaterDirichletTemperature>
 
         <HeaterDirichletTemperature  name="dirichlet_cold"> 
-          <Box nx="1" />
+          <Box dx="2" nx="1" />
         </HeaterDirichletTemperature>
       
   </Geometry>
