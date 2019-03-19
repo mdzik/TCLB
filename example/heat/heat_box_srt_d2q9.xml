@@ -10,18 +10,18 @@
         </None>        
 
         <HeaterDirichletTemperature  name="dirichlet_hot"> 
-          <Box nx="1" dx="-3"/>
+          <Box nx="1" dx="-2"/>
         </HeaterDirichletTemperature>
 
         <HeaterDirichletTemperature  name="dirichlet_cold"> 
-          <Box dx="2" nx="1" />
+          <Box dx="1" nx="1" />
         </HeaterDirichletTemperature>
       
         <Wall mask="ALL" name="border" >
-                <Box nx="2"/>
-                <Box dx="-2"/>
-                <Box ny="2"/>
-                <Box dy="-2"/>
+                <Box nx="1"/>
+                <Box dx="-1"/>
+                <Box ny="1"/>
+                <Box dy="-1"/>
         </Wall>
   </Geometry>
     <Model>
