@@ -1,7 +1,7 @@
 
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/">
-      <Geometry nx="128" ny="128" >
+      <Geometry nx="64" ny="66" >
       <CM><Box /></CM>    
       <!-- <Smoothing><Box /></Smoothing>  -->
 
@@ -9,19 +9,20 @@
             <!-- <Sphere dx="80" nx="10" dy="25" ny="10" />  -->
         </None>        
 
-        <HeaterDirichletTemperature  name="dirichlet_hot"> 
-          <Box dy="-2"/>
-        </HeaterDirichletTemperature>
-
         <HeaterDirichletTemperature  name="dirichlet_cold"> 
             <Box nx="1"/>
             <Box dx="-1"/>
             <Box ny="2"/>
         </HeaterDirichletTemperature>
 
+        <HeaterDirichletTemperature  name="dirichlet_hot"> 
+          <!-- <Box dy="-1"/> -->
+          <!-- <Box ny="1"/> -->
+        </HeaterDirichletTemperature>
+
          <Wall mask="ALL" name="border" >
-                <Box ny="1"/>
-                <Box dy="-1"/>
+           <Box ny="1"/>
+                <!-- <Box dy="-1"/>  -->
         </Wall>
 
   </Geometry>
@@ -36,14 +37,13 @@
         InitTemperature-dirichlet_hot="1.0"
         InitTemperature-dirichlet_cold="0.0"
         />
+    <Params />
 
-
-    <Params  />
     <Params GravitationY="-1.0E-05" />
     <Params BoussinesqCoeff="10"/>
-    <Params Period="128"/>
+    <Params PeriodX="64"/>
+    <Params PeriodY="64"/>
     <!-- <Params VelocityX="-1.0E-01" /> -->
-
     </Model> 
 <!-- 
     <Solve Iterations="25" output="output/"> <VTK Iterations="10"/> </Solve>
@@ -53,10 +53,9 @@
   </None>
 </Geometry> -->
 
-<Solve Iterations="10" output="output/"> <VTK Iterations="1"/> </Solve>
-<Failcheck Iterations="500" nx="128" ny="128" />
-<TXT Iterations="5000" what="T,U"/>
-<Log Iterations="100"/>
-<Solve Iterations="10000" output="output/"> <VTK Iterations="500"/> </Solve>
+<!-- <Solve Iterations="10" output="output/"> <VTK Iterations="1"/> </Solve> -->
+<Failcheck Iterations="10000" nx="64" ny="66" />
+<TXT Iterations="10000" what="T,U"/>
+<Log Iterations="10000"/>
+<Solve Iterations="100000" output="output/"> <VTK Iterations="10000"/> </Solve>
 </CLBConfig>
-

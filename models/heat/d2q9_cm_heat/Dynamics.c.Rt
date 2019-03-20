@@ -91,7 +91,7 @@ CudaDeviceFunction void BounceBack()
 		vector_t u = getU();
 		
 		// Laplace Benchmark WAVE
-		// if ( Period > 0 && Y >= Period)
+		// if (PeriodX > 0 && Y >= PeriodY)
 		// {
 		// 	T = -4.*X*(X-Period)/(Period*Period);
 		// 	SetEquilibrium(h,T,u);
@@ -396,9 +396,9 @@ CudaDeviceFunction void CollisionCM()
 
 	// Laplace Benchmark WAVE
 	real_t T = InitTemperature;
-	if ( Period > 0 && Y >= Period )
+	if(PeriodX > 0 && Y >= PeriodY)
 	{
-		T = -4.*X*(X-Period)/(Period*Period);
+		T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX);
 		SetEquilibrium(h,T,u);
 	}
 

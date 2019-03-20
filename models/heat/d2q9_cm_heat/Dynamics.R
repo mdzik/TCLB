@@ -54,8 +54,9 @@ AddSetting(name="k_s", omega_k='1.0/(3*k_s+0.5)', default=0.16666666, comment='t
 AddSetting(name="cp_s",default=1.0, comment='specific heat capacity at constant pressure of solid (J/(kg·K))')
 AddSetting(name="rho_s",default=1.0, comment='solid density (kg/m3')
 
-# Benchamrk things
-AddSetting(name="Period", default="0", comment='Number of cells in x direction')
+# Benchmark things
+AddSetting(name="PeriodX", default="0", comment='Number of cells in x direction')
+AddSetting(name="PeriodY", default="0", comment='Number of effective cells in y direction')
 
 # Boundary things
 AddNodeType(name="Solid", group="ADDITIONALS")
