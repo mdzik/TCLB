@@ -4,33 +4,46 @@
       <Geometry nx="500" ny="100" >
       <CM><Box /></CM>    
       <!-- <Smoothing><Box /></Smoothing>  -->
-        <None name="heated_region">
-            <Sphere dx="175" nx="50" dy="25" ny="50" /> 
+        <None name="init_T_region">
+            <Sphere dx="150" nx="50" dy="25" ny="50" /> 
         </None>        
-
-        <Solid name="solid_region">
-          <Box dx="100" dy="50" nx="20" ny="25"/>
-        </Solid>
 
         <Wall mask="ALL" name="box" >     
            <Box dx="100" dy="25" nx="20" ny="25"/>
         </Wall>
+        <DarcySolid name="darcy_solid_region">
+          <Box dx="100" dy="50" nx="20" ny="25"/>
+        </DarcySolid>
 
-        <HeaterDirichletTemperature  name="dirichlet_region"> 
+
+        <HeaterDirichletTemperature name="dirichlet_fluid_region"> 
           <Box dx="200" dy="50" nx="20" ny="25"/>
         </HeaterDirichletTemperature>
         
-        <HeaterNeumannHeatFlux  name="neumann_heater_region"> 
+
+        <Wall mask="ALL" name="box" >     
+           <Box dx="300" dy="10" nx="25" ny="25"/>
+        </Wall>
+         <HeaterDirichletTemperature name="dirichlet_wall_region"> 
+          <Box dx="300" dy="10" nx="25" ny="25"/>
+        </HeaterDirichletTemperature>
+
+
+
+      	<DarcySolid name="darcy_solid_region">
+      	  <Box dx="400" dy="60" nx="25" ny="25"/>
+      	</DarcySolid>
+        <HeaterDirichletTemperature name="dirichlet_darcy_solid_region"> 
+          <Box dx="400" dy="60" nx="25" ny="25"/>
+        </HeaterDirichletTemperature>
+
+
+        <!--         <HeaterNeumannHeatFlux  name="neumann_heater_region"> 
           <Box dx="300" dy="25" nx="20" ny="25"/>
         </HeaterNeumannHeatFlux>
         <HeaterNeumannHeatFlux  name="neumann_cool_region"> 
           <Box dx="350" dy="50" nx="20" ny="25"/>
-        </HeaterNeumannHeatFlux>
-
-      	<Solid name="solid_region">
-      	  <Box dx="400" dy="10" nx="20" ny="40"/>
-      	</Solid>
-
+        </HeaterNeumannHeatFlux> -->
   </Geometry>
     <Model>
     <Params
@@ -39,8 +52,13 @@
 
 
         InitTemperature="0.0"
-        InitTemperature-heated_region="10"
-        InitTemperature-dirichlet_region="100.0"
+        InitTemperature-init_T_region="-10"
+
+        InitTemperature-dirichlet_wall_region="10.0"
+        InitTemperature-dirichlet_fluid_region="-10.0"
+        InitTemperature-dirichlet_darcy_solid_region="10.0"
+
+        
 
         InitTemperature-neumann_heater_region="1E0"
         InitTemperature-neumann_cool_region="-1E0"

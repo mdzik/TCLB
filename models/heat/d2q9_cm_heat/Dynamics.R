@@ -52,15 +52,15 @@ AddSetting(name="BoussinesqCoeff", default=0.0, comment='BoussinesqCoeff=rho_0*t
 AddSetting(name="omega_k_s", default=1.0 , comment='inverse of thermal relaxation time')
 AddSetting(name="k_s", omega_k='1.0/(3*k_s+0.5)', default=0.16666666, comment='thermal conductivity of solid (W/(m·K))')
 AddSetting(name="cp_s",default=1.0, comment='specific heat capacity at constant pressure of solid (J/(kg·K))')
-AddSetting(name="rho_s",default=1.0, comment='solid density (kg/m3')
+AddSetting(name="rho_s",default=1.0, comment='darcy_solid density (kg/m3')
 
 # Benchmark things
 AddSetting(name="PeriodX", default="0", comment='Number of cells in x direction')
 AddSetting(name="PeriodY", default="0", comment='Number of effective cells in y direction')
 
-# Boundary things
-AddNodeType(name="Solid", group="ADDITIONALS")
+# Boundary thingsW
+AddNodeType(name="DarcySolid", group="ADDITIONALS")
 AddNodeType(name="Smoothing", group="ADDITIONALS")
-AddNodeType(name="HeaterDirichletTemperature", group="ADDITIONALS")
-AddNodeType(name="HeaterNeumannHeatFlux", group="ADDITIONALS")
+AddNodeType(name="HeaterDirichletTemperature", group="ADDITIONALS_HEAT")
+AddNodeType(name="HeaterNeumannHeatFlux", group="ADDITIONALS_HEAT")
 AddNodeType("CM","COLLISION")

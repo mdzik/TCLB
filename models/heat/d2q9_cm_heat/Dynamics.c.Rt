@@ -62,51 +62,9 @@ CudaDeviceFunction float2 Color() {
 	ret.y = ret.x;
 
 	// ret.y = sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
-
-	// if (NodeType == NODE_Solid){
-	//         ret.y = 0;
-	// } else {
-	//         ret.y = 1;
-	// }
 	return ret;
 }
 
-
-
-
-CudaDeviceFunction void BounceBack()
-{
-	<?R 
-		FullBounceBack() 
-	?>
-
-	// Anti-Bounce-Back Scheme
-	// see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
-	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
-	if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterDirichletTemperature) 
-	{
-		real_t T = InitTemperature;
-		real_t rho = getRho();
-		real_t rhoT = 2*rho*T; // anti bounce-back - prescribe temperature
-		vector_t u = getU();
-		
-		// Laplace Benchmark WAVE
-		// if (PeriodX > 0 && Y >= PeriodY)
-		// {
-		// 	T = -4.*X*(X-Period)/(Period*Period);
-		// 	SetEquilibrium(h,T,u);
-		// }
-
-		for (int i = 0; i < 9; i++) {
-			h[i] = -h[i];} // reverse to obtain zero temperature
-		
-		real_t h_source[9];
-		SetEquilibrium(h_source, rhoT, u);
-
-		for (int i = 0; i < 9; i++) {
-			h[i] += h_source[i];}
-	}
-}
 
 CudaDeviceFunction void EVelocity()
 {}
@@ -120,38 +78,109 @@ CudaDeviceFunction void WVelocity()
 CudaDeviceFunction void EPressure()
 {}
 
+CudaDeviceFunction void HeatNeumannForFluid()
+{
+	real_t T = InitTemperature;
+	real_t m00 = getRho();
+	vector_t u = getU();
+	// TCLB is smart enough to distiguish values prescribed it batch.xml like
+	// InitTemperature-dirichlet_region="123"
+	// InitTemperature-neumann_heater_region="456"
+	real_t d_rhoT = m00*T;  
+	real_t h_source[9];
+	SetEquilibrium(h_source, d_rhoT, u); 
+	for (int i = 0; i < 9; i++) {
+		h[i] += h_source[i];}
+}
+
+CudaDeviceFunction void HeatDirichletEquilibriumScheme()
+{
+	// equilibrium scheme for BC - don't care and impose rho*Teq
+	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+
+	real_t T = InitTemperature;
+	if(PeriodX > 0 && Y >= PeriodY){ 
+		T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark
+	}
+	real_t m00 = getRho();
+	vector_t u = getU();
+	
+	real_t d_rhoT = m00*T;
+	real_t h_source[9];
+	SetEquilibrium(h_source, d_rhoT, u); 
+
+	for (int i = 0; i < 9; i++) {
+		h[i] = h_source[i];
+	}
+}
+
+CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
+{
+	// Anti-Bounce-Back Scheme
+	// see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+	real_t T = InitTemperature;
+	if(PeriodX > 0 && Y >= PeriodY){
+		T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark
+	}
+
+	real_t m00 = getRho();
+	vector_t u = getU();
+
+	real_t rhoT = m00*T;
+	real_t h_eq[9];
+	SetEquilibrium(h_eq,rhoT, u);
+
+	for (int i = 0; i < 9; i++) {
+		h[i] = -h[i] + 2*h_eq[i]; // ABB: reverse to obtain zero temperature: h[i] = -h[i]
+	}
+}
+
 
 CudaDeviceFunction void Run() {
     switch (NodeType & NODE_BOUNDARY) {
-	case NODE_EVelocity:
-		EVelocity();
-		break;
-	case NODE_WPressure:
-		WPressure();
-		break;
-	case NODE_WVelocity:
-		WVelocity();
-		break;
-	case NODE_EPressure:
-		EPressure();
-		break;
-	case NODE_Wall:
-	case NODE_Solid:
-		BounceBack();
-        break;
+		case NODE_EVelocity:
+			EVelocity();
+			break;
+		case NODE_WPressure:
+			WPressure();
+			break;
+		case NODE_WVelocity:
+			WVelocity();
+			break;
+		case NODE_EPressure:
+			EPressure();
+			break;
+		case NODE_Wall:
+			BounceBack();
+			break;
 	}
 	
     switch (NodeType & NODE_COLLISION) {
-	case NODE_BGK:
-		//CollisionBGK();
-		break;
-	case NODE_MRT:
-	case NODE_CM:
-		CollisionCM();
-		break;
-    }
+		case NODE_CM:
+			CollisionCM();
+			break;
+	}
+
+	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterDirichletTemperature) {
+		// HeatDirichletEquilibriumScheme();
+		HeatDirichletAntiBounceBackScheme();
+	}
+
+	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterNeumannHeatFlux) {
+		HeatNeumannForFluid();
+	}	
 }
 
+
+
+CudaDeviceFunction void BounceBack()
+{
+	<?R 
+		FullBounceBack() 
+	?>
+}
 
 // zeroth moment is rho*X 
 CudaDeviceFunction void SetEquilibrium(real_t x_in[9], real_t rho_Xeq, vector_t u, real_t rho=1.) 
@@ -215,7 +244,7 @@ CudaDeviceFunction void relax_and_collide_hydro_with_F(real_t x_in[9], real_t om
 	real_t uxuy = u.x*u.y;
 	real_t ux2 = u.x*u.x;
 	real_t uy2 = u.y*u.y;
-real_t m00 = x_in[0] + x_in[1] + x_in[2] + x_in[3] + x_in[4] + x_in[5] + x_in[6] + x_in[7] + x_in[8];
+	real_t m00 = x_in[0] + x_in[1] + x_in[2] + x_in[3] + x_in[4] + x_in[5] + x_in[6] + x_in[7] + x_in[8];
 	real_t temp[9];
 	for (int i = 0; i < 9; i++) {
 		temp[i] = x_in[i];}
@@ -365,7 +394,7 @@ CudaDeviceFunction void CollisionCM()
 	u.y += Force.y/(2*m00);
 
 	// add Darcy force to stop flow within solid regions
-	if ((NodeType & NODE_ADDITIONALS) == NODE_Solid) 
+	if ((NodeType & NODE_ADDITIONALS) == NODE_DarcySolid) 
 	{
 		vector_t uDarcyStoper = get_uDarcyStoper(m00,  u);
 		Force.x += uDarcyStoper.x;
@@ -373,57 +402,5 @@ CudaDeviceFunction void CollisionCM()
 	} 
 
 	relax_and_collide_hydro_with_F(f, omega_nu, u, Force);	
-	// if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterDirichletTemperature) {
-	// 	// case I - skip collision, just impose d_rhoTeq
-	// 	real_t d_rhoT = m00*InitTemperature;
-	// 	real_t h_source[9];
-	// 	SetEquilibrium(h_source, d_rhoT, u); 
-
-	// 	for (int i = 0; i < 9; i++) {
-	// 		h[i] = h_source[i];
-	// 	}
-	// }
-	// else{
-	// 	relax_and_collide_ADE(h, omega_k, u);
-	// }
-
-
-	// equilibrium scheme for BC
-	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
-	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
-
 	relax_and_collide_ADE(h, omega_k, u);
-
-	// Laplace Benchmark WAVE
-	real_t T = InitTemperature;
-	if(PeriodX > 0 && Y >= PeriodY)
-	{
-		T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX);
-		SetEquilibrium(h,T,u);
-	}
-
-	if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterDirichletTemperature) 
-	{
-		// we are after collision in this if-scope {}
-		// case II - for omega_k = 1 is the same as case I, however for different omega_k shall be a bit better
-		real_t d_rhoT = m00*(T - localTemperature);
-		real_t h_source[9];
-		SetEquilibrium(h_source, d_rhoT, u);
-
-		for (int i = 0; i < 9; i++) {
-			h[i] += h_source[i];
-		}
-	}
-
-	if ((NodeType & NODE_ADDITIONALS) == NODE_HeaterNeumannHeatFlux) 
-	{
-		// TCLB is smart enough to distiguish values prescribed it batch.xml like
-		// InitTemperature-dirichlet_region="123"
-		// InitTemperature-neumann_heater_region="456"
-		real_t d_rhoT = m00*T;  
-		real_t h_source[9];
-		SetEquilibrium(h_source, d_rhoT, u); 
-		for (int i = 0; i < 9; i++) {
-			h[i] += h_source[i];}
-	}
 }
