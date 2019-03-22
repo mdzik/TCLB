@@ -10,8 +10,8 @@
         </None>        
 
          <Wall mask="ALL" name="border" >
-<!--             <Box ny="2"/>
-            <Box dy="-2"/> -->
+            <Box ny="1"/>
+            <Box dy="-1"/>
         </Wall>
 
         <HeaterDirichletTemperature  name="dirichlet_hot"> 
@@ -50,7 +50,7 @@
 
 <!-- <Solve Iterations="10" output="output/"> <VTK Iterations="1"/> </Solve> -->
 <Failcheck Iterations="10000" nx="64" ny="66" />
-<TXT Iterations="10000" what="T,U"/>
-<Log Iterations="10000"/>
-<Solve Iterations="100000" output="output/"> <VTK Iterations="10000"/> </Solve>
+<TXT Iterations="50000" what="T,U"/>
+<Log Iterations="50000"/>
+<Solve Iterations="250000" output="output/"> <VTK Iterations="50000"/> </Solve>
 </CLBConfig>

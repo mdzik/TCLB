@@ -1,6 +1,6 @@
 
 <?R
-    tab = expand.grid(PeriodX=c(16,32,64,128,256))
+    tab = expand.grid(PeriodX=c(32,64,128,256))
 
     dir_name <- "batch_laplace_test"
     dir.create(dir_name)
@@ -20,7 +20,15 @@
 <CLBConfig version="2.0" output="output/laplace_template/">
     <Geometry nx="<?%f PeriodX ?>" ny="<?%f PeriodX +2 ?>" >
       <CM><Box /></CM>    
-      <!-- <Smoothing><Box /></Smoothing>  -->    
+
+         <Wall mask="ALL" name="border" >
+        	<Box ny="1"/>
+			<Box dy="-1"/> 
+        </Wall>
+
+        <HeaterDirichletTemperature  name="dirichlet_hot"> 
+        	<Box dy="-2"/>
+        </HeaterDirichletTemperature>
 
         <HeaterDirichletTemperature  name="dirichlet_cold"> 
             <Box nx="1"/>
@@ -28,14 +36,6 @@
             <Box ny="2"/>
         </HeaterDirichletTemperature>
 
-        <HeaterDirichletTemperature  name="dirichlet_hot"> 
-          <Box dy="-1"/>
-        </HeaterDirichletTemperature>
-
-         <Wall mask="ALL" name="border" >
-           <Box ny="1"/>
-                <!-- <Box dy="-1"/>  -->
-        </Wall>
     </Geometry>
     <Model>
         <Params
@@ -52,19 +52,10 @@
         <Params PeriodY="<?%f PeriodX ?>"/>
     </Model>
 
-<!-- 
-    <Solve Iterations="25" output="output/"> <VTK Iterations="10"/> </Solve>
-<Geometry>
-  <None mask="ADDITIONALS">
-    <Box nx="512" ny="100" nz="100"/>
-  </None>
-</Geometry> -->
-
-<!-- <Solve Iterations="10" output="output/"> <VTK Iterations="1"/> </Solve> -->
-<Failcheck Iterations="10000" nx="<?%f PeriodX ?>" ny="<?%f PeriodX +2 ?>" />
-<TXT Iterations="10000" what="T,U"/>
-<Log Iterations="10000"/>
-<Solve Iterations="100000" output="output/"> <VTK Iterations="10000"/> </Solve>
+<Failcheck Iterations="50000" nx="<?%f PeriodX ?>" ny="<?%f PeriodX +2 ?>" />
+<TXT Iterations="50000" what="T,U"/>
+<Log Iterations="50000"/>
+<Solve Iterations="250000"> <VTK Iterations="50000"/> </Solve>
 </CLBConfig>
 
 <?R
