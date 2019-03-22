@@ -164,8 +164,9 @@ CudaDeviceFunction void Run() {
 	}
 
 	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterDirichletTemperature) {
-		// HeatDirichletEquilibriumScheme();
-		HeatDirichletAntiBounceBackScheme();
+		HeatDirichletEquilibriumScheme();
+		// alternatywnie:
+		// HeatDirichletAntiBounceBackScheme();
 	}
 
 	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterNeumannHeatFlux) {
