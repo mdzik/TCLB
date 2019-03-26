@@ -1,21 +1,21 @@
 
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/">
-      <Geometry nx="100" ny="100" nz="100">
+      <Geometry nx="90" ny="90" nz="90">
       <CM><Box/></CM>    
       <!-- <Smoothing><Box /></Smoothing>  -->
         <None name="heated_region">
             <Sphere dx="75" nx="50" dy="25" ny="50" dz="25" nz="50"/> 
         </None>        
 
-<!--         <Wall mask="ALL" name="border" >
-          <Box dx="320" fy="64" nx="16" />
-     
+        <Wall mask="ALL" name="border" >
           <Box nx="2"/>
           <Box dx="-2"/>
           <Box ny="2"/>
           <Box dy="-2"/>
-        </Wall> -->
+          <Box nz="1"/>
+      	  <Box dz="-1"/>
+        </Wall>
 
   </Geometry>
     <Model>
@@ -29,7 +29,7 @@
 
         />
     <Params  />
-    <!-- <Params GravitationY="-1.0E-05" /> -->
+    <Params GravitationY="-1.0E-05" />
     <Params BoussinesqCoeff="1"/>
     <Params VelocityX="-1.0E-01" />
 
@@ -43,8 +43,8 @@
 </Geometry> -->
 
 <Solve Iterations="1" output="output/"> <VTK Iterations="1"/> </Solve>
-<Failcheck Iterations="10" nx="400" ny="100" nz="100"/>
+<Failcheck Iterations="10" nx="100" ny="100" nz="100"/>
 <Log Iterations="100"/>
-<Solve Iterations="1000" output="output/"> <VTK Iterations="100"/> </Solve>
+<Solve Iterations="500" output="output/"> <VTK Iterations="100"/> </Solve>
 </CLBConfig>
 

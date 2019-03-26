@@ -24,7 +24,11 @@
     # Calculating equlibrium density set
 	source("lib/feq.R")
 	EQ = MRT_eq(U, rho, J, ortogonal=FALSE);
+	h_pop_size = PV("19")
 ?>
+
+	// int a = <?R C( h_pop_size) ?>;
+	// <?R C(PV(c("const int h_size")), h_pop_size) ?>
 
 CudaDeviceFunction real_t getRho(){
 	return <?R C(sum(f)) ?>;
@@ -34,16 +38,36 @@ CudaDeviceFunction real_t getT(){
 	return (<?R C(sum(h)) ?>)/(<?R C(sum(f)) ?>);
 }
 
-CudaDeviceFunction vector_t getU(){
+    
+CudaDeviceFunction vector_t getRawU(){
 	real_t d = getRho();
 	vector_t u;
-    <?R C(PV(c("u.x","u.y", "u.z")), f %*% U) ?>
-
-    // TODO:  dont forget to add force here later on
+<?R C(PV(c("u.x","u.y", "u.z")), f %*% U) ?>
 	u.x /= d;
 	u.y /= d;
 	u.z /= d;
 	return u;
+}
+
+CudaDeviceFunction vector_t getU()
+{
+	real_t localTemperature = getT();
+	vector_t u = getRawU();
+	real_t m00 = getRho();
+	vector_t Force = getForce(localTemperature, m00);
+	u.x += Force.x/(2*m00);
+	u.y += Force.y/(2*m00);
+	u.z = 0;
+	return u;
+}
+
+CudaDeviceFunction vector_t get_fDarcyStoper(real_t rho, vector_t u)
+{
+	vector_t fDarcy;
+	fDarcy.x = -2*rho*(u.x);
+	fDarcy.y = -2*rho*(u.y);
+	fDarcy.z = 0;
+	return fDarcy;
 }
 
 CudaDeviceFunction float2 Color() {
@@ -60,50 +84,144 @@ CudaDeviceFunction float2 Color() {
 	// } else {
 	//         ret.y = 1;
 	// }
-
-	
-
 	return ret;
 }
 
 
 CudaDeviceFunction void Init() {
+	real_t rho = 1.0;
 	if((NodeType & NODE_BOUNDARY) == NODE_Wall){
-		set_eq_hydro(1.0,0,0,0);
+		set_eq_hydro(rho,0,0,0);
 	}
 	else{	
 		real_t pressure = 0;
-		set_eq_hydro(1.0 + pressure * 3.0, VelocityX, 0, 0);
+		set_eq_hydro(rho + pressure * 3.0, VelocityX, 0, 0);
 	}
 
-	real_t T = InitTemperature;
+	real_t rhoT = rho*InitTemperature;
 	vector_t u; u.x = VelocityX; u.y = 0; u.z = 0;
-	set_eq_ADE(h,T,u);
+	set_eq_ADE(h,rhoT,u);
+}
+
+CudaDeviceFunction void BounceBack()
+{
+	<?R 
+		FullBounceBack() 
+	?>
+}
+
+CudaDeviceFunction void EVelocity()
+{}
+
+CudaDeviceFunction void WPressure()
+{}
+
+CudaDeviceFunction void WVelocity()
+{}
+
+CudaDeviceFunction void EPressure()
+{}
+
+CudaDeviceFunction void HeatNeumannForFluid()
+{
+	real_t T = InitTemperature;
+	real_t m00 = getRho();
+	vector_t u = getU();
+	// TCLB is smart enough to distiguish values prescribed it batch.xml like
+	// InitTemperature-dirichlet_region="123"
+	// InitTemperature-neumann_heater_region="456"
+	real_t d_rhoT = m00*T;  
+
+	<?R C(PV(c("const int h_size")), h_pop_size) ?>
+	real_t h_source[h_size];
+	set_eq_ADE(h_source, d_rhoT, u); 
+
+	for (int i = 0; i < <?R C( h_pop_size) ?>; i++) {
+		h[i] += h_source[i];}
+}
+
+CudaDeviceFunction void HeatDirichletEquilibriumScheme()
+{
+	// equilibrium scheme for BC - don't care and impose rho*Teq
+	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+
+	real_t T = InitTemperature;
+	if(PeriodX > 0 && Y >= PeriodY){ 
+		T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark
+	}
+	real_t m00 = getRho();
+	vector_t u = getU();
+	
+	real_t d_rhoT = m00*T;
+
+	<?R C(PV(c("const int h_size")), h_pop_size) ?>
+	real_t h_eq[h_size];
+	set_eq_ADE(h_eq, d_rhoT, u); 
+
+	for (int i = 0; i < h_size; i++) {
+		h[i] = h_eq[i];
+	}
+}
+
+CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
+{
+	// Anti-Bounce-Back Scheme
+	// see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+	real_t T = InitTemperature;
+	if(PeriodX > 0 && Y >= PeriodY){
+		T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark
+	}
+
+	real_t m00 = getRho();
+	vector_t u = getU();
+
+	real_t rhoT = m00*T;
+
+
+	<?R C(PV(c("const int h_size")), h_pop_size) ?>
+	real_t h_eq[h_size];
+	set_eq_ADE(h_eq, rhoT, u);
+	for (int i = 0; i < h_size; i++) {
+		h[i] = -h[i] + 2*h_eq[i]; // ABB: reverse to obtain zero temperature: h[i] = -h[i]
+	}
 }
 
 CudaDeviceFunction void Run() {
-    // switch (NodeType & NODE_BOUNDARY) {
-	// // case NODE_EVelocity:
-	// // 	EVelocity();
-	// // 	break;
-	// // case NODE_WPressure:
-	// // 	WPressure();
-	// // 	break;
-	// // case NODE_WVelocity:
-	// // 	WVelocity();
-	// // 	break;
-	// // case NODE_EPressure:
-	// // 	EPressure();
-	// // 	break;
-	// case NODE_Wall:
-    // 	BounceBack();
-    //     break;
-    // }
+    switch (NodeType & NODE_BOUNDARY) {
+		case NODE_EVelocity:
+			EVelocity();
+			break;
+		case NODE_WPressure:
+			WPressure();
+			break;
+		case NODE_WVelocity:
+			WVelocity();
+			break;
+		case NODE_EPressure:
+			EPressure();
+			break;
+		case NODE_Wall:
+			BounceBack();
+			break;
+	}
+	
+    switch (NodeType & NODE_COLLISION) {
+		case NODE_CM:
+			CollisionCM();
+			break;
+	}
 
-    if (NodeType & NODE_CM)
-    {
-		CollisionCM();
-    }
+	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterDirichletTemperature) {
+		// HeatDirichletEquilibriumScheme();
+		// alternatively:
+		HeatDirichletAntiBounceBackScheme();
+	}
+
+	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterNeumannHeatFlux) {
+		HeatNeumannForFluid();
+	}	
 }
 
 CudaDeviceFunction void set_eq_hydro(real_t rho, real_t Jx, real_t Jy, real_t Jz)
@@ -113,7 +231,7 @@ CudaDeviceFunction void set_eq_hydro(real_t rho, real_t Jx, real_t Jy, real_t Jz
 	?>
 }
 
-CudaDeviceFunction void set_eq_ADE(real_t h_in[19], real_t H, vector_t u) 
+CudaDeviceFunction void set_eq_ADE(real_t x_in[<?R C( h_pop_size) ?>], real_t rho_Xeq, vector_t u) 
 {
 	real_t uxuy = u.x*u.y;
 	real_t uxuz = u.x*u.z;
@@ -122,77 +240,77 @@ CudaDeviceFunction void set_eq_ADE(real_t h_in[19], real_t H, vector_t u)
 	real_t uy2 = u.y*u.y;
 	real_t uz2 = u.z*u.z;
 
-	real_t m00 = H;
-	real_t temp[19];
+	real_t m00 = rho_Xeq;
+	real_t temp[<?R C( h_pop_size) ?>];
 
 
 	//equilibrium in central moments space
 	//collide
-	h_in[0] = m00;
-	h_in[1] = 0;
-	h_in[2] = 0;
-	h_in[3] = 0;
-	h_in[4] = 0;
-	h_in[5] = 0;
-	h_in[6] = 0;
-	h_in[7] = 1/3.*m00;
-	h_in[8] = 1/3.*m00;
-	h_in[9] = 1/3.*m00;
-	h_in[10] = 0;
-	h_in[11] = 0;
-	h_in[12] = 0;
-	h_in[13] = 0;
-	h_in[14] = 0;
-	h_in[15] = 0;
-	h_in[16] = 1/9.*m00;
-	h_in[17] = 1/9.*m00;
-	h_in[18] = 1/9.*m00;
+	x_in[0] = m00;
+	x_in[1] = 0;
+	x_in[2] = 0;
+	x_in[3] = 0;
+	x_in[4] = 0;
+	x_in[5] = 0;
+	x_in[6] = 0;
+	x_in[7] = 1/3.*m00;
+	x_in[8] = 1/3.*m00;
+	x_in[9] = 1/3.*m00;
+	x_in[10] = 0;
+	x_in[11] = 0;
+	x_in[12] = 0;
+	x_in[13] = 0;
+	x_in[14] = 0;
+	x_in[15] = 0;
+	x_in[16] = 1/9.*m00;
+	x_in[17] = 1/9.*m00;
+	x_in[18] = 1/9.*m00;
 
 	//back to raw moments
-	temp[0] = h_in[0];
-	temp[1] = h_in[0]*u.x + h_in[1];
-	temp[2] = h_in[0]*u.y + h_in[2];
-	temp[3] = h_in[0]*u.z + h_in[3];
-	temp[4] = h_in[0]*uxuy + h_in[1]*u.y + h_in[2]*u.x + h_in[4];
-	temp[5] = h_in[0]*uxuz + h_in[1]*u.z + h_in[3]*u.x + h_in[5];
-	temp[6] = h_in[0]*uyuz + h_in[2]*u.z + h_in[3]*u.y + h_in[6];
-	temp[7] = h_in[0]*ux2 + 2.*h_in[1]*u.x + h_in[7];
-	temp[8] = h_in[0]*uy2 + 2.*h_in[2]*u.y + h_in[8];
-	temp[9] = h_in[0]*uz2 + 2.*h_in[3]*u.z + h_in[9];
-	temp[10] = h_in[0]*u.x*uy2 + h_in[10] + h_in[1]*uy2 + 2.*h_in[2]*uxuy + 2.*h_in[4]*u.y + h_in[8]*u.x;
-	temp[11] = h_in[0]*u.x*uz2 + h_in[11] + h_in[1]*uz2 + 2.*h_in[3]*uxuz + 2.*h_in[5]*u.z + h_in[9]*u.x;
-	temp[12] = h_in[0]*ux2*u.y + h_in[12] + 2.*h_in[1]*uxuy + h_in[2]*ux2 + 2.*h_in[4]*u.x + h_in[7]*u.y;
-	temp[13] = h_in[0]*ux2*u.z + h_in[13] + 2.*h_in[1]*uxuz + h_in[3]*ux2 + 2.*h_in[5]*u.x + h_in[7]*u.z;
-	temp[14] = h_in[0]*u.y*uz2 + h_in[14] + h_in[2]*uz2 + 2.*h_in[3]*uyuz + 2.*h_in[6]*u.z + h_in[9]*u.y;
-	temp[15] = h_in[0]*uy2*u.z + h_in[15] + 2.*h_in[2]*uyuz + h_in[3]*uy2 + 2.*h_in[6]*u.y + h_in[8]*u.z;
-	temp[16] = h_in[0]*ux2*uy2 + 2.*h_in[10]*u.x + 2.*h_in[12]*u.y + h_in[16] + 2.*h_in[1]*u.x*uy2 + 2.*h_in[2]*ux2*u.y + 4.*h_in[4]*uxuy + h_in[7]*uy2 + h_in[8]*ux2;
-	temp[17] = h_in[0]*ux2*uz2 + 2.*h_in[11]*u.x + 2.*h_in[13]*u.z + h_in[17] + 2.*h_in[1]*u.x*uz2 + 2.*h_in[3]*ux2*u.z + 4.*h_in[5]*uxuz + h_in[7]*uz2 + h_in[9]*ux2;
-	temp[18] = h_in[0]*uy2*uz2 + 2.*h_in[14]*u.y + 2.*h_in[15]*u.z + h_in[18] + 2.*h_in[2]*u.y*uz2 + 2.*h_in[3]*uy2*u.z + 4.*h_in[6]*uyuz + h_in[8]*uz2 + h_in[9]*uy2;
+	temp[0] = x_in[0];
+	temp[1] = x_in[0]*u.x + x_in[1];
+	temp[2] = x_in[0]*u.y + x_in[2];
+	temp[3] = x_in[0]*u.z + x_in[3];
+	temp[4] = x_in[0]*uxuy + x_in[1]*u.y + x_in[2]*u.x + x_in[4];
+	temp[5] = x_in[0]*uxuz + x_in[1]*u.z + x_in[3]*u.x + x_in[5];
+	temp[6] = x_in[0]*uyuz + x_in[2]*u.z + x_in[3]*u.y + x_in[6];
+	temp[7] = x_in[0]*ux2 + 2.*x_in[1]*u.x + x_in[7];
+	temp[8] = x_in[0]*uy2 + 2.*x_in[2]*u.y + x_in[8];
+	temp[9] = x_in[0]*uz2 + 2.*x_in[3]*u.z + x_in[9];
+	temp[10] = x_in[0]*u.x*uy2 + x_in[10] + x_in[1]*uy2 + 2.*x_in[2]*uxuy + 2.*x_in[4]*u.y + x_in[8]*u.x;
+	temp[11] = x_in[0]*u.x*uz2 + x_in[11] + x_in[1]*uz2 + 2.*x_in[3]*uxuz + 2.*x_in[5]*u.z + x_in[9]*u.x;
+	temp[12] = x_in[0]*ux2*u.y + x_in[12] + 2.*x_in[1]*uxuy + x_in[2]*ux2 + 2.*x_in[4]*u.x + x_in[7]*u.y;
+	temp[13] = x_in[0]*ux2*u.z + x_in[13] + 2.*x_in[1]*uxuz + x_in[3]*ux2 + 2.*x_in[5]*u.x + x_in[7]*u.z;
+	temp[14] = x_in[0]*u.y*uz2 + x_in[14] + x_in[2]*uz2 + 2.*x_in[3]*uyuz + 2.*x_in[6]*u.z + x_in[9]*u.y;
+	temp[15] = x_in[0]*uy2*u.z + x_in[15] + 2.*x_in[2]*uyuz + x_in[3]*uy2 + 2.*x_in[6]*u.y + x_in[8]*u.z;
+	temp[16] = x_in[0]*ux2*uy2 + 2.*x_in[10]*u.x + 2.*x_in[12]*u.y + x_in[16] + 2.*x_in[1]*u.x*uy2 + 2.*x_in[2]*ux2*u.y + 4.*x_in[4]*uxuy + x_in[7]*uy2 + x_in[8]*ux2;
+	temp[17] = x_in[0]*ux2*uz2 + 2.*x_in[11]*u.x + 2.*x_in[13]*u.z + x_in[17] + 2.*x_in[1]*u.x*uz2 + 2.*x_in[3]*ux2*u.z + 4.*x_in[5]*uxuz + x_in[7]*uz2 + x_in[9]*ux2;
+	temp[18] = x_in[0]*uy2*uz2 + 2.*x_in[14]*u.y + 2.*x_in[15]*u.z + x_in[18] + 2.*x_in[2]*u.y*uz2 + 2.*x_in[3]*uy2*u.z + 4.*x_in[6]*uyuz + x_in[8]*uz2 + x_in[9]*uy2;
 
 	//back to density-probability functions
-	h_in[0] = temp[0] + temp[16] + temp[17] + temp[18] - temp[7] - temp[8] - temp[9];
-	h_in[1] = -1/2.*temp[10] - 1/2.*temp[11] - 1/2.*temp[16] - 1/2.*temp[17] + 1/2.*temp[1] + 1/2.*temp[7];
-	h_in[2] = 1/2.*temp[10] + 1/2.*temp[11] - 1/2.*temp[16] - 1/2.*temp[17] - 1/2.*temp[1] + 1/2.*temp[7];
-	h_in[3] = -1/2.*temp[12] - 1/2.*temp[14] - 1/2.*temp[16] - 1/2.*temp[18] + 1/2.*temp[2] + 1/2.*temp[8];
-	h_in[4] = 1/2.*temp[12] + 1/2.*temp[14] - 1/2.*temp[16] - 1/2.*temp[18] - 1/2.*temp[2] + 1/2.*temp[8];
-	h_in[5] = -1/2.*temp[13] - 1/2.*temp[15] - 1/2.*temp[17] - 1/2.*temp[18] + 1/2.*temp[3] + 1/2.*temp[9];
-	h_in[6] = 1/2.*temp[13] + 1/2.*temp[15] - 1/2.*temp[17] - 1/2.*temp[18] - 1/2.*temp[3] + 1/2.*temp[9];
-	h_in[7] = 1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[16] + 1/4.*temp[4];
-	h_in[8] = -1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[16] - 1/4.*temp[4];
-	h_in[9] = 1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[16] - 1/4.*temp[4];
-	h_in[10] = -1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[16] + 1/4.*temp[4];
-	h_in[11] = 1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[17] + 1/4.*temp[5];
-	h_in[12] = -1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[17] - 1/4.*temp[5];
-	h_in[13] = 1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[17] - 1/4.*temp[5];
-	h_in[14] = -1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[17] + 1/4.*temp[5];
-	h_in[15] = 1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[18] + 1/4.*temp[6];
-	h_in[16] = -1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[18] - 1/4.*temp[6];
-	h_in[17] = 1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[18] - 1/4.*temp[6];
-	h_in[18] = -1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[18] + 1/4.*temp[6];
+	x_in[0] = temp[0] + temp[16] + temp[17] + temp[18] - temp[7] - temp[8] - temp[9];
+	x_in[1] = -1/2.*temp[10] - 1/2.*temp[11] - 1/2.*temp[16] - 1/2.*temp[17] + 1/2.*temp[1] + 1/2.*temp[7];
+	x_in[2] = 1/2.*temp[10] + 1/2.*temp[11] - 1/2.*temp[16] - 1/2.*temp[17] - 1/2.*temp[1] + 1/2.*temp[7];
+	x_in[3] = -1/2.*temp[12] - 1/2.*temp[14] - 1/2.*temp[16] - 1/2.*temp[18] + 1/2.*temp[2] + 1/2.*temp[8];
+	x_in[4] = 1/2.*temp[12] + 1/2.*temp[14] - 1/2.*temp[16] - 1/2.*temp[18] - 1/2.*temp[2] + 1/2.*temp[8];
+	x_in[5] = -1/2.*temp[13] - 1/2.*temp[15] - 1/2.*temp[17] - 1/2.*temp[18] + 1/2.*temp[3] + 1/2.*temp[9];
+	x_in[6] = 1/2.*temp[13] + 1/2.*temp[15] - 1/2.*temp[17] - 1/2.*temp[18] - 1/2.*temp[3] + 1/2.*temp[9];
+	x_in[7] = 1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[16] + 1/4.*temp[4];
+	x_in[8] = -1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[16] - 1/4.*temp[4];
+	x_in[9] = 1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[16] - 1/4.*temp[4];
+	x_in[10] = -1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[16] + 1/4.*temp[4];
+	x_in[11] = 1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[17] + 1/4.*temp[5];
+	x_in[12] = -1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[17] - 1/4.*temp[5];
+	x_in[13] = 1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[17] - 1/4.*temp[5];
+	x_in[14] = -1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[17] + 1/4.*temp[5];
+	x_in[15] = 1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[18] + 1/4.*temp[6];
+	x_in[16] = -1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[18] - 1/4.*temp[6];
+	x_in[17] = 1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[18] - 1/4.*temp[6];
+	x_in[18] = -1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[18] + 1/4.*temp[6];
 
 }
 
-CudaDeviceFunction void relax_and_collide_ADE(real_t h_in[19], real_t omega_v, vector_t u) 
+CudaDeviceFunction void relax_and_collide_ADE(real_t x_in[<?R C( h_pop_size) ?>], real_t omega_ade, vector_t u) 
 {
 	real_t uxuy = u.x*u.y;
 	real_t uxuz = u.x*u.z;
@@ -201,118 +319,118 @@ CudaDeviceFunction void relax_and_collide_ADE(real_t h_in[19], real_t omega_v, v
 	real_t uy2 = u.y*u.y;
 	real_t uz2 = u.z*u.z;
 
-	real_t m00 = h_in[0] + h_in[10] + h_in[11] + h_in[12] + h_in[13] + h_in[14] + h_in[15] + h_in[16] + h_in[17] + h_in[18] + h_in[1] + h_in[2] + h_in[3] + h_in[4] + h_in[5] + h_in[6] + h_in[7] + h_in[8] + h_in[9];
+	real_t m00 = x_in[0] + x_in[10] + x_in[11] + x_in[12] + x_in[13] + x_in[14] + x_in[15] + x_in[16] + x_in[17] + x_in[18] + x_in[1] + x_in[2] + x_in[3] + x_in[4] + x_in[5] + x_in[6] + x_in[7] + x_in[8] + x_in[9];
 
-	real_t temp[19];
+	real_t temp[<?R C( h_pop_size) ?>];
 
-	for (int i = 0; i < 19; i++) {
-		temp[i] = h_in[i];}
+	for (int i = 0; i < <?R C( h_pop_size) ?>; i++) {
+		temp[i] = x_in[i];}
 
 	//raw moments from density-probability functions
-	h_in[0] = temp[0] + temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[1] + temp[2] + temp[3] + temp[4] + temp[5] + temp[6] + temp[7] + temp[8] + temp[9];
-	h_in[1] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[1] - temp[2] + temp[7] - temp[8] + temp[9];
-	h_in[2] = -temp[10] + temp[15] - temp[16] + temp[17] - temp[18] + temp[3] - temp[4] + temp[7] + temp[8] - temp[9];
-	h_in[3] = temp[11] + temp[12] - temp[13] - temp[14] + temp[15] + temp[16] - temp[17] - temp[18] + temp[5] - temp[6];
-	h_in[4] = temp[10] + temp[7] - temp[8] - temp[9];
-	h_in[5] = temp[11] - temp[12] - temp[13] + temp[14];
-	h_in[6] = temp[15] - temp[16] - temp[17] + temp[18];
-	h_in[7] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[1] + temp[2] + temp[7] + temp[8] + temp[9];
-	h_in[8] = temp[10] + temp[15] + temp[16] + temp[17] + temp[18] + temp[3] + temp[4] + temp[7] + temp[8] + temp[9];
-	h_in[9] = temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[5] + temp[6];
-	h_in[10] = -temp[10] + temp[7] - temp[8] + temp[9];
-	h_in[11] = temp[11] - temp[12] + temp[13] - temp[14];
-	h_in[12] = -temp[10] + temp[7] + temp[8] - temp[9];
-	h_in[13] = temp[11] + temp[12] - temp[13] - temp[14];
-	h_in[14] = temp[15] - temp[16] + temp[17] - temp[18];
-	h_in[15] = temp[15] + temp[16] - temp[17] - temp[18];
-	h_in[16] = temp[10] + temp[7] + temp[8] + temp[9];
-	h_in[17] = temp[11] + temp[12] + temp[13] + temp[14];
-	h_in[18] = temp[15] + temp[16] + temp[17] + temp[18];
+	x_in[0] = temp[0] + temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[1] + temp[2] + temp[3] + temp[4] + temp[5] + temp[6] + temp[7] + temp[8] + temp[9];
+	x_in[1] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[1] - temp[2] + temp[7] - temp[8] + temp[9];
+	x_in[2] = -temp[10] + temp[15] - temp[16] + temp[17] - temp[18] + temp[3] - temp[4] + temp[7] + temp[8] - temp[9];
+	x_in[3] = temp[11] + temp[12] - temp[13] - temp[14] + temp[15] + temp[16] - temp[17] - temp[18] + temp[5] - temp[6];
+	x_in[4] = temp[10] + temp[7] - temp[8] - temp[9];
+	x_in[5] = temp[11] - temp[12] - temp[13] + temp[14];
+	x_in[6] = temp[15] - temp[16] - temp[17] + temp[18];
+	x_in[7] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[1] + temp[2] + temp[7] + temp[8] + temp[9];
+	x_in[8] = temp[10] + temp[15] + temp[16] + temp[17] + temp[18] + temp[3] + temp[4] + temp[7] + temp[8] + temp[9];
+	x_in[9] = temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[5] + temp[6];
+	x_in[10] = -temp[10] + temp[7] - temp[8] + temp[9];
+	x_in[11] = temp[11] - temp[12] + temp[13] - temp[14];
+	x_in[12] = -temp[10] + temp[7] + temp[8] - temp[9];
+	x_in[13] = temp[11] + temp[12] - temp[13] - temp[14];
+	x_in[14] = temp[15] - temp[16] + temp[17] - temp[18];
+	x_in[15] = temp[15] + temp[16] - temp[17] - temp[18];
+	x_in[16] = temp[10] + temp[7] + temp[8] + temp[9];
+	x_in[17] = temp[11] + temp[12] + temp[13] + temp[14];
+	x_in[18] = temp[15] + temp[16] + temp[17] + temp[18];
 
 	//central moments from raw moments
-	temp[0] = h_in[0];
-	temp[1] = -h_in[0]*u.x + h_in[1];
-	temp[2] = -h_in[0]*u.y + h_in[2];
-	temp[3] = -h_in[0]*u.z + h_in[3];
-	temp[4] = h_in[0]*uxuy - h_in[1]*u.y - h_in[2]*u.x + h_in[4];
-	temp[5] = h_in[0]*uxuz - h_in[1]*u.z - h_in[3]*u.x + h_in[5];
-	temp[6] = h_in[0]*uyuz - h_in[2]*u.z - h_in[3]*u.y + h_in[6];
-	temp[7] = h_in[0]*ux2 - 2.*h_in[1]*u.x + h_in[7];
-	temp[8] = h_in[0]*uy2 - 2.*h_in[2]*u.y + h_in[8];
-	temp[9] = h_in[0]*uz2 - 2.*h_in[3]*u.z + h_in[9];
-	temp[10] = -h_in[0]*u.x*uy2 + h_in[10] + h_in[1]*uy2 + 2.*h_in[2]*uxuy - 2.*h_in[4]*u.y - h_in[8]*u.x;
-	temp[11] = -h_in[0]*u.x*uz2 + h_in[11] + h_in[1]*uz2 + 2.*h_in[3]*uxuz - 2.*h_in[5]*u.z - h_in[9]*u.x;
-	temp[12] = -h_in[0]*ux2*u.y + h_in[12] + 2.*h_in[1]*uxuy + h_in[2]*ux2 - 2.*h_in[4]*u.x - h_in[7]*u.y;
-	temp[13] = -h_in[0]*ux2*u.z + h_in[13] + 2.*h_in[1]*uxuz + h_in[3]*ux2 - 2.*h_in[5]*u.x - h_in[7]*u.z;
-	temp[14] = -h_in[0]*u.y*uz2 + h_in[14] + h_in[2]*uz2 + 2.*h_in[3]*uyuz - 2.*h_in[6]*u.z - h_in[9]*u.y;
-	temp[15] = -h_in[0]*uy2*u.z + h_in[15] + 2.*h_in[2]*uyuz + h_in[3]*uy2 - 2.*h_in[6]*u.y - h_in[8]*u.z;
-	temp[16] = h_in[0]*ux2*uy2 - 2.*h_in[10]*u.x - 2.*h_in[12]*u.y + h_in[16] - 2.*h_in[1]*u.x*uy2 - 2.*h_in[2]*ux2*u.y + 4.*h_in[4]*uxuy + h_in[7]*uy2 + h_in[8]*ux2;
-	temp[17] = h_in[0]*ux2*uz2 - 2.*h_in[11]*u.x - 2.*h_in[13]*u.z + h_in[17] - 2.*h_in[1]*u.x*uz2 - 2.*h_in[3]*ux2*u.z + 4.*h_in[5]*uxuz + h_in[7]*uz2 + h_in[9]*ux2;
-	temp[18] = h_in[0]*uy2*uz2 - 2.*h_in[14]*u.y - 2.*h_in[15]*u.z + h_in[18] - 2.*h_in[2]*u.y*uz2 - 2.*h_in[3]*uy2*u.z + 4.*h_in[6]*uyuz + h_in[8]*uz2 + h_in[9]*uy2;
+	temp[0] = x_in[0];
+	temp[1] = -x_in[0]*u.x + x_in[1];
+	temp[2] = -x_in[0]*u.y + x_in[2];
+	temp[3] = -x_in[0]*u.z + x_in[3];
+	temp[4] = x_in[0]*uxuy - x_in[1]*u.y - x_in[2]*u.x + x_in[4];
+	temp[5] = x_in[0]*uxuz - x_in[1]*u.z - x_in[3]*u.x + x_in[5];
+	temp[6] = x_in[0]*uyuz - x_in[2]*u.z - x_in[3]*u.y + x_in[6];
+	temp[7] = x_in[0]*ux2 - 2.*x_in[1]*u.x + x_in[7];
+	temp[8] = x_in[0]*uy2 - 2.*x_in[2]*u.y + x_in[8];
+	temp[9] = x_in[0]*uz2 - 2.*x_in[3]*u.z + x_in[9];
+	temp[10] = -x_in[0]*u.x*uy2 + x_in[10] + x_in[1]*uy2 + 2.*x_in[2]*uxuy - 2.*x_in[4]*u.y - x_in[8]*u.x;
+	temp[11] = -x_in[0]*u.x*uz2 + x_in[11] + x_in[1]*uz2 + 2.*x_in[3]*uxuz - 2.*x_in[5]*u.z - x_in[9]*u.x;
+	temp[12] = -x_in[0]*ux2*u.y + x_in[12] + 2.*x_in[1]*uxuy + x_in[2]*ux2 - 2.*x_in[4]*u.x - x_in[7]*u.y;
+	temp[13] = -x_in[0]*ux2*u.z + x_in[13] + 2.*x_in[1]*uxuz + x_in[3]*ux2 - 2.*x_in[5]*u.x - x_in[7]*u.z;
+	temp[14] = -x_in[0]*u.y*uz2 + x_in[14] + x_in[2]*uz2 + 2.*x_in[3]*uyuz - 2.*x_in[6]*u.z - x_in[9]*u.y;
+	temp[15] = -x_in[0]*uy2*u.z + x_in[15] + 2.*x_in[2]*uyuz + x_in[3]*uy2 - 2.*x_in[6]*u.y - x_in[8]*u.z;
+	temp[16] = x_in[0]*ux2*uy2 - 2.*x_in[10]*u.x - 2.*x_in[12]*u.y + x_in[16] - 2.*x_in[1]*u.x*uy2 - 2.*x_in[2]*ux2*u.y + 4.*x_in[4]*uxuy + x_in[7]*uy2 + x_in[8]*ux2;
+	temp[17] = x_in[0]*ux2*uz2 - 2.*x_in[11]*u.x - 2.*x_in[13]*u.z + x_in[17] - 2.*x_in[1]*u.x*uz2 - 2.*x_in[3]*ux2*u.z + 4.*x_in[5]*uxuz + x_in[7]*uz2 + x_in[9]*ux2;
+	temp[18] = x_in[0]*uy2*uz2 - 2.*x_in[14]*u.y - 2.*x_in[15]*u.z + x_in[18] - 2.*x_in[2]*u.y*uz2 - 2.*x_in[3]*uy2*u.z + 4.*x_in[6]*uyuz + x_in[8]*uz2 + x_in[9]*uy2;
 
 	//collision in central moments space
 	//collide
-	h_in[0] = m00;
-	h_in[1] = -temp[1]*(omega_v - 1.);
-	h_in[2] = -temp[2]*(omega_v - 1.);
-	h_in[3] = -temp[3]*(omega_v - 1.);
-	h_in[4] = 0;
-	h_in[5] = 0;
-	h_in[6] = 0;
-	h_in[7] = 1/3.*m00;
-	h_in[8] = 1/3.*m00;
-	h_in[9] = 1/3.*m00;
-	h_in[10] = 0;
-	h_in[11] = 0;
-	h_in[12] = 0;
-	h_in[13] = 0;
-	h_in[14] = 0;
-	h_in[15] = 0;
-	h_in[16] = 1/9.*m00;
-	h_in[17] = 1/9.*m00;
-	h_in[18] = 1/9.*m00;
+	x_in[0] = m00;
+	x_in[1] = -temp[1]*(omega_ade - 1.);
+	x_in[2] = -temp[2]*(omega_ade - 1.);
+	x_in[3] = -temp[3]*(omega_ade - 1.);
+	x_in[4] = 0;
+	x_in[5] = 0;
+	x_in[6] = 0;
+	x_in[7] = 1/3.*m00;
+	x_in[8] = 1/3.*m00;
+	x_in[9] = 1/3.*m00;
+	x_in[10] = 0;
+	x_in[11] = 0;
+	x_in[12] = 0;
+	x_in[13] = 0;
+	x_in[14] = 0;
+	x_in[15] = 0;
+	x_in[16] = 1/9.*m00;
+	x_in[17] = 1/9.*m00;
+	x_in[18] = 1/9.*m00;
 
 	//back to raw moments
-	temp[0] = h_in[0];
-	temp[1] = h_in[0]*u.x + h_in[1];
-	temp[2] = h_in[0]*u.y + h_in[2];
-	temp[3] = h_in[0]*u.z + h_in[3];
-	temp[4] = h_in[0]*uxuy + h_in[1]*u.y + h_in[2]*u.x + h_in[4];
-	temp[5] = h_in[0]*uxuz + h_in[1]*u.z + h_in[3]*u.x + h_in[5];
-	temp[6] = h_in[0]*uyuz + h_in[2]*u.z + h_in[3]*u.y + h_in[6];
-	temp[7] = h_in[0]*ux2 + 2.*h_in[1]*u.x + h_in[7];
-	temp[8] = h_in[0]*uy2 + 2.*h_in[2]*u.y + h_in[8];
-	temp[9] = h_in[0]*uz2 + 2.*h_in[3]*u.z + h_in[9];
-	temp[10] = h_in[0]*u.x*uy2 + h_in[10] + h_in[1]*uy2 + 2.*h_in[2]*uxuy + 2.*h_in[4]*u.y + h_in[8]*u.x;
-	temp[11] = h_in[0]*u.x*uz2 + h_in[11] + h_in[1]*uz2 + 2.*h_in[3]*uxuz + 2.*h_in[5]*u.z + h_in[9]*u.x;
-	temp[12] = h_in[0]*ux2*u.y + h_in[12] + 2.*h_in[1]*uxuy + h_in[2]*ux2 + 2.*h_in[4]*u.x + h_in[7]*u.y;
-	temp[13] = h_in[0]*ux2*u.z + h_in[13] + 2.*h_in[1]*uxuz + h_in[3]*ux2 + 2.*h_in[5]*u.x + h_in[7]*u.z;
-	temp[14] = h_in[0]*u.y*uz2 + h_in[14] + h_in[2]*uz2 + 2.*h_in[3]*uyuz + 2.*h_in[6]*u.z + h_in[9]*u.y;
-	temp[15] = h_in[0]*uy2*u.z + h_in[15] + 2.*h_in[2]*uyuz + h_in[3]*uy2 + 2.*h_in[6]*u.y + h_in[8]*u.z;
-	temp[16] = h_in[0]*ux2*uy2 + 2.*h_in[10]*u.x + 2.*h_in[12]*u.y + h_in[16] + 2.*h_in[1]*u.x*uy2 + 2.*h_in[2]*ux2*u.y + 4.*h_in[4]*uxuy + h_in[7]*uy2 + h_in[8]*ux2;
-	temp[17] = h_in[0]*ux2*uz2 + 2.*h_in[11]*u.x + 2.*h_in[13]*u.z + h_in[17] + 2.*h_in[1]*u.x*uz2 + 2.*h_in[3]*ux2*u.z + 4.*h_in[5]*uxuz + h_in[7]*uz2 + h_in[9]*ux2;
-	temp[18] = h_in[0]*uy2*uz2 + 2.*h_in[14]*u.y + 2.*h_in[15]*u.z + h_in[18] + 2.*h_in[2]*u.y*uz2 + 2.*h_in[3]*uy2*u.z + 4.*h_in[6]*uyuz + h_in[8]*uz2 + h_in[9]*uy2;
+	temp[0] = x_in[0];
+	temp[1] = x_in[0]*u.x + x_in[1];
+	temp[2] = x_in[0]*u.y + x_in[2];
+	temp[3] = x_in[0]*u.z + x_in[3];
+	temp[4] = x_in[0]*uxuy + x_in[1]*u.y + x_in[2]*u.x + x_in[4];
+	temp[5] = x_in[0]*uxuz + x_in[1]*u.z + x_in[3]*u.x + x_in[5];
+	temp[6] = x_in[0]*uyuz + x_in[2]*u.z + x_in[3]*u.y + x_in[6];
+	temp[7] = x_in[0]*ux2 + 2.*x_in[1]*u.x + x_in[7];
+	temp[8] = x_in[0]*uy2 + 2.*x_in[2]*u.y + x_in[8];
+	temp[9] = x_in[0]*uz2 + 2.*x_in[3]*u.z + x_in[9];
+	temp[10] = x_in[0]*u.x*uy2 + x_in[10] + x_in[1]*uy2 + 2.*x_in[2]*uxuy + 2.*x_in[4]*u.y + x_in[8]*u.x;
+	temp[11] = x_in[0]*u.x*uz2 + x_in[11] + x_in[1]*uz2 + 2.*x_in[3]*uxuz + 2.*x_in[5]*u.z + x_in[9]*u.x;
+	temp[12] = x_in[0]*ux2*u.y + x_in[12] + 2.*x_in[1]*uxuy + x_in[2]*ux2 + 2.*x_in[4]*u.x + x_in[7]*u.y;
+	temp[13] = x_in[0]*ux2*u.z + x_in[13] + 2.*x_in[1]*uxuz + x_in[3]*ux2 + 2.*x_in[5]*u.x + x_in[7]*u.z;
+	temp[14] = x_in[0]*u.y*uz2 + x_in[14] + x_in[2]*uz2 + 2.*x_in[3]*uyuz + 2.*x_in[6]*u.z + x_in[9]*u.y;
+	temp[15] = x_in[0]*uy2*u.z + x_in[15] + 2.*x_in[2]*uyuz + x_in[3]*uy2 + 2.*x_in[6]*u.y + x_in[8]*u.z;
+	temp[16] = x_in[0]*ux2*uy2 + 2.*x_in[10]*u.x + 2.*x_in[12]*u.y + x_in[16] + 2.*x_in[1]*u.x*uy2 + 2.*x_in[2]*ux2*u.y + 4.*x_in[4]*uxuy + x_in[7]*uy2 + x_in[8]*ux2;
+	temp[17] = x_in[0]*ux2*uz2 + 2.*x_in[11]*u.x + 2.*x_in[13]*u.z + x_in[17] + 2.*x_in[1]*u.x*uz2 + 2.*x_in[3]*ux2*u.z + 4.*x_in[5]*uxuz + x_in[7]*uz2 + x_in[9]*ux2;
+	temp[18] = x_in[0]*uy2*uz2 + 2.*x_in[14]*u.y + 2.*x_in[15]*u.z + x_in[18] + 2.*x_in[2]*u.y*uz2 + 2.*x_in[3]*uy2*u.z + 4.*x_in[6]*uyuz + x_in[8]*uz2 + x_in[9]*uy2;
 
 	//back to density-probability functions
-	h_in[0] = temp[0] + temp[16] + temp[17] + temp[18] - temp[7] - temp[8] - temp[9];
-	h_in[1] = -1/2.*temp[10] - 1/2.*temp[11] - 1/2.*temp[16] - 1/2.*temp[17] + 1/2.*temp[1] + 1/2.*temp[7];
-	h_in[2] = 1/2.*temp[10] + 1/2.*temp[11] - 1/2.*temp[16] - 1/2.*temp[17] - 1/2.*temp[1] + 1/2.*temp[7];
-	h_in[3] = -1/2.*temp[12] - 1/2.*temp[14] - 1/2.*temp[16] - 1/2.*temp[18] + 1/2.*temp[2] + 1/2.*temp[8];
-	h_in[4] = 1/2.*temp[12] + 1/2.*temp[14] - 1/2.*temp[16] - 1/2.*temp[18] - 1/2.*temp[2] + 1/2.*temp[8];
-	h_in[5] = -1/2.*temp[13] - 1/2.*temp[15] - 1/2.*temp[17] - 1/2.*temp[18] + 1/2.*temp[3] + 1/2.*temp[9];
-	h_in[6] = 1/2.*temp[13] + 1/2.*temp[15] - 1/2.*temp[17] - 1/2.*temp[18] - 1/2.*temp[3] + 1/2.*temp[9];
-	h_in[7] = 1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[16] + 1/4.*temp[4];
-	h_in[8] = -1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[16] - 1/4.*temp[4];
-	h_in[9] = 1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[16] - 1/4.*temp[4];
-	h_in[10] = -1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[16] + 1/4.*temp[4];
-	h_in[11] = 1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[17] + 1/4.*temp[5];
-	h_in[12] = -1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[17] - 1/4.*temp[5];
-	h_in[13] = 1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[17] - 1/4.*temp[5];
-	h_in[14] = -1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[17] + 1/4.*temp[5];
-	h_in[15] = 1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[18] + 1/4.*temp[6];
-	h_in[16] = -1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[18] - 1/4.*temp[6];
-	h_in[17] = 1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[18] - 1/4.*temp[6];
-	h_in[18] = -1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[18] + 1/4.*temp[6];
+	x_in[0] = temp[0] + temp[16] + temp[17] + temp[18] - temp[7] - temp[8] - temp[9];
+	x_in[1] = -1/2.*temp[10] - 1/2.*temp[11] - 1/2.*temp[16] - 1/2.*temp[17] + 1/2.*temp[1] + 1/2.*temp[7];
+	x_in[2] = 1/2.*temp[10] + 1/2.*temp[11] - 1/2.*temp[16] - 1/2.*temp[17] - 1/2.*temp[1] + 1/2.*temp[7];
+	x_in[3] = -1/2.*temp[12] - 1/2.*temp[14] - 1/2.*temp[16] - 1/2.*temp[18] + 1/2.*temp[2] + 1/2.*temp[8];
+	x_in[4] = 1/2.*temp[12] + 1/2.*temp[14] - 1/2.*temp[16] - 1/2.*temp[18] - 1/2.*temp[2] + 1/2.*temp[8];
+	x_in[5] = -1/2.*temp[13] - 1/2.*temp[15] - 1/2.*temp[17] - 1/2.*temp[18] + 1/2.*temp[3] + 1/2.*temp[9];
+	x_in[6] = 1/2.*temp[13] + 1/2.*temp[15] - 1/2.*temp[17] - 1/2.*temp[18] - 1/2.*temp[3] + 1/2.*temp[9];
+	x_in[7] = 1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[16] + 1/4.*temp[4];
+	x_in[8] = -1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[16] - 1/4.*temp[4];
+	x_in[9] = 1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[16] - 1/4.*temp[4];
+	x_in[10] = -1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[16] + 1/4.*temp[4];
+	x_in[11] = 1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[17] + 1/4.*temp[5];
+	x_in[12] = -1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[17] - 1/4.*temp[5];
+	x_in[13] = 1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[17] - 1/4.*temp[5];
+	x_in[14] = -1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[17] + 1/4.*temp[5];
+	x_in[15] = 1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[18] + 1/4.*temp[6];
+	x_in[16] = -1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[18] - 1/4.*temp[6];
+	x_in[17] = 1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[18] - 1/4.*temp[6];
+	x_in[18] = -1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[18] + 1/4.*temp[6];
 
 }
 
@@ -420,15 +538,14 @@ CudaDeviceFunction vector_t relax_and_collide_hydro(vector_t Force, real_t omega
 	cc = cc - gcor3 * GalileanCorrection;
 
 	//Cumulants relation 
-
- 	c100 = c100 + Force.x;//100 - change only due to force term
+ 	c100 = c100 + Force.x;    //100 - change only due to force term
 
 	c200 = (a + b + cc)/3.;   //200
 	c020 = (cc - 2*a + b)/3.; //020
 	c002 = (cc - 2*b + a)/3.; 
 
-	c010 = c010 + Force.y;  //010 - change only due to force term
-	c001 = c001 + Force.z ; //001 - change only due to force term
+	c010 = c010 + Force.y;    //010 - change only due to force term
+	c001 = c001 + Force.z ;   //001 - change only due to force term
 
 	c110 = c110 * (1-w[0]);
 	c011 = c011 * (1-w[0]);
@@ -505,41 +622,43 @@ CudaDeviceFunction vector_t relax_and_collide_hydro(vector_t Force, real_t omega
 }
 
 
+CudaDeviceFunction vector_t getForce(real_t localTemp, real_t rho)
+{
+	// Boussinesq approximation
+	// rho(T) ~ rho_0*(1-thermal_exp_coeff*(Temp-Temp_0))
+	// F_b = (rho(T) - rho_0)*Grav_Y = -Grav_Y*rho_0*thermal_exp_coeff*(Temp-Temp_0)
+	// see chapter 8.4.1, eq 8.44, p313 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+	real_t refTemperature = 0;
+	real_t BoussinesqForce = -GravitationY*BoussinesqCoeff*(localTemp - refTemperature); // BoussinesqCoeff=rho_0*thermal_exp_coeff
+
+	vector_t Force; 
+	Force.x = GravitationX*rho; 
+	Force.y = GravitationY*rho+BoussinesqForce; 
+	Force.z = 0;
+
+	return Force;
+}
 
 CudaDeviceFunction void CollisionCM(){
-
-	// real_t myPhaseF = PhaseF(0,0);
-
-	// // Find Macroscopic Details
-	// real_t rho = calcRho(myPhaseF);
-	// real_t tau = calcTau(myPhaseF, rho);
-	// real_t pfavg = 0.5*(PhaseField_l+PhaseField_h);
-
-	// //  Gradients & Normals
-	// vector_t gradPhi = calcGradPhi(); // Phase field gradient
-	// real_t p = getNormalizedPressure(); // normalized pressure
-
-	// vector_t Fhydro = calcTotalHydrodynamicForceCM(gradPhi, myPhaseF, rho, tau,  calcMu(myPhaseF), p);
-
-	// // PHASE FIELD POPULATION UPDATE:
-	// vector_t u; u.x = U; u.y = V;
-	// vector_t F_phi_vect = calcF_phi_xy(gradPhi,  myPhaseF,  pfavg);
-	// AddToF_phiX(F_phi_vect.x);
-	// AddToF_phiY(F_phi_vect.y);
-
-
-	
-	//  PRESSURE EVOLUTION UPDATE:
-	// relax_and_collide_CM_hydro(g, tau, u, Fhydro, rho);
-
-///////////////////////////////////////////
 	real_t localTemperature = getT();
-	real_t refTemperature = 0;
-	real_t BoussinesqForce = GravitationY - GravitationY*BoussinesqCoeff*(localTemperature - refTemperature);
+	real_t m00 = getRho();
+	vector_t Force = getForce(localTemperature, m00);
 
-	vector_t Force; Force.x = 0; Force.y = BoussinesqForce; Force.z = 0;
+	// add Darcy force to stop flow within solid regions
+	if ((NodeType & NODE_ADDITIONALS) == NODE_DarcySolid) 
+	{
+		vector_t u_temp = getRawU();
+		u_temp.x += Force.x/(2*m00);
+		u_temp.y += Force.y/(2*m00);
+		u_temp.z += Force.z/(2*m00);
+
+		vector_t fDarcyStoper = get_fDarcyStoper(m00,  u_temp);
+		Force.x += fDarcyStoper.x;
+		Force.y += fDarcyStoper.y;
+		Force.z += fDarcyStoper.z;
+	} 
+
 	vector_t u = relax_and_collide_hydro(Force, omega_nu);
-
-	// u.x = VelocityX; u.y = 0; u.z = 0;
 	relax_and_collide_ADE(h, omega_k, u);
 }

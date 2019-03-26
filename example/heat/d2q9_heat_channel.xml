@@ -5,7 +5,7 @@
       <CM><Box /></CM>    
       <!-- <Smoothing><Box /></Smoothing>  -->
       
-<!--         <None name="init_T_region">
+        <None name="init_T_region">
             <Sphere dx="150" nx="50" dy="25" ny="50" /> 
         </None>        
 
@@ -19,7 +19,7 @@
 
         <HeaterDirichletTemperature name="dirichlet_fluid_region"> 
           <Box dx="200" dy="50" nx="20" ny="25"/>
-        </HeaterDirichletTemperature> -->
+        </HeaterDirichletTemperature>
         
 
         <Wall mask="ALL" name="box" >     
@@ -29,22 +29,20 @@
           <Box dx="300" dy="10" nx="25" ny="25"/>
         </HeaterDirichletTemperature>
 
-
-
-<!--       	<DarcySolid name="darcy_solid_region">
+      	<DarcySolid name="darcy_solid_region">
       	  <Box dx="400" dy="60" nx="25" ny="25"/>
       	</DarcySolid>
         <HeaterDirichletTemperature name="dirichlet_darcy_solid_region"> 
           <Box dx="400" dy="60" nx="25" ny="25"/>
-        </HeaterDirichletTemperature> -->
+        </HeaterDirichletTemperature>
 
 
-        <!--         <HeaterNeumannHeatFlux  name="neumann_heater_region"> 
+         <HeaterNeumannHeatFlux  name="neumann_heater_region"> 
           <Box dx="300" dy="25" nx="20" ny="25"/>
         </HeaterNeumannHeatFlux>
         <HeaterNeumannHeatFlux  name="neumann_cool_region"> 
           <Box dx="350" dy="50" nx="20" ny="25"/>
-        </HeaterNeumannHeatFlux> -->
+        </HeaterNeumannHeatFlux>
   </Geometry>
     <Model>
     <Params

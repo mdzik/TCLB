@@ -45,7 +45,7 @@ CudaDeviceFunction vector_t getU()
 	return u;
 }
 
-CudaDeviceFunction vector_t get_uDarcyStoper(real_t rho, vector_t u)
+CudaDeviceFunction vector_t get_fDarcyStoper(real_t rho, vector_t u)
 {
 	vector_t fDarcy;
 	fDarcy.x = -2*rho*(u.x);
@@ -107,11 +107,11 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 	vector_t u = getU();
 	
 	real_t d_rhoT = m00*T;
-	real_t h_source[9];
-	SetEquilibrium(h_source, d_rhoT, u); 
+	real_t h_eq[9];
+	SetEquilibrium(h_eq, d_rhoT, u); 
 
 	for (int i = 0; i < 9; i++) {
-		h[i] = h_source[i];
+		h[i] = h_eq[i];
 	}
 }
 
@@ -165,7 +165,7 @@ CudaDeviceFunction void Run() {
 
 	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterDirichletTemperature) {
 		// HeatDirichletEquilibriumScheme();
-		// alternatywnie:
+		// alternatively:
 		HeatDirichletAntiBounceBackScheme();
 	}
 
@@ -184,7 +184,7 @@ CudaDeviceFunction void BounceBack()
 }
 
 // zeroth moment is rho*X 
-CudaDeviceFunction void SetEquilibrium(real_t x_in[9], real_t rho_Xeq, vector_t u, real_t rho=1.) 
+CudaDeviceFunction void SetEquilibrium(real_t x_in[9], real_t rho_Xeq, vector_t u) 
 {
 	real_t uxuy = u.x*u.y;
 	real_t ux2 = u.x*u.x;
@@ -232,11 +232,11 @@ CudaDeviceFunction void SetEquilibrium(real_t x_in[9], real_t rho_Xeq, vector_t 
 
 CudaDeviceFunction void Init() {
 	real_t rho = 1.0;
-	real_t T = InitTemperature;
+	real_t rhoT = rho*InitTemperature;
 	vector_t u; u.x = VelocityX; u.y = 0; u.z = 0;
 
 	SetEquilibrium(f,rho,u);
-	SetEquilibrium(h,T,u);
+	SetEquilibrium(h,rhoT,u);
 }
 
 CudaDeviceFunction void relax_and_collide_hydro_with_F(real_t x_in[9], real_t omega_nu, vector_t u, vector_t F) 
@@ -397,9 +397,9 @@ CudaDeviceFunction void CollisionCM()
 	// add Darcy force to stop flow within solid regions
 	if ((NodeType & NODE_ADDITIONALS) == NODE_DarcySolid) 
 	{
-		vector_t uDarcyStoper = get_uDarcyStoper(m00,  u);
-		Force.x += uDarcyStoper.x;
-		Force.y += uDarcyStoper.y;
+		vector_t fDarcyStoper = get_fDarcyStoper(m00,  u);
+		Force.x += fDarcyStoper.x;
+		Force.y += fDarcyStoper.y;
 	} 
 
 	relax_and_collide_hydro_with_F(f, omega_nu, u, Force);	

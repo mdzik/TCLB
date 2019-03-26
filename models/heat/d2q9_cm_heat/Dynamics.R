@@ -58,7 +58,7 @@ AddSetting(name="rho_s",default=1.0, comment='darcy_solid density (kg/m3')
 AddSetting(name="PeriodX", default="0", comment='Number of cells in x direction')
 AddSetting(name="PeriodY", default="0", comment='Number of effective cells in y direction')
 
-# Boundary thingsW
+# Boundary things
 AddNodeType(name="DarcySolid", group="ADDITIONALS")
 AddNodeType(name="Smoothing", group="ADDITIONALS")
 AddNodeType(name="HeaterDirichletTemperature", group="ADDITIONALS_HEAT")

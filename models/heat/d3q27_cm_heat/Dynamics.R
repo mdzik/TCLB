@@ -42,9 +42,9 @@ AddDensity(
 # AddDensity(name="velo_z", dx=0, dy=0, group="Vel")
 
 #	Inputs: Flow Properties
-AddSetting(name="VelocityX", default=0.0, comment='inlet/outlet/init x-velocity component', zonal=T)
-
-AddSetting(name="GravitationY", default=0.0, comment='applied (rho)*GravitationY')
+AddSetting(name="VelocityX", default=0.0, comment='inlet/outlet/init x-velocity component', zonal=TRUE)
+AddSetting(name="GravitationY", default=0.0, comment='applied rho*GravitationY')
+AddSetting(name="GravitationX", default=0.0, comment='applied rho*GravitationX')
 AddSetting(name="omega_nu", comment='inverse of viscous relaxation time', default=1.0)
 AddSetting(name="nu", omega_nu='1.0/(3*nu+0.5)',  default=0.16666666,  comment='kinematic viscosity')
 
@@ -73,11 +73,18 @@ AddSetting(name="BoussinesqCoeff", default=0.0, comment='Boussinesq force: coeff
 # AddNodeType(name="NVelocity", group="BOUNDARY")
 # AddNodeType(name="WVelocity", group="BOUNDARY")
 
-
-AddNodeType("HeaterDirichletTemperature","ADDITIONALS")
-AddNodeType("HeaterNeumannHeatFlux","ADDITIONALS")
+# Boundary things
+AddNodeType(name="DarcySolid", group="ADDITIONALS")
+AddNodeType(name="Smoothing", group="ADDITIONALS")
+AddNodeType(name="HeaterDirichletTemperature", group="ADDITIONALS_HEAT")
+AddNodeType(name="HeaterNeumannHeatFlux", group="ADDITIONALS_HEAT")
+AddNodeType("CM","COLLISION")
 AddNodeType(name="Smoothing", group="ADDITIONALS")
 AddNodeType("Body", "BODY")
+
+# Benchmark things
+AddSetting(name="PeriodX", default="0", comment='Number of cells in x direction')
+AddSetting(name="PeriodY", default="0", comment='Number of effective cells in y direction')
 
 
 #	Globals - table of global integrals that can be monitored and optimized
