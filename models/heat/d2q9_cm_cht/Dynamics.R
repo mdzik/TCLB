@@ -43,16 +43,13 @@ AddSetting(name="bulk_visc", omega_bulk='1.0/(3*bulk_visc+0.5)',  comment='bulk 
 AddSetting(name="InitTemperature", default=0, comment='Initial/Inflow temperature distribution', zonal=T)
 
 # 	Inputs: Fluid Thermal Properties
-AddSetting(name="omega_k", default=1.0 , comment='inverse of thermal relaxation time')
-AddSetting(name="k", omega_k='1.0/(3*k+0.5)', default=0.16666666, comment='thermal conductivity of fluid (W/(m·K))')
-AddSetting(name="cp", , default=1.0, comment='specific heat capacity at constant pressure of fluid (J/(kg·K))')
+# AddSetting(name="omega_k", default=1.0 , comment='inverse of thermal relaxation time')
+# AddSetting(name="k", omega_k='1.0/(3*k+0.5)', default=0.16666666, comment='thermal conductivity of fluid (W/(m·K))', zonal=T)
+AddSetting(name="gamma", default=1.0, comment='magic stability enhancement')
+AddSetting(name="conductivity", default=0.16666666, comment='thermal conductivity of fluid (W/(m·K))', zonal=T)
+AddSetting(name="material_density", default=1.0, comment='density of material [kg]', zonal=T)
+AddSetting(name="cp", default=1.0, comment='specific heat capacity at constant pressure of fluid (J/(kg·K))', zonal=T)
 AddSetting(name="BoussinesqCoeff", default=0.0, comment='BoussinesqCoeff=rho_0*thermal_exp_coeff')
-
-# 	Inputs: Solid Thermal Properties
-AddSetting(name="omega_k_s", default=1.0 , comment='inverse of thermal relaxation time')
-AddSetting(name="k_s", omega_k='1.0/(3*k_s+0.5)', default=0.16666666, comment='thermal conductivity of solid (W/(m·K))')
-AddSetting(name="cp_s",default=1.0, comment='specific heat capacity at constant pressure of solid (J/(kg·K))')
-AddSetting(name="rho_s",default=1.0, comment='darcy_solid density (kg/m3')
 
 # Benchmark things
 AddSetting(name="PeriodX", default="0", comment='Number of cells in x direction')
