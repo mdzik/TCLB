@@ -1,0 +1,40 @@
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/ruraWrurze_128lu/">
+	<Units>
+    <Params size="1m" gauge="1"/>
+  </Units>
+	<Geometry nx="128m" ny="128m" >
+      <CM><Box /></CM>    
+     	<HeaterDirichletTemperature name="dirichlet_hot"> 
+            <Box />
+        </HeaterDirichletTemperature>
+
+		<None mask="ADDITIONALS_HEAT">
+			<Sphere ny="126m" nx="126m" dx="1m" dy="1m"/>
+		</None>
+
+        <HeaterDirichletTemperature name="dirichlet_cold"> 
+        	<Sphere ny="32m" nx="32m" dx="48m" dy="48m"/>
+        </HeaterDirichletTemperature>
+
+	</Geometry>
+    <Model>
+	    <Params
+	        k="0.16666666" 
+	        cp="1.0"
+
+	        InitTemperature="0.0"
+
+	        InitTemperature-dirichlet_hot="1.0"
+	        InitTemperature-dirichlet_cold="0.0"
+	        />
+	    <Params />
+    </Model> 
+
+<!-- <Solve Iterations="10" > <VTK Iterations="1"/> </Solve> -->
+<Failcheck Iterations="10000" nx="128m" ny="128m" />
+<TXT Iterations="50000" what="T,U"/>
+<Log Iterations="50000"/>
+<Solve Iterations="50000"> <VTK Iterations="5000"/> </Solve>
+</CLBConfig>
