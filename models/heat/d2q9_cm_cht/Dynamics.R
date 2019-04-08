@@ -26,6 +26,10 @@ AddDensity(
 # 	Outputs:
 AddQuantity( name="Rho" )
 AddQuantity( name="T" )
+AddQuantity( name="H" )
+AddQuantity( name="material_density" )
+AddQuantity( name="cp" )
+AddQuantity( name="conductivity" )
 AddQuantity( name="RawU", vector=T )
 AddQuantity( name="U", vector=T )
 
@@ -45,7 +49,7 @@ AddSetting(name="InitTemperature", default=0, comment='Initial/Inflow temperatur
 # 	Inputs: Fluid Thermal Properties
 # AddSetting(name="omega_k", default=1.0 , comment='inverse of thermal relaxation time')
 # AddSetting(name="k", omega_k='1.0/(3*k+0.5)', default=0.16666666, comment='thermal conductivity of fluid (W/(m·K))', zonal=T)
-AddSetting(name="gamma", default=1.0, comment='magic stability enhancement')
+AddSetting(name="h_stability_enhancement", default=1.0, comment='magic stability enhancement')
 AddSetting(name="conductivity", default=0.16666666, comment='thermal conductivity of fluid (W/(m·K))', zonal=T)
 AddSetting(name="material_density", default=1.0, comment='density of material [kg]', zonal=T)
 AddSetting(name="cp", default=1.0, comment='specific heat capacity at constant pressure of fluid (J/(kg·K))', zonal=T)

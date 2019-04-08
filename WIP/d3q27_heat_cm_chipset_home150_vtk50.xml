@@ -1,6 +1,6 @@
 
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/chipset150gauge_500vtk/">
+<CLBConfig version="2.0" output="/media/grzegorz/Worker/output/chipset150_50vtk/">
   <Units>
     <Params size="1m" gauge="150"/>
     <Params nu="1.4e-5m2/s" gauge="0.0001"/>
@@ -62,8 +62,8 @@
 </Geometry> -->
 
 <Solve Iterations="1"> <VTK Iterations="1"/> </Solve>
-<Failcheck Iterations="1000" nx="1m" ny="1m" nz="1m"/>
+<Failcheck Iterations="5000" nx="1m" ny="1m" nz="1m"/>
 <Log Iterations="10000"/>
-<Solve Iterations="20000"> <VTK Iterations="250"/> </Solve>
+<Solve Iterations="40000"> <VTK Iterations="50"/> </Solve>
 </CLBConfig>
 

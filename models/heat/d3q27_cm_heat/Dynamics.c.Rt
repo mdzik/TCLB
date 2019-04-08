@@ -57,7 +57,7 @@ CudaDeviceFunction vector_t getU()
 	vector_t Force = getForce(localTemperature, m00);
 	u.x += Force.x/(2*m00);
 	u.y += Force.y/(2*m00);
-	u.z = 0;
+	u.z += Force.z/(2*m00);
 	return u;
 }
 
@@ -66,7 +66,7 @@ CudaDeviceFunction vector_t get_fDarcyStoper(real_t rho, vector_t u)
 	vector_t fDarcy;
 	fDarcy.x = -2*rho*(u.x);
 	fDarcy.y = -2*rho*(u.y);
-	fDarcy.z = 0;
+	fDarcy.z = -2*rho*(u.z);
 	return fDarcy;
 }
 
@@ -176,9 +176,7 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 
 	real_t m00 = getRho();
 	vector_t u = getU();
-
 	real_t rhoT = m00*T;
-
 
 	<?R C(PV(c("const int h_size")), h_pop_size) ?>
 	real_t h_eq[h_size];
@@ -635,7 +633,7 @@ CudaDeviceFunction vector_t getForce(real_t localTemp, real_t rho)
 	vector_t Force; 
 	Force.x = GravitationX*rho; 
 	Force.y = GravitationY*rho+BoussinesqForce; 
-	Force.z = 0;
+	Force.z = GravitationZ*rho;
 
 	return Force;
 }

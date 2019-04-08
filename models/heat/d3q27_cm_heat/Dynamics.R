@@ -43,8 +43,9 @@ AddDensity(
 
 #	Inputs: Flow Properties
 AddSetting(name="VelocityX", default=0.0, comment='inlet/outlet/init x-velocity component', zonal=TRUE)
-AddSetting(name="GravitationY", default=0.0, comment='applied rho*GravitationY')
 AddSetting(name="GravitationX", default=0.0, comment='applied rho*GravitationX')
+AddSetting(name="GravitationY", default=0.0, comment='applied rho*GravitationY')
+AddSetting(name="GravitationZ", default=0.0, comment='applied rho*GravitationZ')
 AddSetting(name="omega_nu", comment='inverse of viscous relaxation time', default=1.0)
 AddSetting(name="nu", omega_nu='1.0/(3*nu+0.5)',  default=0.16666666,  comment='kinematic viscosity')
 
