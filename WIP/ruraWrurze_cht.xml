@@ -1,8 +1,8 @@
 
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/ruraWrurze_cht/">
+<CLBConfig version="2.0" output="output/ruraWrurze_cht_32lu/">
 	<Units>
-    <Params size="1m" gauge="4"/>
+    <Params size="1m" gauge="1"/>
   </Units>
 	<Geometry nx="32m" ny="32m" >
       <CM><Box/></CM>    
@@ -27,12 +27,13 @@
 	</Geometry>
     <Model>
 	    <Params
-	        conductivity="0.16666666" 
+	        conductivity="0.01" 
 	        cp="1.0"
+			material_density="1.0"
 
-			conductivity-material_A_region="0.02"
-			cp-material_A_region-="0.05"
-			material_density-material_A_region-="0.01666666"
+			conductivity-material_A_region="0.1"
+			cp-material_A_region-="1.0"
+			material_density-material_A_region-="1.0"
 
 	        InitTemperature="0.0"
 	        InitTemperature-dirichlet_hot="1.0"
@@ -43,8 +44,8 @@
     </Model> 
 
 <!-- <Solve Iterations="10" > <VTK Iterations="1"/> </Solve> -->
-<Failcheck Iterations="1000" nx="32m" ny="32m" />
-<TXT Iterations="10000" what="T,U"/>
-<Log Iterations="10000"/>
-<Solve Iterations="25000"> <VTK Iterations="100"/> </Solve>
+<Failcheck Iterations="10000" nx="32m" ny="32m" />
+<TXT Iterations="100000" what="T,U"/>
+<Log Iterations="100000"/>
+<Solve Iterations="500000"> <VTK Iterations="100000"/> </Solve>
 </CLBConfig>
