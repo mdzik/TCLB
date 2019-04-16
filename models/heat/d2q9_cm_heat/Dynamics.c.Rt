@@ -101,7 +101,8 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 
 	real_t T = InitTemperature;
 	if(PeriodX > 0 && Y >= PeriodY){ 
-		T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark
+		T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark 
+		//TODO: przykladaowo z zerami w 0.5, 63.5
 	}
 	real_t m00 = getRho();
 	vector_t u = getU();
@@ -123,6 +124,7 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	real_t T = InitTemperature;
 	if(PeriodX > 0 && Y >= PeriodY){
 		T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark
+		//TODO: przykladaowo z zerami w 1, 63
 	}
 
 	real_t m00 = getRho();
