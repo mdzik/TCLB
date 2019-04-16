@@ -15,6 +15,11 @@
 
 ?>
 
+CudaDeviceFunction real_t getm00_F(){
+	real_t m00_F = <?R C(sum(f)) ?>;
+	return m00_F;
+}
+
 CudaDeviceFunction real_t getRho(){
 	real_t m00_F = <?R C(sum(f)) ?>;
 	return m00_F*material_density;
@@ -23,7 +28,7 @@ CudaDeviceFunction real_t getRho(){
 CudaDeviceFunction real_t getT(){
 	real_t rho = getRho();
 	real_t m00_H = <?R C(sum(h)) ?>;
-	return 	m00_H/(rho*cp*material_density);
+	return m00_H/(rho*cp);
 }
 
 CudaDeviceFunction real_t getcp(){
@@ -39,9 +44,7 @@ CudaDeviceFunction real_t getconductivity(){
 }
 
 CudaDeviceFunction real_t getH(){
-	real_t rho = getRho();
-	real_t m00_H = <?R C(sum(h)) ?>;
-	return m00_H / rho;
+	return <?R C(sum(h)) ?>;
 }
 
 CudaDeviceFunction vector_t getRawU(){
@@ -204,7 +207,7 @@ CudaDeviceFunction void BounceBack()
 	?>
 }
 
-CudaDeviceFunction void SetEquilibriumFluid(real_t f_in[9], real_t m00_f, vector_t u) 
+CudaDeviceFunction void SetEquilibriumFluid(real_t f_in[9], real_t rho, vector_t u) 
 {
 	// #TODO: with Force?
 	real_t uxuy = u.x*u.y;
@@ -214,15 +217,15 @@ CudaDeviceFunction void SetEquilibriumFluid(real_t f_in[9], real_t m00_f, vector
 	real_t temp[9];
 
 	//equilibrium in central moments space
-	f_in[0] = m00_f;
+	f_in[0] = rho;
 	f_in[1] = 0;
 	f_in[2] = 0;
-	f_in[3] = 1/3.*m00_f;
-	f_in[4] = 1/3.*m00_f;
+	f_in[3] = 1/3.*rho;
+	f_in[4] = 1/3.*rho;
 	f_in[5] = 0;
 	f_in[6] = 0;
 	f_in[7] = 0;
-	f_in[8] = 1/9.*m00_f;
+	f_in[8] = 1/9.*rho;
 
 	//back to raw moments
 	temp[0] = f_in[0];
@@ -303,7 +306,6 @@ CudaDeviceFunction void Init() {
 
 CudaDeviceFunction void relax_and_collide_hydro_with_F(real_t x_in[9], real_t rho, real_t omega_nu, vector_t u, vector_t F) 
 {
-	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
 	real_t uxuy = u.x*u.y;
 	real_t ux2 = u.x*u.x;
 	real_t uy2 = u.y*u.y;
@@ -461,6 +463,9 @@ CudaDeviceFunction void CollisionCM()
 	u.x += Force.x/(2*rho);
 	u.y += Force.y/(2*rho);
 
+	real_t omega_k = 1.0/(3*conductivity+0.5);
+	relax_and_collide_ADE(h, rho, omega_k, u);
+
 	// add Darcy force to stop flow within solid regions
 	if ((NodeType & NODE_ADDITIONALS) == NODE_DarcySolid) 
 	{
@@ -468,9 +473,5 @@ CudaDeviceFunction void CollisionCM()
 		Force.x += fDarcyStoper.x;
 		Force.y += fDarcyStoper.y;
 	} 
-
 	relax_and_collide_hydro_with_F(f, rho, omega_nu, u, Force);	
-
-	real_t omega_k = 1.0/(3*conductivity+0.5);
-	relax_and_collide_ADE(h, rho, omega_k, u);
 }

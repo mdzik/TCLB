@@ -24,6 +24,7 @@ AddDensity(
 )
 
 # 	Outputs:
+AddQuantity( name="m00_F" )
 AddQuantity( name="Rho" )
 AddQuantity( name="T" )
 AddQuantity( name="H" )
