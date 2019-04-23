@@ -20,17 +20,6 @@ CudaDeviceFunction real_t getm00_F(){
 	return m00_F;
 }
 
-CudaDeviceFunction real_t getRho(){
-	real_t m00_F = <?R C(sum(f)) ?>;
-	return m00_F*material_density;
-}
-
-CudaDeviceFunction real_t getT(){
-	real_t rho = getRho();
-	real_t m00_H = <?R C(sum(h)) ?>;
-	return m00_H/(rho*cp);
-}
-
 CudaDeviceFunction real_t getcp(){
 	return cp;
 }
@@ -42,6 +31,18 @@ CudaDeviceFunction real_t getmaterial_density(){
 CudaDeviceFunction real_t getconductivity(){
 	return conductivity;
 }
+
+CudaDeviceFunction real_t getRho(){
+	real_t m00_F = <?R C(sum(f)) ?>;
+	return m00_F*material_density;
+}
+
+CudaDeviceFunction real_t getT(){
+	real_t rho = getRho();
+	real_t m00_H = <?R C(sum(h)) ?>;
+	return m00_H/(rho*cp);
+}
+
 
 CudaDeviceFunction real_t getH(){
 	return <?R C(sum(h)) ?>;
@@ -124,9 +125,6 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 
 	real_t T = InitTemperature;
-	if(PeriodX > 0 && Y >= PeriodY){ 
-		T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark
-	}
 	real_t rho = getRho();
 	vector_t u = getU();
 	
@@ -145,10 +143,6 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	// see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 	real_t T = InitTemperature;
-	if(PeriodX > 0 && Y >= PeriodY){
-		T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark
-	}
-
 	real_t rho = getRho();
 	vector_t u = getU();
 
@@ -464,7 +458,7 @@ CudaDeviceFunction void CollisionCM()
 	u.y += Force.y/(2*rho);
 
 	real_t omega_k = 1.0/(3*conductivity+0.5);
-	relax_and_collide_ADE(h, rho, omega_k, u);
+	relax_and_collide_ADE(h, rho, omega_k, u);  // TODO: a moze kolizja z nowym u po hydro kolizji ktora ma juz darcy stopper?
 
 	// add Darcy force to stop flow within solid regions
 	if ((NodeType & NODE_ADDITIONALS) == NODE_DarcySolid) 

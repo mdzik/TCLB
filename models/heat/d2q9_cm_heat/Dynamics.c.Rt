@@ -101,8 +101,15 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 
 	real_t T = InitTemperature;
 	if(PeriodX > 0 && Y >= PeriodY){ 
-		T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark 
-		//TODO: przykladaowo z zerami w 0.5, 63.5
+		//T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark 
+		// Przykladaowo z zerami w 0.5, 63.5
+
+		real_t x1 = 0.5;
+		real_t x2 = PeriodX-0.5;
+		real_t xm = 0.5*(x1+x2);
+		real_t ym = 1.0;
+		real_t a = ym / ((xm - x1)*(xm-x2));
+		T = a*(X - x1)*(X - x2);
 	}
 	real_t m00 = getRho();
 	vector_t u = getU();
@@ -123,8 +130,14 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 	real_t T = InitTemperature;
 	if(PeriodX > 0 && Y >= PeriodY){
-		T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark
-		//TODO: przykladaowo z zerami w 1, 63
+		// T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark
+		// Przykladaowo z zerami w 1, 63
+		real_t x1 = 1.0;
+		real_t x2 = PeriodX-1.0;
+		real_t xm = 0.5*(x1+x2);
+		real_t ym = 1.0;
+		real_t a = ym / ((xm - x1)*(xm-x2));
+		T = a*(X - x1)*(X - x2);
 	}
 
 	real_t m00 = getRho();
@@ -166,9 +179,9 @@ CudaDeviceFunction void Run() {
 	}
 
 	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterDirichletTemperature) {
-		// HeatDirichletEquilibriumScheme();
+		HeatDirichletEquilibriumScheme();
 		// alternatively:
-		HeatDirichletAntiBounceBackScheme();
+		// HeatDirichletAntiBounceBackScheme();
 	}
 
 	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterNeumannHeatFlux) {

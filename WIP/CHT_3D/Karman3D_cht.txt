@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/Karman3d/">
+	<Units>
+		<Params size="1m" gauge="3"/>
+		<Params nu="1.4e-5m2/s" gauge="0.0001"/>
+	</Units>
+        <Geometry nx="10m" ny="10m" nz="60m">
+		<MRT><Box/></MRT>
+		<WVelocity><Inlet/></WVelocity>
+		<EPressure><Outlet/></EPressure>
+		<Wall mask="ALL">
+			<Channel/>
+        	<Sphere nx="3.75m" ny="3.75m" nz="15m" dx="2.5m" dy="2.5m" dz="2.5m"/>
+			<!-- <STL file="example/data/ahmed.stl" scale="1mm" Xrot="-90d" x="1m" y="5cm" z="0.5m"/> -->
+		</Wall>
+
+        <HeaterDirichletTemperature name="dirichlet_cold"> 
+        	<Sphere nx="3.75m" ny="3.75m" nz="3.75m" dx="2.5m" dy="2.5m" dz="2.5m"/>
+        </HeaterDirichletTemperature>
+	</Geometry>
+	<Model>
+
+	 <Params
+        InitTemperature="0.0"
+        InitTemperature-dirichlet_hot="1.0"
+        InitTemperature-dirichlet_cold="0.0"
+    /><Params />
+
+    <Params GravitationY="-1.0E-05" />
+    <!-- <Params GravitationX="-1.0E-05" /> -->
+    <Params GravitationZ="-1.0E-05" />
+	<Params BoussinesqCoeff="1"/>
+<!-- <Params Velocity="0.01"/> -->
+	</Model>
+	<Solve Iterations="1"> <VTK Iterations="1"/> </Solve>
+	<Failcheck Iterations="1000" nx="1m" ny="1m" nz="1m"/>
+	<Log Iterations="10000"/>
+	<Solve Iterations="10000"> <VTK Iterations="1000"/> </Solve>
+</CLBConfig>

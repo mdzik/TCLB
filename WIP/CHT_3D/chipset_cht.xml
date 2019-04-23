@@ -1,0 +1,103 @@
+<!-- 
+  W = kg⋅m2⋅s−3 
+  J = kg⋅m2⋅s−2
+-->
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/chipset150gauge_cht/">
+  <Units>
+    <Params size="1m" gauge="100"/>
+    <Params nu="1.4e-5m2/s" gauge="0.0001"/>
+
+<!--     <Params conductivity="1.0W/m/K" gauge="1E-3"/> 
+    <Params cp="1.0J/kg/K" gauge="1E-3"/>
+    <Params material_density="1.0kg/m3" gauge="1E-3"/> -->
+  </Units>
+  <Geometry nx="1m" ny="1m" nz="1m">
+    <CM><Box/></CM>    
+    <!-- <Smoothing><Box /></Smoothing>  -->
+
+    <Wall mask="ALL" name="border" >
+<!--       <Box nx="1"/>
+      <Box dx="-1"/> -->
+      <Box ny="0.01m"/>
+      <Box dy="-0.01m"/>
+<!--       <Box nz="1"/>
+      <Box dz="-1"/> -->
+    </Wall>
+
+  
+    <DarcySolid name="darcy_solid_region">
+      <STL file="example/data/chipset_radiator.stl" scale="0.01m" Xrot="-0d" x="0.55m" y="0.01m" z="0.5m"/>
+    </DarcySolid>
+    <None name="material_A_region">
+      <STL file="example/data/chipset_radiator.stl" scale="0.01m" Xrot="-0d" x="0.55m" y="0.01m" z="0.5m"/>
+    </None>   
+    <HeaterDirichletTemperature  name="dirichlet_hot"> 
+      <Box dx="0.4m" dz="0.4m" nz="0.2m" nx="0.2m" ny="0.025m"/>
+    </HeaterDirichletTemperature>  
+<!--         
+<HeaterDirichletTemperature  name="dirichlet_hot"> 
+          <Box dy="-2"/>
+        </HeaterDirichletTemperature>
+
+        <HeaterDirichletTemperature  name="dirichlet_cold"> 
+            <Box nx="1"/>
+            <Box dx="-1"/>
+            <Box ny="2"/>
+        </HeaterDirichletTemperature> 
+  -->
+
+  </Geometry>
+    <Model>
+    <Params
+        InitTemperature="0.0"
+        InitTemperature-dirichlet_hot="1.0"
+        InitTemperature-dirichlet_cold="0.0"
+    />
+
+        <Params />
+    <Params
+        h_stability_enhancement="1."
+
+        conductivity="1" 
+        cp="1"
+        material_density="1"
+
+        conductivity-material_A_region="1"
+        cp-material_A_region="1"
+        material_density-material_A_region="1"
+    />
+    <Params />
+
+    <Params />
+<!--     <Params
+        h_stability_enhancement="1."
+
+        conductivity="226W/m/K" 
+        cp="921J/kg/K"
+        material_density="2698kg/m3"
+
+        conductivity-material_A_region="397W/m/K"
+        cp-material_A_region="385J/kg/K"
+        material_density-material_A_region="8940kg/m3"
+    /> -->
+    <Params />
+    <Params GravitationY="-1.0E-05" />
+    <Params BoussinesqCoeff="1"/>
+    <!-- <Params VelocityX="-1.0E-01" /> -->
+
+    </Model> 
+<!-- 
+    <Solve Iterations="25" output="output/"> <VTK Iterations="10"/> </Solve>
+<Geometry>
+  <None mask="ADDITIONALS">
+    <Box nx="512" ny="100" nz="100"/>
+  </None>
+</Geometry> -->
+
+<Solve Iterations="1"> <VTK Iterations="1"/> </Solve>
+<Failcheck Iterations="1000" nx="1m" ny="1m" nz="1m"/>
+<Log Iterations="10000"/>
+<Solve Iterations="1000"> <VTK Iterations="250"/> </Solve>
+</CLBConfig>
+
