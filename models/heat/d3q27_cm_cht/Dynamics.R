@@ -108,6 +108,13 @@ AddNodeType("CM","COLLISION")
 ##########OPTIONAL VALUES##########
 
 #Smagorinsky coefficient
-# if(Options$SMAG){
-# 	AddSetting(name="Smag", default=0, comment='Smagorinsky coefficient for SGS modeling')
-# }
+if(Options$SMAG)
+{
+	AddSetting(name="Smag", default=0, comment='Smagorinsky coefficient for SGS modeling')
+}
+
+if (Options$OutFlow)
+{
+	AddNodeType(name="ENeumann", group="BOUNDARY")
+	AddNodeType(name="EConvect", group="BOUNDARY")
+}
