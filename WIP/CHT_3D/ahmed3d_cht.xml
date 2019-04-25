@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/">
+	<Units>
+		<Params size="1m" gauge="35"/>
+		<Params nu="1.4e-5m2/s" gauge="0.0001"/>
+	</Units>
+        <Geometry nx="4m" ny="1m" nz="1m">
+		<CM><Box/></CM>
+		<WVelocity><Inlet/></WVelocity>
+		<!-- <EPressure><Outlet/></EPressure> -->
+		<EConvect><Outlet/></EConvect>
+		<!-- <ENeumann><Outlet/></ENeumann> -->
+		<Wall mask="ALL">
+			<Channel/>
+			<STL file="example/data/ahmed.stl" scale="1mm" Xrot="-90d" x="1m" y="5cm" z="0.5m"/>
+		</Wall>
+
+		   <HeaterDirichletTemperature  name="dirichlet_hot"> 
+			<STL file="example/data/ahmed.stl" scale="1mm" Xrot="-90d" x="1m" y="5cm" z="0.5m"/>
+		      <!-- <Box dx="0.4m" dz="0.4m" nz="0.2m" nx="0.2m" ny="0.025m"/> -->
+		    </HeaterDirichletTemperature>  
+	</Geometry>
+	<Model>
+		<Params VelocityX="0.01"
+     			
+
+			conductivity="0.001666666" 
+			
+			InitTemperature="0.0"
+			InitTemperature-dirichlet_hot="1.0"
+			InitTemperature-dirichlet_cold="0.0"
+		/>
+	</Model>
+	<Failcheck Iterations="1000" nx="1m" ny="1m" nz="1m"/>
+	<VTK Iterations="1000"/>
+	<Solve Iterations="10000"/>
+</CLBConfig>

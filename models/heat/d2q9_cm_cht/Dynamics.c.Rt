@@ -17,7 +17,7 @@
 
 CudaDeviceFunction real_t getm00_F(){
 	real_t m00_F = <?R C(sum(f)) ?>;
-	return m00_F;
+	return m00_F/material_density; // TODO: or return m00_F; 
 }
 
 CudaDeviceFunction real_t getcp(){
@@ -34,7 +34,7 @@ CudaDeviceFunction real_t getconductivity(){
 
 CudaDeviceFunction real_t getRho(){
 	real_t m00_F = <?R C(sum(f)) ?>;
-	return m00_F*material_density;
+	return m00_F; // TODO: return m00_F* material_density; 
 }
 
 CudaDeviceFunction real_t getT(){

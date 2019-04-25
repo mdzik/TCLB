@@ -36,10 +36,6 @@ AddDensity(
 	group="h"
 )
 
-#	Velocity Fields
-# AddDensity(name="velo_x", dx=0, dy=0, group="Vel")
-# AddDensity(name="velo_y", dx=0, dy=0, group="Vel")
-# AddDensity(name="velo_z", dx=0, dy=0, group="Vel")
 
 #	Inputs: Flow Properties
 AddSetting(name="VelocityX", default=0.0, comment='inlet/outlet/init x-velocity component', zonal=TRUE)
@@ -65,7 +61,7 @@ AddSetting(name="InitTemperature", default=0, comment='Initial/Inflow temperatur
 AddSetting(name="conductivity", default=0.16666666, comment='thermal conductivity of fluid (W/(m·K))', zonal=T)
 AddSetting(name="material_density", default=1.0, comment='density of material [kg]', zonal=T)
 AddSetting(name="cp", default=1.0, comment='specific heat capacity at constant pressure of fluid (J/(kg·K))', zonal=T)
-AddSetting(name="BoussinesqCoeff", default=0.0, comment='BoussinesqCoeff=rho_0*thermal_exp_coeff')
+AddSetting(name="BoussinesqCoeff", default=1.0, comment='BoussinesqCoeff=rho_0*thermal_exp_coeff')
 
 #	Globals - table of global integrals that can be monitored and optimized
 # AddGlobal(name="PressureLoss", comment='pressure loss', unit="1mPa")
@@ -76,12 +72,6 @@ AddSetting(name="BoussinesqCoeff", default=0.0, comment='BoussinesqCoeff=rho_0*t
 # AddGlobal(name="FDrag", comment='Force exerted on body in X-direction', unit="N")
 # AddGlobal(name="FLift", comment='Force exerted on body in Y-direction', unit="N")
 # AddGlobal(name="FTotal", comment='Force exerted on body in X+Y -direction', unit="N")
-
-#	Boundary things
-# AddNodeType(name="MovingWall_N", group="BOUNDARY")
-# AddNodeType(name="MovingWall_S", group="BOUNDARY")
-# AddNodeType(name="NVelocity", group="BOUNDARY")
-# AddNodeType(name="WVelocity", group="BOUNDARY")
 
 # 	Outputs:
 AddQuantity( name="Rho", unit="kg/m3")
@@ -96,7 +86,6 @@ if(Options$DEBUG){
 	AddQuantity( name="conductivity" )
 	AddQuantity( name="RawU", vector=T )
 }
-
 
 # Boundary things
 AddNodeType(name="DarcySolid", group="ADDITIONALS")
@@ -113,8 +102,21 @@ if(Options$SMAG)
 	AddSetting(name="Smag", default=0, comment='Smagorinsky coefficient for SGS modeling')
 }
 
+#	Velocity Fields # TODO: do I need this?
+AddDensity(name="U", dx=0, dy=0, dz=0, group="Vel")  
+# AddDensity(name="V", dx=0, dy=0, dz=0, group="Vel")
+# AddDensity(name="W", dx=0, dy=0, dz=0, group="Vel")
 if (Options$OutFlow)
 {
+	AddDensity(name=paste("fold",0:26,sep=""), dx=0,dy=0,dz=0,group="fold")
+	AddDensity(name=paste("hold",0:18,sep=""), dx=0,dy=0,dz=0,group="hold")
+
+	for (d in rows(DensityAll)) {
+		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy, dz=-d$dz )
+	}
+
+	AddField(name="U",dx=c(-1,0,0)) # TODO: do I need this?
+
 	AddNodeType(name="ENeumann", group="BOUNDARY")
 	AddNodeType(name="EConvect", group="BOUNDARY")
 }
