@@ -2,4 +2,4 @@
 ADJOINT=0
 TEST=FALSE
 # OPT="SMAG*Outflow*autosym"
-OPT="OutFlow*SMAG*DEBUG"
+OPT="OutFlow*SMAG*DEBUG*autosym"

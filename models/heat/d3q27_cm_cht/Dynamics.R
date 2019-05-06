@@ -64,14 +64,17 @@ AddSetting(name="cp", default=1.0, comment='specific heat capacity at constant p
 AddSetting(name="BoussinesqCoeff", default=1.0, comment='BoussinesqCoeff=rho_0*thermal_exp_coeff')
 
 #	Globals - table of global integrals that can be monitored and optimized
+AddGlobal(name="FDrag",    comment='Force exerted on body in X-direction', unit="N")
+AddGlobal(name="FLateral", comment='Force exerted on body in Y-direction', unit="N")
+AddGlobal(name="FLift",    comment='Force exerted on body in Z-direction', unit="N")
+
+AddGlobal(name="HeatFluxX",    comment='Heat flux from body in X-direction', unit="W")
+AddGlobal(name="HeatFluxY",    comment='Heat flux from body in Y-direction', unit="W")
+AddGlobal(name="HeatFluxZ",    comment='Heat flux from body in Z-direction', unit="W")
 # AddGlobal(name="PressureLoss", comment='pressure loss', unit="1mPa")
 # AddGlobal(name="OutletFlux", comment='pressure loss', unit="1m2/s")
 # AddGlobal(name="InletFlux", comment='pressure loss', unit="1m2/s")
 # AddGlobal(name="TotalTemperature", comment='Energy conservation check', unit="J")
-
-# AddGlobal(name="FDrag", comment='Force exerted on body in X-direction', unit="N")
-# AddGlobal(name="FLift", comment='Force exerted on body in Y-direction', unit="N")
-# AddGlobal(name="FTotal", comment='Force exerted on body in X+Y -direction', unit="N")
 
 # 	Outputs:
 AddQuantity( name="Rho", unit="kg/m3")
@@ -88,6 +91,7 @@ if(Options$DEBUG){
 }
 
 # Boundary things
+AddNodeType("BodyOfInterest", "BODY")
 AddNodeType(name="DarcySolid", group="ADDITIONALS")
 AddNodeType(name="Smoothing", group="ADDITIONALS")
 AddNodeType(name="HeaterDirichletTemperature", group="ADDITIONALS_HEAT")

@@ -18,6 +18,7 @@
 
     # Extracting velocity set
 		U = as.matrix(DensityAll[DensityAll$group=="f",c("dx","dy","dz")])
+		UforHeat = as.matrix(DensityAll[DensityAll$group=="h",c("dx","dy","dz")])
 
     # Calculating equlibrium density set
 		EQ = MRT_eq(U, rho, J, ortogonal=FALSE);
@@ -160,6 +161,9 @@ CudaDeviceFunction void BounceBack()
 		# FullBounceBack()  
 	?> 
 
+	vector_t p1,p2;
+  <?R C(PV(c("p1.x","p1.y", "p1.z")), f %*% U) ?>
+	
 	real_t tmp;
 	tmp = f001;
 	f001 = f002;
@@ -201,6 +205,15 @@ CudaDeviceFunction void BounceBack()
 	f111 = f222;
 	f222 = tmp;
 	
+	<?R # C(PV(c("p2.x","p2.y", "p2.z")), f %*% U) ?>
+
+  //Summing the difference in momentum before/after collision
+	if((NodeType & NODE_BODY) == NODE_BodyOfInterest) {
+    AddToFDrag(-(p2.x-p1.x));
+    AddToFLateral(-(p2.y-p1.y));
+    AddToFLift(-(p2.z-p1.z));
+		}
+		
 	tmp = h[10];
 	h[10] = h[7];
 	h[7] = tmp;
@@ -229,6 +242,7 @@ CudaDeviceFunction void BounceBack()
 	h[11] = h[14];
 	h[14] = tmp;
 	
+
 }
 
 
@@ -440,6 +454,10 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 }
 
 CudaDeviceFunction void Run() {
+	vector_t h1,h2;
+	<?R C(PV(c("h1.x","h1.y", "h1.z")), h %*% UforHeat) ?>
+	
+
     switch (NodeType & NODE_BOUNDARY) {
 		case NODE_EVelocity:
 			EVelocity();
@@ -454,7 +472,7 @@ CudaDeviceFunction void Run() {
 			EPressure();
 			break;
 		case NODE_Wall:
-			BounceBack();
+			BounceBack(); // Force Measurment here
 			break;
 		#ifdef OPTIONS_OutFlow
 			case NODE_EConvect:
@@ -481,6 +499,16 @@ CudaDeviceFunction void Run() {
 	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterNeumannHeatFlux) {
 		HeatNeumannForFluid();
 	}	
+
+	<?R C(PV(c("h2.x","h2.y", "h2.z")), h %*% UforHeat) ?>
+	// Summing the difference in heat flux (both convective and diffusive) before/after collision
+	// convective flux - eq part of h distributions
+	// diffusive flux - neq part of h distributions
+	if((NodeType & NODE_BODY) == NODE_BodyOfInterest) {
+    AddToHeatFluxX(-(h2.x-h1.x));
+    AddToHeatFluxY(-(h2.y-h1.y));
+    AddToHeatFluxZ(-(h2.z-h1.z));
+		}
 }
 
 CudaDeviceFunction void set_eq_hydro(real_t rho, real_t Jx, real_t Jy, real_t Jz)

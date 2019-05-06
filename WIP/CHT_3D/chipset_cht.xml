@@ -54,7 +54,6 @@
         InitTemperature-dirichlet_hot="1.0"
         InitTemperature-dirichlet_cold="0.0"
     />
-
         <Params />
     <Params
         h_stability_enhancement="1."
@@ -84,6 +83,7 @@
     <Params />
     <Params GravitationY="-1.0E-05" />
     <Params BoussinesqCoeff="1"/>
+    
     <!-- <Params VelocityX="-1.0E-01" /> -->
 
     </Model> 
