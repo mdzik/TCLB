@@ -3,13 +3,13 @@
   J = kg⋅m2⋅s−2
 -->
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/HotKarman3D_cht/">
+<CLBConfig version="2.0" output="output/HotKarman3D/">
 	<Units>
 		<Params size="1m" gauge="40"/>
-		<Params nu="1.4e-5m2/s" gauge="0.0001"/>
-		<!--     <Params conductivity="1.0W/m/K" gauge="1E-3"/> 
-    <Params cp="1.0J/kg/K" gauge="1E-3"/>
-    <Params material_density="1.0kg/m3" gauge="1E-3"/> -->
+		<Params nu="20.92e-6m2/s" gauge="1e-6"/>
+		<Params conductivity="30e-3W/m/K" gauge="1e-0"/> 
+        <Params cp="1.0J/kg/K" gauge="1e-3"/>
+        <!-- <Params material_density="1.0kg/m3" gauge="1E-3"/> -->
 	</Units>
         <Geometry nx="7m" ny="2m" nz="0.25m">
 		<CM><Box/></CM>
@@ -37,12 +37,20 @@
 	</Geometry>
 	<Model>
 	 <Params
-        InitTemperature="0.0K"
-        InitTemperature-dirichlet_hot="1.0K"
-        InitTemperature-dirichlet_cold="0.0K"
+        InitTemperature="26.2K"
+        InitTemperature-dirichlet_hot="128.4K"
+        InitTemperature-dirichlet_cold="26.2K"
         />
     <Params/>
+
     <Params
+        h_stability_enhancement="1."
+        cp="1003.82J/kg/K"
+        material_density="1kg/m3"
+        />
+    <Params/>
+
+<!--     <Params
         h_stability_enhancement="1."
 
         conductivity="0.001666666" 
@@ -53,7 +61,8 @@
         cp-material_A_region="1"
         material_density-material_A_region="1"
         />
-    <Params/>
+    <Params/> -->
+
 <!--     <Params
         h_stability_enhancement="1."
 
@@ -67,11 +76,13 @@
     /> 
     <Params /> -->
 
-    <Params VelocityX="1.0E-02m/s" />
+    <Params VelocityX="10.0m/s" />
 <!--     <Params GravitationY="-1.0E-05" />
     <Params BoussinesqCoeff="1"/> -->
 	</Model>
 	<Failcheck Iterations="2000" nx="6m" ny="2m" nz="0.25m"/>
 	<VTK Iterations="1000"/>
-	<Solve Iterations="100000"/>
+    <TXT Iterations="1000" what="T,U"/>
+    <Log Iterations="1000"/>
+	<Solve Iterations="20000"/>
 </CLBConfig>

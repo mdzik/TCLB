@@ -3,7 +3,7 @@
   J = kg⋅m2⋅s−2
 -->
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/HotKarman3D_cht/">
+<CLBConfig version="2.0" output="output/HotKarman3d_cht/">
 	<Units>
 		<Params size="1m" gauge="40"/>
 		<Params nu="1.4e-5m2/s" gauge="0.0001"/>
@@ -37,9 +37,9 @@
 	</Geometry>
 	<Model>
 	 <Params
-        InitTemperature="0.0K"
-        InitTemperature-dirichlet_hot="1.0K"
-        InitTemperature-dirichlet_cold="0.0K"
+        InitTemperature="26.2"
+        InitTemperature-dirichlet_hot="128.4"
+        InitTemperature-dirichlet_cold="26.2"
         />
     <Params/>
     <Params
@@ -67,7 +67,7 @@
     /> 
     <Params /> -->
 
-    <Params VelocityX="1.0E-02m/s" />
+    <Params VelocityX="1.0E-02" />
 <!--     <Params GravitationY="-1.0E-05" />
     <Params BoussinesqCoeff="1"/> -->
 	</Model>
