@@ -59,7 +59,7 @@ AddSetting(name="InitTemperature", default=0, comment='Initial/Inflow temperatur
 
 # 	Inputs: Fluid Thermal Properties
 AddSetting(name="conductivity", default=0.16666666, comment='thermal conductivity of fluid (W/(m·K))', zonal=T)
-AddSetting(name="material_density", default=1.0, comment='density of material [kg]', zonal=T)
+AddSetting(name="material_density", default=1.0, comment='density of material [kg/m3]', zonal=T)
 AddSetting(name="cp", default=1.0, comment='specific heat capacity at constant pressure of fluid (J/(kg·K))', zonal=T)
 AddSetting(name="BoussinesqCoeff", default=1.0, comment='BoussinesqCoeff=rho_0*thermal_exp_coeff')
 
@@ -83,11 +83,11 @@ AddQuantity( name="U", unit="m/s",vector=T )
 # 	Debug-Outputs:
 if(Options$DEBUG){
 	AddQuantity( name="m00_F" )
-	AddQuantity( name="H" )
-	AddQuantity( name="material_density" )
-	AddQuantity( name="cp" )
-	AddQuantity( name="conductivity" )
-	AddQuantity( name="RawU", vector=T )
+	AddQuantity( name="H", unit="J" )
+	AddQuantity( name="material_density", unit="kg/m3" )
+	AddQuantity( name="cp", unit="J/kg/K")
+	AddQuantity( name="conductivity", unit="W/m/K" )
+	AddQuantity( name="RawU", unit="m/s", vector=T )
 }
 
 # Boundary things

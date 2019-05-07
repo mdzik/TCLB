@@ -12,7 +12,24 @@
 
 # Extracting velocity set
 	U = d2q9
+	h_pop_size = PV("9")
 
+# Calculating equlibrium density set
+	source("lib/feq.R")
+	J = PV("J",c("x","y","z"))
+	EQ = MRT_eq(U, rho, J, ortogonal=FALSE);
+
+	if (Options$OutFlow) 
+	{
+		f_neighbours = Density$nicename[Density$group =="f"]
+		h_neighbours = Density$nicename[Density$group =="h"]
+		f_old = PV(Density$name[Density$group == "fold"])
+		h_old = PV(Density$name[Density$group == "hold"])
+		f_n = PV(paste(f_neighbours,"(",-Density$dx[Density$group=="f"]-1,",",-Density$dy[Density$group=="f"],")",sep=""))
+		h_n = PV(paste(h_neighbours,"(",-Density$dx[Density$group=="h"]-1,",",-Density$dy[Density$group=="h"],")",sep=""))
+		U_loc = PV("U_local")
+		U_inv = PV("invU")
+	}
 ?>
 
 CudaDeviceFunction real_t getm00_F(){
@@ -98,11 +115,111 @@ CudaDeviceFunction void WPressure()
 {}
 
 CudaDeviceFunction void WVelocity()
-{}
+{
+	real_t rho, Rx;
+	vector_t u;
+	u.x=VelocityX; u.y=VelocityY; u.z=0;
+	rho = ( f[0] + f[2] + f[4] + 2.*(f[3] + f[7] + f[6]) ) / (1. - u.x);
+	Rx = rho * u.x;
+	f[1] = f[3] + (2./3.) * Rx;
+	f[5] = f[7] + (1./6.) * Rx + (1./2.)*(f[4] - f[2]);
+	f[8] = f[6] + (1./6.) * Rx + (1./2.)*(f[2] - f[4]);
+
+		// equilibrium scheme for Heat-BC - don't care and impose rho*Teq
+	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+
+	real_t T = InitTemperature;
+	real_t H = rho*cp*T;
+
+	<?R C(PV(c("const int h_size")), h_pop_size) ?>
+	real_t h_eq[h_size];
+	SetEquilibriumHeat(h_eq, H, rho, u); 
+
+	for (int i = 0; i < h_size; i++) {
+		h[i] = h_eq[i];
+	}
+}
 
 CudaDeviceFunction void EPressure()
-{}
+{
+	
+		<?R 
+	 			#ZouHe(EQ, 1, -1, "pressure")
+				#ZouHeRewrite(EQ,   f, c(1,0), type="pressure")
+		?>
+			
+		// 	ZouHe(EQ, 1, -1, "pressure") gives 
+		// real_t Jx, Jy, Jz, rho;
+		// rho = (1 + Pressure*3.);  // TODO: why pressure +1, shall add material density?!
+		// Jx  =  f[4] - rho + f[2] + f[0] + ( f[8] + f[5] + f[1] )*2. ;
+		// Jy  =  ( f[4] - f[2] )*3. ;
+		// f[3] = f[1] - Jx*2./3.;
+		// f[6] = f[8] + ( Jy - Jx )/6.;
+		// f[7] = f[5] + ( -Jy - Jx )/6.;
 
+		//ZouHeRewrite(EQ,   f, c(1,0), type="pressure") gives
+		/********* pressure-type Zou He boundary condition  ****************/
+	real_t rho = (material_density + Pressure*3.);  // TODO: why pressure +1, shall add material density?!
+	real_t Rx  =  -rho + f[4] + f[2] + f[0] + ( f[8] + f[5] + f[1] )*2. ;
+	real_t Ry  =  ( f[4] - f[2] )*3. ;
+	f[3] = f[1] - Rx*2./3.;
+	f[6] = f[8] + ( Ry - Rx )/6.;
+	f[7] = f[5] + ( -Ry - Rx )/6.;
+					
+	// equilibrium scheme for Heat-BC - don't care and impose rho*Teq
+	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+
+		real_t T = InitTemperature;
+		vector_t u;
+		u.x= Rx/rho; u.y=Ry/rho; u.z=0;  
+
+		real_t H = rho*cp*T;
+
+		<?R C(PV(c("const int h_size")), h_pop_size) ?>
+		real_t h_eq[h_size];
+		SetEquilibriumHeat(h_eq, H, rho, u); 
+
+		for (int i = 0; i < h_size; i++) {
+			h[i] = h_eq[i];
+		}
+}
+
+//	BOUNDARY CONDITIONS:
+#ifdef OPTIONS_OutFlow
+#define myMax(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })
+
+CudaDeviceFunction void EConvect()
+{
+	real_t U_local = myMax(0, U(-1,0,0)); // TODO: anty-cofka?
+	real_t invU = 1.0/(1+ U_local);
+
+	<?R
+		if (Options$OutFlow) {
+			C(f, (f_old + U_loc*f_n)*U_inv)
+			C(f_old, f)
+
+			#C(h, (h_old + U_loc*h_n)*U_inv)
+			#C(h_old, h)
+		}
+	?>
+}
+
+CudaDeviceFunction void ENeumann()
+{
+	// TODO: is this really Neumann... or just simple extrapolation?
+	<?R
+		if (Options$OutFlow){
+			C(f, PV(paste0(f_neighbours,"(",-Density$dx[Density$group=="f"]-1,",",-Density$dy[Density$group=="f"],")")))
+			C(h, PV(paste0(h_neighbours,"(",-Density$dx[Density$group=="h"]-1,",",-Density$dy[Density$group=="h"],")")))
+	}
+	?>
+}
+#endif
 CudaDeviceFunction void HeatNeumannForFluid()
 {
 	real_t T = InitTemperature;
@@ -157,6 +274,9 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 
 
 CudaDeviceFunction void Run() {
+	vector_t h1,h2;
+	<?R #C(PV(c("h1.x","h1.y")), h %*% UforHeat) ?>
+	
     switch (NodeType & NODE_BOUNDARY) {
 		case NODE_EVelocity:
 			EVelocity();
@@ -171,8 +291,16 @@ CudaDeviceFunction void Run() {
 			EPressure();
 			break;
 		case NODE_Wall:
-			BounceBack();
+			BounceBack(); // Force Measurment here
 			break;
+		#ifdef OPTIONS_OutFlow
+			case NODE_EConvect:
+				EConvect();
+				break;
+			case NODE_ENeumann:
+				ENeumann();
+				break;
+		#endif
 	}
 	
     switch (NodeType & NODE_COLLISION) {
@@ -189,7 +317,16 @@ CudaDeviceFunction void Run() {
 
 	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterNeumannHeatFlux) {
 		HeatNeumannForFluid();
-	}	
+	}
+	
+	<?R #C(PV(c("h2.x","h2.y")), h %*% UforHeat) ?>
+	// Summing the difference in heat flux (both convective and diffusive) before/after collision
+	// convective flux - eq part of h distributions
+	// diffusive flux - neq part of h distributions
+	if((NodeType & NODE_BODY) == NODE_BodyOfInterest) {
+    AddToHeatFluxX(-(h2.x-h1.x));
+    AddToHeatFluxY(-(h2.y-h1.y));
+	}
 }
 
 
@@ -197,8 +334,35 @@ CudaDeviceFunction void Run() {
 CudaDeviceFunction void BounceBack()
 {
 	<?R 
-		FullBounceBack() 
+		# TODO: BounceBack gets crazy and bounces h_old and f_old in _Outflow mode :/
+		#	FullBounceBack() 
 	?>
+
+	real_t tmp;
+	tmp = f[6];
+	f[6] = f[8];
+	f[8] = tmp;
+	tmp = f[2];
+	f[2] = f[4];
+	f[4] = tmp;
+	tmp = f[1];
+	f[1] = f[3];
+	f[3] = tmp;
+	tmp = f[5];
+	f[5] = f[7];
+	f[7] = tmp;
+	tmp = h[6];
+	h[6] = h[8];
+	h[8] = tmp;
+	tmp = h[2];
+	h[2] = h[4];
+	h[4] = tmp;
+	tmp = h[1];
+	h[1] = h[3];
+	h[3] = tmp;
+	tmp = h[5];
+	h[5] = h[7];
+	h[7] = tmp;
 }
 
 CudaDeviceFunction void SetEquilibriumFluid(real_t f_in[9], real_t rho, vector_t u) 
@@ -292,10 +456,21 @@ CudaDeviceFunction void SetEquilibriumHeat(real_t h_in[9], real_t H, real_t rho,
 CudaDeviceFunction void Init() {
 	real_t rho = 1.0*material_density;
 	real_t H = rho*cp*InitTemperature;
-	vector_t u; u.x = VelocityX; u.y = 0; u.z = 0;
+	vector_t u; u.x = VelocityX; u.y = VelocityY; u.z = 0;
 
 	SetEquilibriumFluid(f,rho,u);
 	SetEquilibriumHeat(h,H,rho,u);
+
+	#ifdef OPTIONS_OutFlow
+	if ((NodeType & NODE_BOUNDARY) == NODE_EConvect){
+			<?R if (Options$OutFlow)
+				{
+					C(f_old, f)
+					C(h_old, h)     
+				}       
+			?>
+	}
+	#endif
 }
 
 CudaDeviceFunction void relax_and_collide_hydro_with_F(real_t x_in[9], real_t rho, real_t omega_nu, vector_t u, vector_t F) 
@@ -457,8 +632,6 @@ CudaDeviceFunction void CollisionCM()
 	u.x += Force.x/(2*rho);
 	u.y += Force.y/(2*rho);
 
-	real_t omega_k = 1.0/(3*conductivity+0.5);
-	relax_and_collide_ADE(h, rho, omega_k, u);  // TODO: a moze kolizja z nowym u po hydro kolizji ktora ma juz darcy stopper?
 
 	// add Darcy force to stop flow within solid regions
 	if ((NodeType & NODE_ADDITIONALS) == NODE_DarcySolid) 
@@ -468,4 +641,10 @@ CudaDeviceFunction void CollisionCM()
 		Force.y += fDarcyStoper.y;
 	} 
 	relax_and_collide_hydro_with_F(f, rho, omega_nu, u, Force);	
+
+	#ifdef OPTIONS_OutFlow
+		U = u.x; // for convective outlet BC
+	#endif	
+	real_t omega_k = 1.0/(3*conductivity+0.5);
+	relax_and_collide_ADE(h, rho, omega_k, u);  // TODO: a moze kolizja z nowym u po hydro kolizji ktora ma juz darcy stopper?
 }

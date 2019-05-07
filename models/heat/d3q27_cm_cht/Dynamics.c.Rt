@@ -62,8 +62,8 @@
 #endif
 
 CudaDeviceFunction real_t getRho(){
-	real_t m00_F = <?R C(sum(f)) ?>;
-	return m00_F;
+	real_t rho = <?R C(sum(f)) ?>;
+	return rho;
 }
 
 CudaDeviceFunction real_t getT(){
@@ -326,7 +326,7 @@ CudaDeviceFunction void EVelocity()
 CudaDeviceFunction void EPressure()
 {
 	real_t Jx, Jy, Jz, rho;
-	rho = (1 + Pressure*3.)*material_density;
+	rho = (material_density + Pressure*3.); // TODO: *material_density; ? why pressure + 1?
 
 	Jx  = ( -f022 - f012 - f002 - f021 - f011 - f001 - f020 - f010 + rho - f000 + ( -f112 - f121 - f122 - f111 - f102 - f101 - f120 - f110 - f100 )*2. ) / ( -1 );
 	Jy  = ( f022 - f012 + f021 - f011 + f020 - f010 ) / ( 1/3. );
