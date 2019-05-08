@@ -33,7 +33,7 @@
 		  <Cylinder dx="285m" dy="60m" nx="30m" ny="30m" />
 		</HeaterDirichletTemperature>  
 
-		<!-- <BodyOfInterest><Outlet/></BodyOfInterest> -->
+		<MeasurmentArea><Outlet/></MeasurmentArea>
 	</Geometry>
 	<Model>
 	 <Params

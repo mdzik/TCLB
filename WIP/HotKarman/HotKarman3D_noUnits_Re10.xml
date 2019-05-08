@@ -27,10 +27,10 @@
 		  <Cylinder dx="285" dy="60" nx="30" ny="30" nz="5"/>
 		</HeaterDirichletTemperature>  
 
-		<BodyOfInterest>
+		<MeasurmentArea>
             <Cylinder dx="285" dy="60" nx="30" ny="30" nz="5"/>
             <!-- <Outlet/> -->
-        </BodyOfInterest>
+        </MeasurmentArea>
 	</Geometry>
 	<Model>
 	 <Params

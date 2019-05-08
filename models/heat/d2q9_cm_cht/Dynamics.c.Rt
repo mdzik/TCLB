@@ -222,6 +222,8 @@ CudaDeviceFunction void ENeumann()
 #endif
 CudaDeviceFunction void HeatNeumannForFluid()
 {
+	real_t h1 = <?R 	C(sum(h)) ?>;
+
 	real_t T = InitTemperature;
 	real_t rho = getRho();
 	vector_t u = getU();
@@ -233,6 +235,9 @@ CudaDeviceFunction void HeatNeumannForFluid()
 	SetEquilibriumHeat(h_source, H, rho, u); 
 	for (int i = 0; i < 9; i++) {
 		h[i] += h_source[i];}
+
+	real_t h2 = <?R 	C(sum(h)) ?>;
+	AddToHeatFluxTotal(h2-h1);
 }
 
 CudaDeviceFunction void HeatDirichletEquilibriumScheme()
@@ -240,6 +245,8 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 	// equilibrium scheme for BC - don't care and impose rho*Teq
 	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+
+	real_t h1 = <?R 	C(sum(h)) ?>;
 
 	real_t T = InitTemperature;
 	real_t rho = getRho();
@@ -252,13 +259,21 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 	for (int i = 0; i < 9; i++) {
 		h[i] = h_eq[i];
 	}
+
+	real_t h2 = <?R 	C(sum(h)) ?>;
+	AddToHeatFluxTotal(h2-h1);
 }
 
 CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 {
+
+
 	// Anti-Bounce-Back Scheme
 	// see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+
+	real_t h1 = <?R 	C(sum(h)) ?>;
+
 	real_t T = InitTemperature;
 	real_t rho = getRho();
 	vector_t u = getU();
@@ -270,13 +285,14 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	for (int i = 0; i < 9; i++) {
 		h[i] = -h[i] + 2*h_eq[i]; // ABB: reverse to obtain zero temperature: h[i] = -h[i]
 	}
+	real_t h2 = <?R 	C(sum(h)) ?>;
+	AddToHeatFluxTotal(h2-h1);
 }
 
 
 CudaDeviceFunction void Run() {
-	vector_t p1,h1;
-	if((NodeType & NODE_BODY) == NODE_BodyOfInterest) {
-		<?R # C(PV(c("h1.x","h1.y", "h1.z")), h %*% U) ?>
+	vector_t p1;
+	if((NodeType & NODE_BODY) == NODE_MeasurmentArea) {
 		<?R C(PV(c("p1.x","p1.y", "p1.z")), f %*% U) ?>
 	}
 
@@ -322,7 +338,7 @@ CudaDeviceFunction void Run() {
 		HeatNeumannForFluid();
 	}
 	
-	if((NodeType & NODE_BODY) == NODE_BodyOfInterest) {
+	if((NodeType & NODE_BODY) == NODE_MeasurmentArea) {
 		vector_t h2,p2;
 		<?R C(PV(c("h2.x","h2.y", "h2.z")), h %*% U) ?>
 		// Summing the difference in heat flux (both convective and diffusive) before/after collision
@@ -333,8 +349,6 @@ CudaDeviceFunction void Run() {
     AddToHeatFluxY(-(h2.y));
 		// AddToHeatFluxZ(-(h2.z-h1.z));
 		// AddToHeatFluxTotal(-(h2.x-h1.x) -(h2.y-h1.y));
-
-		AddToHeatFluxTotal(<?R 	C(sum(h)) ?>);
 
 		<?R # C(PV(c("p2.x","p2.y", "p2.z")), f %*% U) ?>
 		//Summing the difference in momentum before/after collision

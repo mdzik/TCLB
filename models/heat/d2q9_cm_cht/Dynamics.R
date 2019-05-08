@@ -73,7 +73,7 @@ AddSetting(name="PeriodX", default="0", comment='Number of cells in x direction'
 AddSetting(name="PeriodY", default="0", comment='Number of effective cells in y direction')
 
 # Boundary things
-AddNodeType("BodyOfInterest", "BODY")
+AddNodeType("MeasurmentArea", "BODY")
 AddNodeType(name="DarcySolid", group="ADDITIONALS")
 AddNodeType(name="Smoothing", group="ADDITIONALS")
 AddNodeType(name="HeaterDirichletTemperature", group="ADDITIONALS_HEAT")
