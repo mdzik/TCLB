@@ -276,7 +276,7 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 CudaDeviceFunction void Run() {
 	vector_t p1,h1;
 	if((NodeType & NODE_BODY) == NODE_BodyOfInterest) {
-		<?R C(PV(c("h1.x","h1.y", "h1.z")), h %*% U) ?>
+		<?R # C(PV(c("h1.x","h1.y", "h1.z")), h %*% U) ?>
 		<?R C(PV(c("p1.x","p1.y", "p1.z")), f %*% U) ?>
 	}
 
@@ -329,11 +329,13 @@ CudaDeviceFunction void Run() {
 		// convective flux - eq part of h distributions
 		// diffusive flux - neq part of h distributions
 
-    // AddToHeatFluxX(-(h2.x-h1.x));
-    // AddToHeatFluxY(-(h2.y-h1.y));
+    AddToHeatFluxX(-(h2.x));
+    AddToHeatFluxY(-(h2.y));
 		// AddToHeatFluxZ(-(h2.z-h1.z));
-		AddToHeatFluxTotal(-(h2.x-h1.x) -(h2.y-h1.y));
-		
+		// AddToHeatFluxTotal(-(h2.x-h1.x) -(h2.y-h1.y));
+
+		AddToHeatFluxTotal(<?R 	C(sum(h)) ?>);
+
 		<?R # C(PV(c("p2.x","p2.y", "p2.z")), f %*% U) ?>
 		//Summing the difference in momentum before/after collision
 

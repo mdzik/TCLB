@@ -3,7 +3,7 @@
   J = kg⋅m2⋅s−2
 -->
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/HotKarman2D_noUnits_long/">
+<CLBConfig version="2.0" output="output/HotKarman2D_Re10/">
 	<Units>
 		<Params size="1m" gauge="1"/>
 <!-- 		<Params nu="20.92e-6m2/s" gauge="1e-6"/>
