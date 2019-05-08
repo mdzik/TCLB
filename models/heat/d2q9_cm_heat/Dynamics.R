@@ -54,11 +54,17 @@ AddSetting(name="k_s", omega_k='1.0/(3*k_s+0.5)', default=0.16666666, comment='t
 AddSetting(name="cp_s",default=1.0, comment='specific heat capacity at constant pressure of solid (J/(kg·K))')
 AddSetting(name="rho_s",default=1.0, comment='darcy_solid density (kg/m3')
 
+#	Globals - table of global integrals that can be monitored and optimized
+AddGlobal(name="FDrag",    comment='Force exerted on body in X-direction', unit="N")
+AddGlobal(name="FLift",    comment='Force exerted on body in Y-direction', unit="N")
+AddGlobal(name="HeatFluxTotal",    comment='Total Heat flux from body', unit="W")
+
 # Benchmark things
 AddSetting(name="PeriodX", default="0", comment='Number of cells in x direction')
 AddSetting(name="PeriodY", default="0", comment='Number of effective cells in y direction')
 
 # Boundary things
+AddNodeType("BodyOfInterest", "BODY")
 AddNodeType(name="DarcySolid", group="ADDITIONALS")
 AddNodeType(name="Smoothing", group="ADDITIONALS")
 AddNodeType(name="HeaterDirichletTemperature", group="ADDITIONALS_HEAT")

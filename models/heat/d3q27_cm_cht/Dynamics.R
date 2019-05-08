@@ -71,6 +71,7 @@ AddGlobal(name="FLift",    comment='Force exerted on body in Z-direction', unit=
 AddGlobal(name="HeatFluxX",    comment='Heat flux from body in X-direction', unit="W")
 AddGlobal(name="HeatFluxY",    comment='Heat flux from body in Y-direction', unit="W")
 AddGlobal(name="HeatFluxZ",    comment='Heat flux from body in Z-direction', unit="W")
+AddGlobal(name="HeatFluxTotal",    comment='Total Heat flux from body', unit="W")
 # AddGlobal(name="PressureLoss", comment='pressure loss', unit="1mPa")
 # AddGlobal(name="OutletFlux", comment='pressure loss', unit="1m2/s")
 # AddGlobal(name="InletFlux", comment='pressure loss', unit="1m2/s")

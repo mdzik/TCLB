@@ -3,7 +3,7 @@
   J = kg⋅m2⋅s−2
 -->
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/HotKarman2D_noUnits/">
+<CLBConfig version="2.0" output="output/HotKarman2D_noUnits_long/">
 	<Units>
 		<Params size="1m" gauge="1"/>
 <!-- 		<Params nu="20.92e-6m2/s" gauge="1e-6"/>
@@ -44,8 +44,8 @@
     <Params/>
 
     <Params
-        nu="0.003000"
-        conductivity="0.003000"
+        nu="0.03"
+        conductivity="0.03"
 
         h_stability_enhancement="1."
         cp="1"
@@ -84,8 +84,8 @@
 	</Model>
 
     <Failcheck Iterations="2000"  nx="1000m" ny="150m"/>
-	<VTK Iterations="1000"/>
-    <TXT Iterations="1000" what="T,U"/>
-    <Log Iterations="1000"/>
-	<Solve Iterations="100000"/>
+	<VTK Iterations="10000"/>
+    <TXT Iterations="10000" what="T,U"/>
+    <Log Iterations="10000"/>
+	<Solve Iterations="750000"/>
 </CLBConfig>

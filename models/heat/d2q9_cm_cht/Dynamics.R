@@ -82,12 +82,11 @@ AddNodeType("CM","COLLISION")
 
 #	Globals - table of global integrals that can be monitored and optimized
 AddGlobal(name="FDrag",    comment='Force exerted on body in X-direction', unit="N")
-AddGlobal(name="FLateral", comment='Force exerted on body in Y-direction', unit="N")
-AddGlobal(name="FLift",    comment='Force exerted on body in Z-direction', unit="N")
+AddGlobal(name="FLift",    comment='Force exerted on body in Y-direction', unit="N")
 
 AddGlobal(name="HeatFluxX",    comment='Heat flux from body in X-direction', unit="W")
 AddGlobal(name="HeatFluxY",    comment='Heat flux from body in Y-direction', unit="W")
-AddGlobal(name="HeatFluxZ",    comment='Heat flux from body in Z-direction', unit="W")
+AddGlobal(name="HeatFluxTotal",    comment='Total Heat flux from body', unit="W")
 
 AddDensity(name="U", dx=0, dy=0, group="Vel")  
 # AddDensity(name="V", dx=0, dy=0, dz=0, group="Vel")
