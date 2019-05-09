@@ -77,6 +77,7 @@ AddNodeType("MeasurmentArea", "BODY")
 AddNodeType(name="DarcySolid", group="ADDITIONALS")
 AddNodeType(name="Smoothing", group="ADDITIONALS")
 AddNodeType(name="HeaterDirichletTemperature", group="ADDITIONALS_HEAT")
+AddNodeType(name="HeaterSource", group="ADDITIONALS_HEAT")
 AddNodeType(name="HeaterNeumannHeatFlux", group="ADDITIONALS_HEAT")
 AddNodeType("CM","COLLISION")
 
@@ -86,7 +87,7 @@ AddGlobal(name="FLift",    comment='Force exerted on body in Y-direction', unit=
 
 AddGlobal(name="HeatFluxX",    comment='Heat flux from body in X-direction', unit="W")
 AddGlobal(name="HeatFluxY",    comment='Heat flux from body in Y-direction', unit="W")
-AddGlobal(name="HeatFluxTotal",    comment='Total Heat flux from body', unit="W")
+AddGlobal(name="HeatSource",    comment='Total Heat generated', unit="W")
 
 AddDensity(name="U", dx=0, dy=0, group="Vel")  
 # AddDensity(name="V", dx=0, dy=0, dz=0, group="Vel")

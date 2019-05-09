@@ -11,7 +11,7 @@
         <Params cp="1.0J/kg/K" gauge="1e0"/> -->
         <!-- <Params material_density="1.0kg/m3" gauge="1E-3"/> -->
 	</Units>
-    <Geometry nx="1000" ny="150" nz="5">
+    <Geometry nx="1200" ny="150" nz="5">
 		<CM><Box/></CM>
 		<WVelocity><Inlet/></WVelocity>
 		<!-- <EPressure><Outlet/></EPressure> -->
@@ -83,6 +83,6 @@
     <Failcheck Iterations="2000"  nx="1000" ny="150" nz="5"/>
 	<VTK Iterations="10000"/>
     <TXT Iterations="10000" what="T,U"/>
-    <Log Iterations="10000"/>
+    <Log Iterations="1000"/>
 	<Solve Iterations="750000"/>
 </CLBConfig>

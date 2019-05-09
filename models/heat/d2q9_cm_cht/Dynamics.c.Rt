@@ -220,9 +220,9 @@ CudaDeviceFunction void ENeumann()
 	?>
 }
 #endif
-CudaDeviceFunction void HeatNeumannForFluid()
+CudaDeviceFunction void HeaterSource()
 {
-	real_t h1 = <?R 	C(sum(h)) ?>;
+	real_t h1 = <?R C(sum(h)) ?>;
 
 	real_t T = InitTemperature;
 	real_t rho = getRho();
@@ -236,8 +236,8 @@ CudaDeviceFunction void HeatNeumannForFluid()
 	for (int i = 0; i < 9; i++) {
 		h[i] += h_source[i];}
 
-	real_t h2 = <?R 	C(sum(h)) ?>;
-	AddToHeatFluxTotal(h2-h1);
+	real_t h2 = <?R C(sum(h)) ?>;
+	AddToHeatSource(h2-h1);
 }
 
 CudaDeviceFunction void HeatDirichletEquilibriumScheme()
@@ -260,8 +260,8 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 		h[i] = h_eq[i];
 	}
 
-	real_t h2 = <?R 	C(sum(h)) ?>;
-	AddToHeatFluxTotal(h2-h1);
+	real_t h2 = <?R C(sum(h)) ?>;
+	AddToHeatSource(h2-h1);
 }
 
 CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
@@ -285,8 +285,8 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	for (int i = 0; i < 9; i++) {
 		h[i] = -h[i] + 2*h_eq[i]; // ABB: reverse to obtain zero temperature: h[i] = -h[i]
 	}
-	real_t h2 = <?R 	C(sum(h)) ?>;
-	AddToHeatFluxTotal(h2-h1);
+	real_t h2 = <?R C(sum(h)) ?>;
+	AddToHeatSource(h2-h1);
 }
 
 
@@ -334,21 +334,21 @@ CudaDeviceFunction void Run() {
 		// HeatDirichletAntiBounceBackScheme();
 	}
 
-	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterNeumannHeatFlux) {
-		HeatNeumannForFluid();
+	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterSource) {
+		HeaterSource();
 	}
 	
 	if((NodeType & NODE_BODY) == NODE_MeasurmentArea) {
 		vector_t h2,p2;
 		<?R C(PV(c("h2.x","h2.y", "h2.z")), h %*% U) ?>
-		// Summing the difference in heat flux (both convective and diffusive) before/after collision
+		// Summing the heat flux (both convective and diffusive) before/after collision
 		// convective flux - eq part of h distributions
 		// diffusive flux - neq part of h distributions
 
-    AddToHeatFluxX(-(h2.x));
-    AddToHeatFluxY(-(h2.y));
+    AddToHeatFluxX(-h2.x);
+    AddToHeatFluxY(-h2.y);
 		// AddToHeatFluxZ(-(h2.z-h1.z));
-		// AddToHeatFluxTotal(-(h2.x-h1.x) -(h2.y-h1.y));
+		// AddToHeatSource(-(h2.x-h1.x) -(h2.y-h1.y));
 
 		<?R # C(PV(c("p2.x","p2.y", "p2.z")), f %*% U) ?>
 		//Summing the difference in momentum before/after collision
