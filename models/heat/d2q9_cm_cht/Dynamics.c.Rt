@@ -203,8 +203,8 @@ CudaDeviceFunction void EConvect()
 			C(f, (f_old + U_loc*f_n)*U_inv)
 			C(f_old, f)
 
-			#C(h, (h_old + U_loc*h_n)*U_inv)
-			#C(h_old, h)
+			C(h, (h_old + U_loc*h_n)*U_inv)
+			C(h_old, h)
 		}
 	?>
 }
@@ -283,7 +283,7 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	SetEquilibriumHeat(h_eq, H, rho, u);
 
 	for (int i = 0; i < 9; i++) {
-		h[i] = -h[i] + 2*h_eq[i]; // ABB: reverse to obtain zero temperature: h[i] = -h[i]
+		h[i] = -h[i] + 2*h_eq[i]; // #TODO: make bounce back first!!! 
 	}
 	real_t h2 = <?R C(sum(h)) ?>;
 	AddToHeatSource(h2-h1);

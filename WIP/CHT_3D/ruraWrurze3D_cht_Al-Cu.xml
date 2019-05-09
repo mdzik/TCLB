@@ -13,25 +13,25 @@
 	<Params	material_density="1.0kg/m3" gauge="1E-3"/>
 
   </Units>
-	<Geometry nx="32m" ny="32m" nz="32m" >
+	<Geometry nx="32m" ny="32m" nz="4m" >
       <CM><Box/></CM>    
      	<HeaterDirichletTemperature name="dirichlet_hot"> 
             <Box />
         </HeaterDirichletTemperature>
 
 		<None mask="ADDITIONALS_HEAT">
-			<Sphere ny="30m" nx="30m" nz="30m" dx="1m" dy="1m" dz="30m"/>
+			<Cylinder ny="30m" nx="30m" dx="1m" dy="1m" nz="4m"/>
 		</None>
 
         <HeaterDirichletTemperature name="dirichlet_cold"> 
-        	<Sphere ny="8m" nx="8m" nz="8m" dx="12m" dy="12m" dz="12m"/>
+        	<Cylinder ny="8m" nx="8m" dx="12m" dy="12m" nz="4m"/>
         </HeaterDirichletTemperature>
 
       	<DarcySolid name="darcy_solid_region">
-        	<Sphere ny="20m" nx="20m" nz="20m" dx="6m" dy="6m" dz="6m"/>
+        	<Cylinder ny="20m" nx="20m" dx="6m" dy="6m" nz="4m"/>
       	</DarcySolid>
         <None name="material_A_region">
-        	<Sphere ny="20m" nx="20m" nz="20m" dx="6m" dy="6m" dz="6m"/>
+        	<Cylinder ny="20m" nx="20m" dx="6m" dy="6m" nz="4m"/>
         </None>        
 	</Geometry>
     <Model>
@@ -56,8 +56,8 @@
     </Model> 
 
 <!-- <Solve Iterations="10" > <VTK Iterations="1"/> </Solve> -->
-<Failcheck Iterations="10000" nx="32m" ny="32m" nz="32m" />
+<Failcheck Iterations="100" nx="32m" ny="32m" nz="4m" />
 <TXT Iterations="100000" what="T,U"/>
 <Log Iterations="100000"/>
-<Solve Iterations="500000"> <VTK Iterations="100000"/> </Solve>
+<Solve Iterations="500000"> <VTK Iterations="1"/> </Solve>
 </CLBConfig>

@@ -7,6 +7,7 @@
 	<Units>
     <Params size="1m" gauge="4"/>
 
+	<!-- <Params nu="20.92e-6m2/s" gauge="1e-6"/> -->
     <Params conductivity="1.0W/m/K" gauge="1E-3"/> 
 	<Params cp="1.0J/kg/K" gauge="1E-3"/>
 	<Params	material_density="1.0kg/m3" gauge="1E-3"/>
@@ -45,9 +46,9 @@
 			cp-material_A_region="385J/kg/K"
 			material_density-material_A_region="8940kg/m3"
 
-	        InitTemperature="0.0"
-	        InitTemperature-dirichlet_hot="1.0"
-	        InitTemperature-dirichlet_cold="0.0"
+	        InitTemperature="0.0K"
+	        InitTemperature-dirichlet_hot="1.0K"
+	        InitTemperature-dirichlet_cold="0.0K"
 
 	        />
 	    <Params />
@@ -55,8 +56,8 @@
     </Model> 
 
 <!-- <Solve Iterations="10" > <VTK Iterations="1"/> </Solve> -->
-<Failcheck Iterations="10000" nx="32m" ny="32m" />
+<Failcheck Iterations="100" nx="32m" ny="32m" />
 <TXT Iterations="100000" what="T,U"/>
 <Log Iterations="100000"/>
-<Solve Iterations="500000"> <VTK Iterations="100000"/> </Solve>
+<Solve Iterations="100"> <VTK Iterations="1"/> </Solve>
 </CLBConfig>
