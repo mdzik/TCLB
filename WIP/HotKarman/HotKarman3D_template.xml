@@ -63,7 +63,7 @@
         <Params/>
     </Model>
 
-<Failcheck Iterations="50000" nx="1200" ny="150" nz="50" />
+<Failcheck Iterations="50000" nx="1000" ny="150" nz="50" />
 <TXT Iterations="50000" what="T,U"/>
 <Log Iterations="1000"/>
 <Solve Iterations="750000"> <VTK Iterations="10000"/> </Solve>

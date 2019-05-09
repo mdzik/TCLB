@@ -8,8 +8,8 @@
     # tab$xml = paste0(tab$name,".xml")
     tab$name = paste0("HotKarman2D_template", "_nu_",tab$nu,"_k_",tab$k)
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
-    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
-    #tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name,"/"))
+    #tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+    tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name,"/"))
 
     write.csv(tab, "HotKarman2D_template.csv", row.names=FALSE)
     for (i in 1:nrow(tab)) {
@@ -65,7 +65,7 @@
         <Params VelocityX="1.0E-02" />
     </Model>
 
-<Failcheck Iterations="50000" nx="1200" ny="150"/>
+<Failcheck Iterations="50000" nx="1000" ny="150"/>
 <TXT Iterations="50000" what="T,U"/>
 <Log Iterations="1000"/>
 <Solve Iterations="750000"> <VTK Iterations="10000"/> </Solve>
