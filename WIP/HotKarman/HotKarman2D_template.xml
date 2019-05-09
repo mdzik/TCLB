@@ -8,8 +8,8 @@
     # tab$xml = paste0(tab$name,".xml")
     tab$name = paste0("HotKarman2D_template", "_nu_",tab$nu,"_k_",tab$k)
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
-    tab$output = paste0(paste0("output/",dir_name,"/",tab$name))
-    #tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name))
+    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+    #tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name,"/"))
 
     write.csv(tab, "HotKarman2D_template.csv", row.names=FALSE)
     for (i in 1:nrow(tab)) {
@@ -17,10 +17,11 @@
         print(xml)
         sink(xml) # save to a .xml file
 ?>
-<CLBConfig version="2.0" output="<?%s output ?>">
-<!-- <CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/HotKarman2D_template/"> -->
+
 <?xml version="1.0"?>
 <!-- <CLBConfig version="2.0" output="output/HotKarman2D_template/"> -->
+<CLBConfig version="2.0" output="<?%s output ?>">
+<!-- <CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/HotKarman2D_template/"> -->q
     <Geometry nx="1000" ny="150">
       <CM><Box /></CM>    
         <CM><Box/></CM>
@@ -61,6 +62,7 @@
             material_density="1"
             />
         <Params/>
+        <Params VelocityX="1.0E-02" />
     </Model>
 
 <Failcheck Iterations="50000" nx="1200" ny="150"/>
