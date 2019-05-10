@@ -282,8 +282,22 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	real_t h_eq[9];
 	SetEquilibriumHeat(h_eq, H, rho, u);
 
+	real_t tmp;
+	tmp = h[6];
+	h[6] = h[8];
+	h[8] = tmp;
+	tmp = h[2];
+	h[2] = h[4];
+	h[4] = tmp;
+	tmp = h[1];
+	h[1] = h[3];
+	h[3] = tmp;
+	tmp = h[5];
+	h[5] = h[7];
+	h[7] = tmp;
+
 	for (int i = 0; i < 9; i++) {
-		h[i] = -h[i] + 2*h_eq[i]; // #TODO: make bounce back first!!! 
+		h[i] = -h[i] + 2*h_eq[i]; 
 	}
 	real_t h2 = <?R C(sum(h)) ?>;
 	AddToHeatSource(h2-h1);
@@ -380,6 +394,7 @@ CudaDeviceFunction void BounceBack()
 	tmp = f[5];
 	f[5] = f[7];
 	f[7] = tmp;
+
 	tmp = h[6];
 	h[6] = h[8];
 	h[8] = tmp;

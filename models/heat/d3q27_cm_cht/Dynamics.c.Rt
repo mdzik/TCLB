@@ -294,20 +294,20 @@ CudaDeviceFunction void EVelocity()
 	<?R #ZouHe(EQ, 1, 1, "velocity") ?>  // TODO: this doesnt work
 
 
- 	real_t Jx, Jy, Jz, rho;
-	rho  = ( -f022 - f012 - f002 - f021 - f011 - f001 - f020 - f010 - f000 + ( -f112 - f121 - f122 - f111 - f102 - f101 - f120 - f110 - f100 )*2. ) / ( -1 - VelocityX );
-	Jx = VelocityX*rho;
-	Jy  = ( f022 - f012 + f021 - f011 + f020 - f010 ) / ( 1/3. );
-	Jz  = ( f022 + f012 + f002 - f021 - f011 - f001 )*3. ;
-	f200 = f100 - Jx*4./9.;
-	f210 = f120 + ( Jy - Jx )/9.;
-	f220 = f110 + ( -Jy - Jx )/9.;
-	f201 = f102 + ( Jz - Jx )/9.;
-	f211 = f122 + ( Jz + Jy - Jx )/36.;
-	f221 = f112 + ( Jz - Jy - Jx )/36.;
-	f202 = f101 + ( -Jz - Jx )/9.;
-	f212 = f121 + ( -Jz + Jy - Jx )/36.;
-	f222 = f111 + ( -Jz - Jy - Jx )/36.;
+ 	// real_t Jx, Jy, Jz, rho;
+	// rho  = ( -f022 - f012 - f002 - f021 - f011 - f001 - f020 - f010 - f000 + ( -f112 - f121 - f122 - f111 - f102 - f101 - f120 - f110 - f100 )*2. ) / ( -1 - VelocityX );
+	// Jx = VelocityX*rho;
+	// Jy  = ( f022 - f012 + f021 - f011 + f020 - f010 ) / ( 1/3. );
+	// Jz  = ( f022 + f012 + f002 - f021 - f011 - f001 )*3. ;
+	// f200 = f100 - Jx*4./9.;
+	// f210 = f120 + ( Jy - Jx )/9.;
+	// f220 = f110 + ( -Jy - Jx )/9.;
+	// f201 = f102 + ( Jz - Jx )/9.;
+	// f211 = f122 + ( Jz + Jy - Jx )/36.;
+	// f221 = f112 + ( Jz - Jy - Jx )/36.;
+	// f202 = f101 + ( -Jz - Jx )/9.;
+	// f212 = f121 + ( -Jz + Jy - Jx )/36.;
+	// f222 = f111 + ( -Jz - Jy - Jx )/36.;
 }
 
 
@@ -437,6 +437,35 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	vector_t u = getU();
 
 	real_t H = rho*cp*T;
+
+	real_t tmp;
+	tmp = h[10];
+	h[10] = h[7];
+	h[7] = tmp;
+	tmp = h[12];
+	h[12] = h[13];
+	h[13] = tmp;
+	tmp = h[8];
+	h[8] = h[9];
+	h[9] = tmp;
+	tmp = h[16];
+	h[16] = h[17];
+	h[17] = tmp;
+	tmp = h[5];
+	h[5] = h[6];
+	h[6] = tmp;
+	tmp = h[3];
+	h[3] = h[4];
+	h[4] = tmp;
+	tmp = h[15];
+	h[15] = h[18];
+	h[18] = tmp;
+	tmp = h[1];
+	h[1] = h[2];
+	h[2] = tmp;
+	tmp = h[11];
+	h[11] = h[14];
+	h[14] = tmp;
 
 	<?R C(PV(c("const int h_size")), h_pop_size) ?>
 	real_t h_eq[h_size];

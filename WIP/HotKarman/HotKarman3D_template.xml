@@ -8,7 +8,8 @@
     # tab$xml = paste0(tab$name,".xml")
     tab$name = paste0("HotKarman3D_template", "_nu_",tab$nu,"_k_",tab$k)
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
-    tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name))
+    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+    #tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/"))
 
     write.csv(tab, "HotKarman3D_template.csv", row.names=FALSE)
     for (i in 1:nrow(tab)) {
@@ -39,8 +40,8 @@
         </HeaterDirichletTemperature>  
 
         <MeasurmentArea>
-            <Cylinder dx="285" dy="60" nx="30" ny="30" nz="50"/>
-            <!-- <Outlet/> -->
+            <!-- <Cylinder dx="285" dy="60" nx="30" ny="30" nz="50"/> -->
+            <Outlet/>
         </MeasurmentArea>
     </Geometry>
 
