@@ -34,24 +34,20 @@
 
 CudaDeviceFunction real_t getm00_F(){
 	real_t m00_F = <?R C(sum(f)) ?>;
-	return m00_F/material_density; // TODO: or return m00_F; 
+	return m00_F;
 }
 
 CudaDeviceFunction real_t getcp(){
 	return cp;
 }
 
-CudaDeviceFunction real_t getmaterial_density(){
-	return material_density;
-}
 
 CudaDeviceFunction real_t getconductivity(){
 	return conductivity;
 }
 
 CudaDeviceFunction real_t getRho(){
-	real_t m00_F = <?R C(sum(f)) ?>;
-	return m00_F; // TODO: return m00_F* material_density; 
+	return material_density;
 }
 
 CudaDeviceFunction real_t getT(){
@@ -66,12 +62,21 @@ CudaDeviceFunction real_t getH(){
 }
 
 CudaDeviceFunction vector_t getRawU(){
-	real_t rho = getRho();
+
+	real_t m00_F = getm00_F();
 	vector_t u;
   <?R C(PV(c("u.x","u.y", "u.z")), f %*% U) ?>
-	u.x /= rho;
-	u.y /= rho;
+	u.x /= m00_F;
+	u.y /= m00_F;
 	u.z = 0;
+
+
+	// real_t rho = getRho();
+	// vector_t u;
+ //  <?R C(PV(c("u.x","u.y", "u.z")), f %*% U) ?>
+	// u.x /= rho;
+	// u.y /= rho;
+	// u.z = 0;
 	return u;
 }
 
@@ -79,7 +84,8 @@ CudaDeviceFunction vector_t getU()
 {
 	real_t localTemperature = getT();
 	vector_t u = getRawU();
-	real_t rho = getRho();
+	// real_t rho = getRho();
+	real_t rho = getm00_F();
 	vector_t Force = getForce(localTemperature, rho);
 	u.x += Force.x/(2*rho);
 	u.y += Force.y/(2*rho);
@@ -116,11 +122,11 @@ CudaDeviceFunction void WPressure()
 
 CudaDeviceFunction void WVelocity()
 {
-	real_t rho, Rx;
+	real_t m00_F, Rx;
 	vector_t u;
 	u.x=VelocityX; u.y=VelocityY; u.z=0;
-	rho = ( f[0] + f[2] + f[4] + 2.*(f[3] + f[7] + f[6]) ) / (1. - u.x);
-	Rx = rho * u.x;
+	m00_F = ( f[0] + f[2] + f[4] + 2.*(f[3] + f[7] + f[6]) ) / (1. - u.x);
+	Rx = m00_F * u.x;
 	f[1] = f[3] + (2./3.) * Rx;
 	f[5] = f[7] + (1./6.) * Rx + (1./2.)*(f[4] - f[2]);
 	f[8] = f[6] + (1./6.) * Rx + (1./2.)*(f[2] - f[4]);
@@ -129,6 +135,7 @@ CudaDeviceFunction void WVelocity()
 	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 
+	real_t rho = getRho();
 	real_t T = InitTemperature;
 	real_t H = rho*cp*T;
 
@@ -143,6 +150,7 @@ CudaDeviceFunction void WVelocity()
 
 CudaDeviceFunction void EPressure()
 {
+	
 		<?R 
 	 			#ZouHe(EQ, 1, -1, "pressure")
 				#ZouHeRewrite(EQ,   f, c(1,0), type="pressure")
@@ -159,30 +167,34 @@ CudaDeviceFunction void EPressure()
 
 		//ZouHeRewrite(EQ,   f, c(1,0), type="pressure") gives
 		/********* pressure-type Zou He boundary condition  ****************/
-		real_t rho = (material_density + Pressure*3.);  // TODO: why pressure +1, shall add material density?!
-		real_t Rx  =  -rho + f[4] + f[2] + f[0] + ( f[8] + f[5] + f[1] )*2. ;
-		real_t Ry  =  ( f[4] - f[2] )*3. ;
-		f[3] = f[1] - Rx*2./3.;
-		f[6] = f[8] + ( Ry - Rx )/6.;
-		f[7] = f[5] + ( -Ry - Rx )/6.;
-						
-		// equilibrium scheme for Heat-BC - don't care and impose rho*Teq
-		// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
-		// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+	// real_t m00 = (material_density + Pressure*3.);  // TODO: why pressure +1, shall add material density?!
+	real_t m00_F = (1 + Pressure*3.);
+	real_t Rx  =  -m00_F + f[4] + f[2] + f[0] + ( f[8] + f[5] + f[1] )*2. ;
+	real_t Ry  =  ( f[4] - f[2] )*3. ;
+	f[3] = f[1] - Rx*2./3.;
+	f[6] = f[8] + ( Ry - Rx )/6.;
+	f[7] = f[5] + ( -Ry - Rx )/6.;
+					
+	// equilibrium scheme for Heat-BC - don't care and impose rho*Teq
+	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 
-		real_t T = InitTemperature;
-		vector_t u;
-		u.x= Rx/rho; u.y=Ry/rho; u.z=0;  
+	real_t T = InitTemperature;
+	vector_t u;
+	
+	u.x= Rx/m00_F; u.y=Ry/m00_F; u.z=0;  
+	// u.x= Rx/rho; u.y=Ry/rho; u.z=0;  
 
-		real_t H = rho*cp*T;
+	real_t rho = getRho();
+	real_t H = rho*cp*T;
 
-		<?R C(PV(c("const int h_size")), h_pop_size) ?>
-		real_t h_eq[h_size];
-		SetEquilibriumHeat(h_eq, H, rho, u); 
+	<?R C(PV(c("const int h_size")), h_pop_size) ?>
+	real_t h_eq[h_size];
+	SetEquilibriumHeat(h_eq, H, rho, u); 
 
-		for (int i = 0; i < h_size; i++) {
-			h[i] = h_eq[i];
-		}
+	for (int i = 0; i < h_size; i++) {
+		h[i] = h_eq[i];
+	}
 }
 
 //	BOUNDARY CONDITIONS:
@@ -219,7 +231,6 @@ CudaDeviceFunction void ENeumann()
 	?>
 }
 #endif
-
 CudaDeviceFunction void HeaterSource()
 {
 	real_t h1 = <?R C(sum(h)) ?>;
@@ -246,11 +257,11 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 
-	real_t h1 = <?R 	C(sum(h)) ?>;
+	real_t h1 = <?R C(sum(h)) ?>;
 
 	real_t T = InitTemperature;
 	real_t rho = getRho();
-	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU(); 
+	vector_t u = getU();
 	
 	real_t H = rho*cp*T;
 	real_t h_eq[9];
@@ -266,6 +277,8 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 
 CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 {
+
+
 	// Anti-Bounce-Back Scheme
 	// see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
@@ -274,7 +287,7 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 
 	real_t T = InitTemperature;
 	real_t rho = getRho();
-	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU(); 
+	vector_t u = getU();
 
 	real_t H = rho*cp*T;
 	real_t h_eq[9];
@@ -407,7 +420,7 @@ CudaDeviceFunction void BounceBack()
 	h[7] = tmp;
 }
 
-CudaDeviceFunction void SetEquilibriumFluid(real_t f_in[9], real_t rho, vector_t u) 
+CudaDeviceFunction void SetEquilibriumFluid(real_t f_in[9], real_t m00, vector_t u) 
 {
 	// #TODO: with Force?
 	real_t uxuy = u.x*u.y;
@@ -417,15 +430,15 @@ CudaDeviceFunction void SetEquilibriumFluid(real_t f_in[9], real_t rho, vector_t
 	real_t temp[9];
 
 	//equilibrium in central moments space
-	f_in[0] = rho;
+	f_in[0] = m00;
 	f_in[1] = 0;
 	f_in[2] = 0;
-	f_in[3] = 1/3.*rho;
-	f_in[4] = 1/3.*rho;
+	f_in[3] = 1/3.*m00;
+	f_in[4] = 1/3.*m00;
 	f_in[5] = 0;
 	f_in[6] = 0;
 	f_in[7] = 0;
-	f_in[8] = 1/9.*rho;
+	f_in[8] = 1/9.*m00;
 
 	//back to raw moments
 	temp[0] = f_in[0];
@@ -496,11 +509,12 @@ CudaDeviceFunction void SetEquilibriumHeat(real_t h_in[9], real_t H, real_t rho,
 
 
 CudaDeviceFunction void Init() {
-	real_t rho = 1.0*material_density;
+	real_t rho = material_density;
 	real_t H = rho*cp*InitTemperature;
 	vector_t u; u.x = VelocityX; u.y = VelocityY; u.z = 0;
 
-	SetEquilibriumFluid(f,rho,u);
+	real_t m00_F = 1.0;
+	SetEquilibriumFluid(f,m00_F,u);
 	SetEquilibriumHeat(h,H,rho,u);
 
 	#ifdef OPTIONS_OutFlow
@@ -667,22 +681,23 @@ CudaDeviceFunction vector_t getForce(real_t localTemp, real_t rho)
 CudaDeviceFunction void CollisionCM()
 {
 	real_t localTemperature = getT();
+	real_t m00_F = getm00_F();
 	real_t rho = getRho();
 
-	vector_t Force = getForce(localTemperature, rho);
+	vector_t Force = getForce(localTemperature, m00_F);
 	vector_t u = getRawU();
-	u.x += Force.x/(2*rho);
-	u.y += Force.y/(2*rho);
+	u.x += Force.x/(2*m00_F);
+	u.y += Force.y/(2*m00_F);
 
 
 	// add Darcy force to stop flow within solid regions
 	if ((NodeType & NODE_ADDITIONALS) == NODE_DarcySolid) 
 	{
-		vector_t fDarcyStoper = get_fDarcyStoper(rho,  u);
+		vector_t fDarcyStoper = get_fDarcyStoper(m00_F,  u);
 		Force.x += fDarcyStoper.x;
 		Force.y += fDarcyStoper.y;
 	} 
-	relax_and_collide_hydro_with_F(f, rho, omega_nu, u, Force);	
+	relax_and_collide_hydro_with_F(f, m00_F, omega_nu, u, Force);	
 
 	#ifdef OPTIONS_OutFlow
 		U = u.x; // for convective outlet BC

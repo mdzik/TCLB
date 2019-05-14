@@ -315,7 +315,7 @@ CudaDeviceFunction void EPressure()
 {
 	real_t Jx, Jy, Jz, rho;
 	rho = (material_density + Pressure*3.); // TODO: *material_density; ? why pressure + 1?
-
+// rho = (1 + Pressure*3.);
 	Jx  = ( -f022 - f012 - f002 - f021 - f011 - f001 - f020 - f010 + rho - f000 + ( -f112 - f121 - f122 - f111 - f102 - f101 - f120 - f110 - f100 )*2. ) / ( -1 );
 	Jy  = ( f022 - f012 + f021 - f011 + f020 - f010 ) / ( 1/3. );
 	Jz  = ( f022 + f012 + f002 - f021 - f011 - f001 )*3. ;
@@ -409,8 +409,10 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 
 	real_t T = InitTemperature;
 	real_t rho = getRho();
-	vector_t u = getU();
-	
+	// vector_t u = getU();
+
+	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU(); 
+
 	real_t H = rho*cp*T;
 
 	<?R C(PV(c("const int h_size")), h_pop_size) ?>
@@ -431,12 +433,6 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	// see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 	real_t h1 = <?R C(sum(h)) ?>;
-
-	real_t T = InitTemperature;
-	real_t rho = getRho();
-	vector_t u = getU();
-
-	real_t H = rho*cp*T;
 
 	real_t tmp;
 	tmp = h[10];
@@ -467,6 +463,11 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	h[11] = h[14];
 	h[14] = tmp;
 
+	real_t T = InitTemperature;
+	real_t rho = getRho();
+	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU(); 
+	real_t H = rho*cp*T;
+	
 	<?R C(PV(c("const int h_size")), h_pop_size) ?>
 	real_t h_eq[h_size];
 	SetEquilibriumHeat(h_eq, H, rho, u);
@@ -517,9 +518,9 @@ CudaDeviceFunction void Run() {
 	}
 
 	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterDirichletTemperature) {
-		//HeatDirichletEquilibriumScheme();
+		HeatDirichletEquilibriumScheme();
 		// alternatively:
-		HeatDirichletAntiBounceBackScheme();
+		//HeatDirichletAntiBounceBackScheme();
 	}
 
 	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterSource) {
