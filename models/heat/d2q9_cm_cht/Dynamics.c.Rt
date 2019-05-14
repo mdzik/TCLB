@@ -247,8 +247,19 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 
 	real_t h1 = <?R 	C(sum(h)) ?>;
-
 	real_t T = InitTemperature;
+	if(PeriodX > 0 && Y >= PeriodY){ 
+		// T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark 
+		// For example with zeroths in 0.5, 63.5
+
+		real_t x1 = 0.5;
+		real_t x2 = PeriodX-0.5;
+		real_t xm = 0.5*(x1+x2);
+		real_t ym = 1.0;
+		real_t a = ym / ((xm - x1)*(xm-x2));
+		T = a*(X - x1)*(X - x2);
+	}
+
 	real_t rho = getRho();
 	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU(); 
 	
@@ -270,9 +281,20 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	// see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 
-	real_t h1 = <?R 	C(sum(h)) ?>;
+	real_t h1 = <?R C(sum(h)) ?>;
 
 	real_t T = InitTemperature;
+	if(PeriodX > 0 && Y >= PeriodY){
+		// T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark
+		// For example with zeroths in 1, 63
+		real_t x1 = 1.0;
+		real_t x2 = PeriodX-1.0;
+		real_t xm = 0.5*(x1+x2);
+		real_t ym = 1.0;
+		real_t a = ym / ((xm - x1)*(xm-x2));
+		T = a*(X - x1)*(X - x2);
+	}
+
 	real_t rho = getRho();
 	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU(); 
 

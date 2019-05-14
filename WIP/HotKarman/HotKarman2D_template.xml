@@ -1,6 +1,6 @@
 
 <?R
-    tab = expand.grid(nu=c(3e-02,3e-03,3e-04), k=c(3e-01, 3e-02,3e-03))
+    tab = expand.grid(nu=c(3e-02,3e-03,3e-04), k=c(3e-01,3e-02,3e-03,3e-04))
 
     dir_name <- "batch_HotKarman2D"
     dir.create(dir_name)
@@ -65,10 +65,10 @@
         <Params VelocityX="1.0E-02" />
     </Model>
 
-<Failcheck Iterations="50000" nx="1000" ny="150"/>
+<Failcheck Iterations="1000" nx="1000" ny="150"/>
 <TXT Iterations="50000" what="T,U"/>
 <Log Iterations="1000"/>
-<Solve Iterations="750000"> <VTK Iterations="10000"/> </Solve>
+<Solve Iterations="750000"> <VTK Iterations="500"/> </Solve>
 </CLBConfig>
 
 <?R
