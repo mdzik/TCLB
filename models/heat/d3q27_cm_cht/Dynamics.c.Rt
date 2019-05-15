@@ -434,34 +434,37 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 	real_t h1 = <?R C(sum(h)) ?>;
 
-	real_t tmp;
-	tmp = h[10];
-	h[10] = h[7];
-	h[7] = tmp;
-	tmp = h[12];
-	h[12] = h[13];
-	h[13] = tmp;
-	tmp = h[8];
-	h[8] = h[9];
-	h[9] = tmp;
-	tmp = h[16];
-	h[16] = h[17];
-	h[17] = tmp;
-	tmp = h[5];
-	h[5] = h[6];
-	h[6] = tmp;
-	tmp = h[3];
-	h[3] = h[4];
-	h[4] = tmp;
-	tmp = h[15];
-	h[15] = h[18];
-	h[18] = tmp;
-	tmp = h[1];
-	h[1] = h[2];
-	h[2] = tmp;
-	tmp = h[11];
-	h[11] = h[14];
-	h[14] = tmp;
+	if ((NodeType & NODE_BOUNDARY) != NODE_Wall) // in case of wall, bounce back procedure has been already done
+	{
+		real_t tmp;
+		tmp = h[10];
+		h[10] = h[7];
+		h[7] = tmp;
+		tmp = h[12];
+		h[12] = h[13];
+		h[13] = tmp;
+		tmp = h[8];
+		h[8] = h[9];
+		h[9] = tmp;
+		tmp = h[16];
+		h[16] = h[17];
+		h[17] = tmp;
+		tmp = h[5];
+		h[5] = h[6];
+		h[6] = tmp;
+		tmp = h[3];
+		h[3] = h[4];
+		h[4] = tmp;
+		tmp = h[15];
+		h[15] = h[18];
+		h[18] = tmp;
+		tmp = h[1];
+		h[1] = h[2];
+		h[2] = tmp;
+		tmp = h[11];
+		h[11] = h[14];
+		h[14] = tmp;
+	}
 
 	real_t T = InitTemperature;
 	real_t rho = getRho();
@@ -481,7 +484,7 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 
 CudaDeviceFunction void Run() {
 	vector_t p1;
-	if((NodeType & NODE_BODY) == NODE_MeasurmentArea) {
+	if((NodeType & NODE_OBJECTIVE) == NODE_MeasurmentArea) {
 		<?R C(PV(c("p1.x","p1.y", "p1.z")), f %*% U) ?>
 	}
 
@@ -527,7 +530,7 @@ CudaDeviceFunction void Run() {
 		HeaterSource();
 	}	
 
-	if((NodeType & NODE_BODY) == NODE_MeasurmentArea) {
+	if((NodeType & NODE_OBJECTIVE) == NODE_MeasurmentArea) {
 		vector_t h2,p2;
 		<?R C(PV(c("h2.x","h2.y", "h2.z")), h %*% UforHeat) ?>
 		// Summing the heat flux (both convective and diffusive) before/after collision

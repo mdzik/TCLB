@@ -73,7 +73,7 @@ AddSetting(name="PeriodX", default="0", comment='Number of cells in x direction'
 AddSetting(name="PeriodY", default="0", comment='Number of effective cells in y direction')
 
 # Boundary things
-AddNodeType("MeasurmentArea", "BODY")
+AddNodeType("MeasurmentArea", "OBJECTIVE")
 AddNodeType(name="DarcySolid", group="ADDITIONALS")
 AddNodeType(name="Smoothing", group="ADDITIONALS")
 AddNodeType(name="HeaterDirichletTemperature", group="ADDITIONALS_HEAT")
@@ -81,7 +81,7 @@ AddNodeType(name="HeaterSource", group="ADDITIONALS_HEAT")
 AddNodeType(name="HeaterNeumannHeatFlux", group="ADDITIONALS_HEAT")
 AddNodeType("CM","COLLISION")
 
-#	Globals - table of global integrals that can be monitored and optimized
+# Globals - table of global integrals that can be monitored and optimized
 AddGlobal(name="FDrag",    comment='Force exerted on body in X-direction', unit="N")
 AddGlobal(name="FLift",    comment='Force exerted on body in Y-direction', unit="N")
 

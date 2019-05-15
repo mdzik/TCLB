@@ -2,7 +2,7 @@
 <?R
     tab = expand.grid(PeriodX=c(32,64,128,256))
 
-    dir_name <- "batch_laplace_test"
+    dir_name <- "batch_laplace_benchmark"
     dir.create(dir_name)
     tab$name = paste0(dir_name,"/laplace_template", "_nx_",tab$PeriodX,"_ny_",tab$PeriodX+2)
     tab$xml = paste0(tab$name,".xml")
@@ -15,7 +15,7 @@
         sink(xml) # save to a .xml file
 ?>
 
-<!-- <CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/bubble_cm_template/"> -->
+<!-- <CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/laplace_template/"> -->
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/laplace_template/">
     <Geometry nx="<?%f PeriodX ?>" ny="<?%f PeriodX +2 ?>" >

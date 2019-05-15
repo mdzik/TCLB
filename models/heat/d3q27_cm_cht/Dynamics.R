@@ -92,7 +92,7 @@ if(Options$DEBUG){
 }
 
 # Boundary things
-AddNodeType("MeasurmentArea", "BODY")
+AddNodeType("MeasurmentArea", "OBJECTIVE")
 AddNodeType(name="DarcySolid", group="ADDITIONALS")
 AddNodeType(name="Smoothing", group="ADDITIONALS")
 AddNodeType(name="HeaterDirichletTemperature", group="ADDITIONALS_HEAT")

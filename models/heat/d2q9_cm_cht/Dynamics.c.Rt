@@ -289,6 +289,10 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 		// For example with zeroths in 1, 63
 		real_t x1 = 1.0;
 		real_t x2 = PeriodX-1.0;
+
+		// real_t x1 = 0.5;
+		// real_t x2 = PeriodX-0.5;
+
 		real_t xm = 0.5*(x1+x2);
 		real_t ym = 1.0;
 		real_t a = ym / ((xm - x1)*(xm-x2));
@@ -302,19 +306,22 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	real_t h_eq[9];
 	SetEquilibriumHeat(h_eq, H, rho, u);
 
-	real_t tmp;
-	tmp = h[6];
-	h[6] = h[8];
-	h[8] = tmp;
-	tmp = h[2];
-	h[2] = h[4];
-	h[4] = tmp;
-	tmp = h[1];
-	h[1] = h[3];
-	h[3] = tmp;
-	tmp = h[5];
-	h[5] = h[7];
-	h[7] = tmp;
+	if ((NodeType & NODE_BOUNDARY) != NODE_Wall) // in case of wall, bounce back procedure has been already done
+	{
+		real_t tmp;
+		tmp = h[6];
+		h[6] = h[8];
+		h[8] = tmp;
+		tmp = h[2];
+		h[2] = h[4];
+		h[4] = tmp;
+		tmp = h[1];
+		h[1] = h[3];
+		h[3] = tmp;
+		tmp = h[5];
+		h[5] = h[7];
+		h[7] = tmp;
+	}
 
 	for (int i = 0; i < 9; i++) {
 		h[i] = -h[i] + 2*h_eq[i]; 
@@ -324,13 +331,13 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 }
 
 
-CudaDeviceFunction void Run() {
+CudaDeviceFunction void Run(){
 	vector_t p1;
-	if((NodeType & NODE_BODY) == NODE_MeasurmentArea) {
+	if((NodeType & NODE_OBJECTIVE) == NODE_MeasurmentArea) {
 		<?R C(PV(c("p1.x","p1.y", "p1.z")), f %*% U) ?>
 	}
 
-    switch (NodeType & NODE_BOUNDARY) {
+    switch (NodeType & NODE_BOUNDARY){
 		case NODE_EVelocity:
 			EVelocity();
 			break;
@@ -363,16 +370,16 @@ CudaDeviceFunction void Run() {
 	}
 
 	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterDirichletTemperature) {
-		HeatDirichletEquilibriumScheme();
+		// HeatDirichletEquilibriumScheme();
 		// alternatively:
-		// HeatDirichletAntiBounceBackScheme();
+		HeatDirichletAntiBounceBackScheme();
 	}
 
 	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterSource) {
 		HeaterSource();
 	}
 	
-	if((NodeType & NODE_BODY) == NODE_MeasurmentArea) {
+	if((NodeType & NODE_OBJECTIVE) == NODE_MeasurmentArea) {
 		vector_t h2,p2;
 		<?R C(PV(c("h2.x","h2.y", "h2.z")), h %*% U) ?>
 		// Summing the heat flux (both convective and diffusive) before/after collision
