@@ -1,5 +1,5 @@
 <?R
-    tab = expand.grid(sizer=c(1,2,4,8), k_outer_material=c(0.01,0.001))
+    tab = expand.grid(sizer=c(1,2,4,8), k_outer_material=c(0.1,0.01,0.001,0.0001))
 
     dir_name <- "batch_ruraWrurze_variable_k"
     dir.create(dir_name)

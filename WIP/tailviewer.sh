@@ -1,7 +1,33 @@
+#!/bin/bash
+set -e
 
-for i in slurm*
-do
-	echo "=== reading tail of $i ==="
-	tail --lines 5 $i
-done
+#this reads tails of all logs from given dir
 
+DIRNAME=$1
+
+if test -d $DIRNAME
+then
+    for i in $DIRNAME/*.log
+    do
+    	if test -f $i
+		then
+			echo "=== reading tail of $i ==="
+			tail --lines 5 $i
+		else
+			echo -e "\n no local logs"
+		fi
+    done
+
+    for i in $DIRNAME/slurm*
+	do
+		if test -f $i
+		then
+			echo "=== reading tail of $j ==="
+			tail --lines 5 $i
+		else
+			echo -e "\n no slurm logs"
+		fi
+	done
+else
+	echo directory doesnt exists
+fi
