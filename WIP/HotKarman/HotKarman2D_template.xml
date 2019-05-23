@@ -1,6 +1,6 @@
 
 <?R
-    tab = expand.grid(nu=c(3e-02,3e-03,3e-04), k=c(3e-01,3e-02,3e-03,3e-04))
+    tab = expand.grid(nu=c(3e-02,3e-03,3e-04), k=c(3e-01,3e-02,3e-03,3e-04,3e-5))
 
     dir_name <- "batch_HotKarman2D"
     dir.create(dir_name)

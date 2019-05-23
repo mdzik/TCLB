@@ -251,12 +251,14 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 	if(PeriodX > 0 && Y >= PeriodY){ 
 		// For example with zeroths in 0.5, 63.5
 
-		real_t x1 = 0.5;
-		real_t x2 = PeriodX-0.5;
-		real_t xm = 0.5*(x1+x2);
-		real_t ym = 1.0;
-		real_t a = ym / ((xm - x1)*(xm-x2));
-		T = a*(X - x1)*(X - x2);
+		// real_t x1 = 0.5;
+		// real_t x2 = PeriodX-0.5;
+		// real_t xm = 0.5*(x1+x2);
+		// real_t ym = 1.0;
+		// real_t a = ym / ((xm - x1)*(xm-x2));
+		// T = a*(X - x1)*(X - x2);
+
+		T = sin(M_PI*(X-0.5)/(PeriodX-1.0));
 	}
 
 	real_t rho = getRho();
@@ -284,18 +286,17 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 
 	real_t T = InitTemperature;
 	if(PeriodX > 0 && Y >= PeriodY){
-		// T = -4.*X*(X-PeriodX)/(PeriodX*PeriodX); // Laplace Benchmark
 		// For example with zeroths in 1, 63
-		// real_t x1 = 1.0;
-		// real_t x2 = PeriodX-1.0;
 
-		real_t x1 = 0.5;
-		real_t x2 = PeriodX-0.5;
+		// real_t x1 = 0.5;
+		// real_t x2 = PeriodX-0.5;
 
-		real_t xm = 0.5*(x1+x2);
-		real_t ym = 1.0;
-		real_t a = ym / ((xm - x1)*(xm-x2));
-		T = a*(X - x1)*(X - x2);
+		// real_t xm = 0.5*(x1+x2);
+		// real_t ym = 1.0;
+		// real_t a = ym / ((xm - x1)*(xm-x2));
+		// T = a*(X - x1)*(X - x2);
+
+		T = sin(M_PI*(X-0.5)/(PeriodX-1.0));
 	}
 
 	real_t rho = getRho();
@@ -369,9 +370,9 @@ CudaDeviceFunction void Run(){
 	}
 
 	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterDirichletTemperature) {
-		HeatDirichletEquilibriumScheme();
+		// HeatDirichletEquilibriumScheme();
 		// alternatively:
-		// HeatDirichletAntiBounceBackScheme();
+		HeatDirichletAntiBounceBackScheme();
 	}
 
 	if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterSource) {
