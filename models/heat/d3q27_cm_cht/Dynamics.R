@@ -25,7 +25,7 @@ AddDensity(
 
 for (f in fname) AddField(f,dx=0,dy=0,dz=0) # Make f accessible also in present node (not only streamed)
 
-# recznie: AddDensity( name="h[0]", dx= 0, dy= 0, group="h")
+# Manually: AddDensity( name="h[0]", dx= 0, dy= 0, group="h")
 AddDensity(
 	# name = paste("h",1:19-1,sep=""),  # without brackets
 	name = paste("h[",1:19-1,"]",sep=""),
@@ -56,6 +56,8 @@ AddSetting(name="h_stability_enhancement", default=1.0, comment='magic stability
 
 # 	Inputs: General Thermal Properties
 AddSetting(name="InitTemperature", default=0, comment='Initial/Inflow temperature distribution', zonal=T)
+AddSetting(name="InitHeatFlux", default=0, comment='Initial/Inflow heat flux through boundary', zonal=T)
+
 
 # 	Inputs: Fluid Thermal Properties
 AddSetting(name="conductivity", default=0.16666666, comment='thermal conductivity of fluid (W/(m·K))', zonal=T)
@@ -99,6 +101,10 @@ AddNodeType(name="HeaterDirichletTemperature", group="ADDITIONALS_HEAT")
 AddNodeType(name="HeaterSource", group="ADDITIONALS_HEAT")
 AddNodeType(name="HeaterNeumannHeatFlux", group="ADDITIONALS_HEAT")
 AddNodeType("CM","COLLISION")
+
+# Benchmark things
+AddSetting(name="CylinderCenterX", default="0", comment='X coord of cylinder with imposed heat flux')
+AddSetting(name="CylinderCenterY", default="0", comment='Y coord of cylinder with imposed heat flux')
 
 ##########OPTIONAL VALUES##########
 

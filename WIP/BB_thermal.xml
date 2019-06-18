@@ -1,0 +1,43 @@
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/BB_thermal/">
+	<Geometry nx="64" ny="64" nz="3">
+      <CM><Box /></CM>    
+
+         <Wall mask="ALL" name="border" >
+            <Box ny="1"/>
+            <Box dy="-1"/>
+            <Box nx="1"/>
+            <Box dx="-1"/>
+        </Wall>
+
+        <HeaterDirichletTemperature  name="dirichlet_hot"> 
+          <Box dx="-2"/>
+        </HeaterDirichletTemperature>
+
+        <HeaterDirichletTemperature  name="dirichlet_cold"> 
+            <Box nx="2"/>
+        </HeaterDirichletTemperature>
+
+	</Geometry>
+    <Model>
+	    <Params
+	        k="0.16666666" 
+	        cp="1.0"
+
+	        InitTemperature="0.5"
+
+	        InitTemperature-dirichlet_hot="1.0"
+	        InitTemperature-dirichlet_cold="0.0"
+	        />
+	    <Params />
+
+    </Model> 
+
+<!-- <Solve Iterations="10" output="output/"> <VTK Iterations="1"/> </Solve> -->
+<Failcheck Iterations="10000" nx="64" ny="64" nz="3" />
+<!-- <TXT Iterations="50000" what="T,U"/> -->
+<Log Iterations="50000"/>
+<Solve Iterations="5000"> <VTK Iterations="100"/> </Solve>
+<Solve Iterations="100000"> <VTK Iterations="1000"/> </Solve>
+</CLBConfig>
