@@ -384,22 +384,23 @@ CudaDeviceFunction void ENeumann()
 }
 #endif
 
-CudaDeviceFunction void HeatFlux(real_t rho)
+CudaDeviceFunction void HeatFlux()
 {
-	<?R C(PV(c("const int h_size")), h_pop_size) ?>
-	real_t temp[h_size];
-
+	real_t rho = getRho();
 	real_t imposed_heat_flux= InitHeatFlux;
 	// real_t first_order_cm = -2.*imposed_heat_flux*h_stability_enhancement;
 	// real_t third_order_cm = -2/3.*imposed_heat_flux*h_stability_enhancement*h_stability_enhancement/(cp*rho);
 	real_t first_order_cm = imposed_heat_flux*h_stability_enhancement;
-	real_t third_order_cm = 1/3.*imposed_heat_flux*h_stability_enhancement*h_stability_enhancement/(cp*rho);
+	real_t third_order_cm = 1/3.*imposed_heat_flux*h_stability_enhancement*h_stability_enhancement/(rho*cp);
 
 	real_t dx = X - CylinderCenterX;
 	real_t dy = Y - CylinderCenterY;
 	real_t phi = atan2(dy,dx);
 	
 	// set the cm_heat_flux_cht_bc into the temp variables
+	<?R C(PV(c("const int h_size")), h_pop_size) ?>
+	real_t temp[h_size];
+
 	temp[0] = 0;
 	temp[1] = cos(phi)*first_order_cm; // x-flux: 100
 	temp[2] = sin(phi)*first_order_cm; // y-flux: 010
@@ -591,8 +592,7 @@ CudaDeviceFunction void Run() {
 			HeaterSource();
 			break;
 		case NODE_HeaterNeumannHeatFlux:
-			real_t rho = getRho();
-			HeatFlux(rho);
+			HeatFlux();
 			break;
 	}
 

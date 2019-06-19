@@ -37,6 +37,17 @@ AddDensity(
 )
 
 
+# # initialisation
+# AddStage("BaseInit"  , "Init_distributions" , save=Fields$group %in% c("f","h","Vel"))
+
+# # iteration
+# AddStage("HydroIter" , "calcHydroIter"      , save=Fields$group %in% c("g","h","Vel","nw") , load=DensityAll$group %in% c("g","h","Vel","nw"))
+# AddStage("HeatIter"  , "calcHeatIter"		, save=Fields$group %in% c("PF")			   , load=DensityAll$group %in% c("g","h","Vel","nw"))
+
+
+# AddAction("Init"     , c("BaseInit"))
+# AddAction("Iteration", c("HydroIter", "HeatIter"))
+
 #	Inputs: Flow Properties
 AddSetting(name="VelocityX", default=0.0, comment='inlet/outlet/init x-velocity component', zonal=TRUE)
 AddSetting(name="VelocityY", default=0.0, comment='inlet/outlet/init velocity', zonal=T)
