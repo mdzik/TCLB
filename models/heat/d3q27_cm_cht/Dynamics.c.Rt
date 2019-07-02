@@ -386,19 +386,57 @@ CudaDeviceFunction void ENeumann()
 
 CudaDeviceFunction void HeatFlux()
 {
+
+	if ((NodeType & NODE_BOUNDARY) != NODE_Wall) // in case of wall, bounce back procedure has been already done
+	{
+		// anti-bounce back
+		real_t tmp;
+		tmp = h[10];
+		h[10] = h[7];
+		h[7] = tmp;
+		tmp = h[12];
+		h[12] = h[13];
+		h[13] = tmp;
+		tmp = h[8];
+		h[8] = h[9];
+		h[9] = tmp;
+		tmp = h[16];
+		h[16] = h[17];
+		h[17] = tmp;
+		tmp = h[5];
+		h[5] = h[6];
+		h[6] = tmp;
+		tmp = h[3];
+		h[3] = h[4];
+		h[4] = tmp;
+		tmp = h[15];
+		h[15] = h[18];
+		h[18] = tmp;
+		tmp = h[1];
+		h[1] = h[2];
+		h[2] = tmp;
+		tmp = h[11];
+		h[11] = h[14];
+		h[14] = tmp;
+	}
+
+	<?R C(PV(c("const int h_size")), h_pop_size) ?>
+	for (int i = 0; i < h_size; i++) {
+		h[i] = -h[i];
+	}
+
 	real_t rho = getRho();
 	real_t imposed_heat_flux= InitHeatFlux;
 	// real_t first_order_cm = -2.*imposed_heat_flux*h_stability_enhancement;
 	// real_t third_order_cm = -2/3.*imposed_heat_flux*h_stability_enhancement*h_stability_enhancement/(cp*rho);
-	real_t first_order_cm = imposed_heat_flux*h_stability_enhancement;
-	real_t third_order_cm = 1/3.*imposed_heat_flux*h_stability_enhancement*h_stability_enhancement/(rho*cp);
+	real_t first_order_cm = -2*imposed_heat_flux*h_stability_enhancement;
+	real_t third_order_cm = -2*1/3.*imposed_heat_flux*h_stability_enhancement*h_stability_enhancement/(rho*cp);
 
 	real_t dx = X - CylinderCenterX;
 	real_t dy = Y - CylinderCenterY;
 	real_t phi = atan2(dy,dx);
 	
 	// set the cm_heat_flux_cht_bc into the temp variables
-	<?R C(PV(c("const int h_size")), h_pop_size) ?>
 	real_t temp[h_size];
 
 	temp[0] = 0;
@@ -414,34 +452,34 @@ CudaDeviceFunction void HeatFlux()
 	temp[10] = cos(phi)*third_order_cm; // x-flux: 120
 	temp[11] = cos(phi)*third_order_cm; // x-flux: 102
 	temp[12] = sin(phi)*third_order_cm; // y-flux: 210
-	temp[13] = 0*third_order_cm; // z-flux: 201
+	temp[13] = 0*third_order_cm; 		// z-flux: 201
 	temp[14] = sin(phi)*third_order_cm; // y-flux: 012
-	temp[15] = 0*third_order_cm; // z-flux: 021
+	temp[15] = 0*third_order_cm; 		// z-flux: 021
 	temp[16] = 0;
 	temp[17] = 0;
 	temp[18] = 0;
 	// we assume that the Neumann BC is not moving, 
 	// thus we treat the cm as raw moments and...
 	// go back straight from cm to density-probability functions
-	h[0] = temp[0] + temp[16] + temp[17] + temp[18] - temp[7] - temp[8] - temp[9];
-	h[1] = -1/2.*temp[10] - 1/2.*temp[11] - 1/2.*temp[16] - 1/2.*temp[17] + 1/2.*temp[1] + 1/2.*temp[7];
-	h[2] = 1/2.*temp[10] + 1/2.*temp[11] - 1/2.*temp[16] - 1/2.*temp[17] - 1/2.*temp[1] + 1/2.*temp[7];
-	h[3] = -1/2.*temp[12] - 1/2.*temp[14] - 1/2.*temp[16] - 1/2.*temp[18] + 1/2.*temp[2] + 1/2.*temp[8];
-	h[4] = 1/2.*temp[12] + 1/2.*temp[14] - 1/2.*temp[16] - 1/2.*temp[18] - 1/2.*temp[2] + 1/2.*temp[8];
-	h[5] = -1/2.*temp[13] - 1/2.*temp[15] - 1/2.*temp[17] - 1/2.*temp[18] + 1/2.*temp[3] + 1/2.*temp[9];
-	h[6] = 1/2.*temp[13] + 1/2.*temp[15] - 1/2.*temp[17] - 1/2.*temp[18] - 1/2.*temp[3] + 1/2.*temp[9];
-	h[7] = 1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[16] + 1/4.*temp[4];
-	h[8] = -1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[16] - 1/4.*temp[4];
-	h[9] = 1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[16] - 1/4.*temp[4];
-	h[10] = -1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[16] + 1/4.*temp[4];
-	h[11] = 1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[17] + 1/4.*temp[5];
-	h[12] = -1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[17] - 1/4.*temp[5];
-	h[13] = 1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[17] - 1/4.*temp[5];
-	h[14] = -1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[17] + 1/4.*temp[5];
-	h[15] = 1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[18] + 1/4.*temp[6];
-	h[16] = -1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[18] - 1/4.*temp[6];
-	h[17] = 1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[18] - 1/4.*temp[6];
-	h[18] = -1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[18] + 1/4.*temp[6];
+	h[0] += temp[0] + temp[16] + temp[17] + temp[18] - temp[7] - temp[8] - temp[9];
+	h[1] += -1/2.*temp[10] - 1/2.*temp[11] - 1/2.*temp[16] - 1/2.*temp[17] + 1/2.*temp[1] + 1/2.*temp[7];
+	h[2] += 1/2.*temp[10] + 1/2.*temp[11] - 1/2.*temp[16] - 1/2.*temp[17] - 1/2.*temp[1] + 1/2.*temp[7];
+	h[3] += -1/2.*temp[12] - 1/2.*temp[14] - 1/2.*temp[16] - 1/2.*temp[18] + 1/2.*temp[2] + 1/2.*temp[8];
+	h[4] += 1/2.*temp[12] + 1/2.*temp[14] - 1/2.*temp[16] - 1/2.*temp[18] - 1/2.*temp[2] + 1/2.*temp[8];
+	h[5] += -1/2.*temp[13] - 1/2.*temp[15] - 1/2.*temp[17] - 1/2.*temp[18] + 1/2.*temp[3] + 1/2.*temp[9];
+	h[6] += 1/2.*temp[13] + 1/2.*temp[15] - 1/2.*temp[17] - 1/2.*temp[18] - 1/2.*temp[3] + 1/2.*temp[9];
+	h[7] += 1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[16] + 1/4.*temp[4];
+	h[8] += -1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[16] - 1/4.*temp[4];
+	h[9] += 1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[16] - 1/4.*temp[4];
+	h[10] += -1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[16] + 1/4.*temp[4];
+	h[11] += 1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[17] + 1/4.*temp[5];
+	h[12] += -1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[17] - 1/4.*temp[5];
+	h[13] += 1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[17] - 1/4.*temp[5];
+	h[14] += -1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[17] + 1/4.*temp[5];
+	h[15] += 1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[18] + 1/4.*temp[6];
+	h[16] += -1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[18] - 1/4.*temp[6];
+	h[17] += 1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[18] - 1/4.*temp[6];
+	h[18] += -1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[18] + 1/4.*temp[6];
 }
 
 CudaDeviceFunction void HeaterSource()
@@ -595,20 +633,6 @@ CudaDeviceFunction void Run() {
 			HeatFlux();
 			break;
 	}
-
-	// if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterDirichletTemperature) {
-	// 	HeatDirichletEquilibriumScheme();
-	// 	// alternatively:
-	// 	//HeatDirichletAntiBounceBackScheme();
-	// }
-
-	// if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterSource) {
-	// 	HeaterSource();
-	// }	
-
-	// if ((NodeType & NODE_ADDITIONALS_HEAT) == NODE_HeaterNeumannHeatFlux) {
-	// 	HeatFlux();
-	// }	
 	
 
 	if((NodeType & NODE_OBJECTIVE) == NODE_MeasurmentArea) {
@@ -618,16 +642,15 @@ CudaDeviceFunction void Run() {
 		// convective flux - eq part of h distributions
 		// diffusive flux - neq part of h distributions
 
-    AddToHeatFluxX(-h2.x);
-    AddToHeatFluxY(-h2.y);
+		AddToHeatFluxX(-h2.x);
+		AddToHeatFluxY(-h2.y);
 		AddToHeatFluxZ(-h2.z);
-		
+
 		<?R # C(PV(c("p2.x","p2.y", "p2.z")), f %*% U) ?>
 		//Summing the difference in momentum before/after collision
-
-    AddToFDrag(-(p2.x-p1.x));
-    AddToFLateral(-(p2.y-p1.y));
-    AddToFLift(-(p2.z-p1.z));
+		AddToFDrag(-(p2.x-p1.x));
+		AddToFLateral(-(p2.y-p1.y));
+		AddToFLift(-(p2.z-p1.z));
 	}
 }
 
