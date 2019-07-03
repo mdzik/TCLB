@@ -386,7 +386,6 @@ CudaDeviceFunction void ENeumann()
 
 CudaDeviceFunction void HeatFlux()
 {
-
 	if ((NodeType & NODE_BOUNDARY) != NODE_Wall) // in case of wall, bounce back procedure has been already done
 	{
 		// anti-bounce back
@@ -421,12 +420,12 @@ CudaDeviceFunction void HeatFlux()
 	}
 
 	<?R C(PV(c("const int h_size")), h_pop_size) ?>
-	for (int i = 0; i < h_size; i++) {
-		h[i] = -h[i];
-	}
+	// for (int i = 0; i < h_size; i++) {
+	// 	h[i] = -h[i];
+	// }
 
 	real_t rho = getRho();
-	real_t imposed_heat_flux= InitHeatFlux;
+	real_t imposed_heat_flux = InitHeatFlux;
 	// real_t first_order_cm = -2.*imposed_heat_flux*h_stability_enhancement;
 	// real_t third_order_cm = -2/3.*imposed_heat_flux*h_stability_enhancement*h_stability_enhancement/(cp*rho);
 	real_t first_order_cm = -2*imposed_heat_flux*h_stability_enhancement;
@@ -617,6 +616,9 @@ CudaDeviceFunction void Run() {
     switch (NodeType & NODE_COLLISION) {
 		case NODE_CM:
 			CollisionCM();
+			break;
+		case NODE_BGK:
+			CollisionBGK();
 			break;
 	}
 
@@ -1095,4 +1097,39 @@ CudaDeviceFunction void CollisionCM(){
 	#endif	
 	real_t omega_k = 1.0/(3*conductivity+0.5);
 	relax_and_collide_ADE(h, rho, omega_k, u);
+}
+
+CudaDeviceFunction void CollisionBGK(){
+	real_t localTemperature = getT();
+	real_t rho = getRho();
+	vector_t Force = getForce(localTemperature, rho);
+
+	// add Darcy force to stop flow within solid regions
+	if ((NodeType & NODE_ADDITIONALS) == NODE_DarcySolid) 
+	{
+		vector_t u_temp = getRawU();
+		u_temp.x += Force.x/(2*rho);
+		u_temp.y += Force.y/(2*rho);
+		u_temp.z += Force.z/(2*rho);
+
+		vector_t fDarcyStoper = get_fDarcyStoper(rho,  u_temp);
+		Force.x += fDarcyStoper.x;
+		Force.y += fDarcyStoper.y;
+		Force.z += fDarcyStoper.z;
+	} 
+
+	vector_t u = relax_and_collide_hydro(Force, omega_nu);
+	#ifdef OPTIONS_OutFlow
+		U = u.x; // for convective outlet BC
+	#endif	
+	real_t omega_k = 1.0/(3*conductivity+0.5);
+
+
+	<?R C(PV(c("const int h_size")), h_pop_size) ?>
+	real_t h_eq[h_size];
+	real_t H = rho*cp*localTemperature;
+	SetEquilibriumHeat(h_eq, H, rho, u);
+	for (int i = 0; i < h_size; i++) {
+		h[i] = h[i] + omega_k*(h_eq[i]-h[i]);	
+	}
 }
