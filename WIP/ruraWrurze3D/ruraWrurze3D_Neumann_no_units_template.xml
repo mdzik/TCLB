@@ -30,17 +30,20 @@
 	<Params cp="1.0J/kg/K" gauge="1E-0"/>
 	<Params	material_density="1.0kg/m3" gauge="1E-0"/> -->
   </Units>
-	<Geometry nx="32m" ny="32m" nz="3" >
-      <CM><Box/></CM>    
-     	<HeaterDirichletTemperature name="dirichlet_cold"> 
+	<Geometry nx="32m" ny="32m" nz="3" >  
+     	<HeaterDirichletTemperature mask="COLLISION" name="dirichlet_cold"> 
             <Box />
         </HeaterDirichletTemperature>
+
+     	<CM>
+     		<Cylinder ny="120" nx="120" dx="4" dy="4"/>
+     	</CM>    
 
 		<None mask="ADDITIONALS_HEAT">
 			<Cylinder ny="30m" nx="30m" dx="1m" dy="1m"/>
 		</None>
 
-        <HeaterNeumannHeatFlux name="neumann_hot"> 
+        <HeaterNeumannHeatFlux mask="COLLISION" name="neumann_hot"> 
         	<Cylinder ny="8m" nx="8m" dx="12m" dy="12m"/>
         </HeaterNeumannHeatFlux> 
 

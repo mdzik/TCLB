@@ -8,16 +8,20 @@
 <CLBConfig version="2.0" output="output/batch_ruraWrurze_NeumannBC/test/">
 
 	<Geometry nx="128" ny="128" nz="3" >
-      <CM><Box/></CM>    
-     	<HeaterDirichletTemperature name="dirichlet_cold"> 
+		
+     	<HeaterDirichletTemperature mask="COLLISION" name="dirichlet_cold"> 
             <Box />
         </HeaterDirichletTemperature>
+     
+     	<CM>
+     		<Cylinder ny="120" nx="120" dx="4" dy="4"/>
+     	</CM>    
 
 		<None mask="ADDITIONALS_HEAT">
 			<Cylinder ny="120" nx="120" dx="4" dy="4"/>
 		</None>
 
-        <HeaterNeumannHeatFlux name="neumann_hot"> 
+        <HeaterNeumannHeatFlux mask="COLLISION" name="neumann_hot"> 
         	<Cylinder ny="32" nx="32" dx="48" dy="48"/>
         </HeaterNeumannHeatFlux> 
 
@@ -34,7 +38,7 @@
 			material_density="1"
 
 	        InitTemperature="0.0"
-	        InitHeatFlux-neumann_hot="1.0"
+	        InitHeatFlux-neumann_hot="0.16666666"
 	        InitTemperature-dirichlet_cold="0.0"
 	        />
 	    <Params />

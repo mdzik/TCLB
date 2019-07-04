@@ -1,5 +1,5 @@
 <?R
-    tab = expand.grid(sizer=c(4), ux=c(0.01), k_material=c(1e-01,1e-02,1e-03,1e-04,1e-05), collision=c("BGK","CM"))
+    tab = expand.grid(sizer=c(4), ux=c(0.01), k_material=c(1e-02,1e-03,1e-04,1e-05), collision=c("BGK","MRT","CM","CM_SRT", "HCM", "CM_HIGHER"))
 
     dir_name <- "batch_square_advection"
     dir.create(dir_name)
@@ -31,7 +31,7 @@
   </Units>
 	<Geometry nx="<?%f 32*sizer ?>" ny="<?%f 32*sizer ?>" nz="3" >
       <<?%s collision ?>> <Box/> </<?%s collision ?>>    
-       <None name="init_T_region">
+        <None name="init_T_region">
             <Box dx="<?%f 10*sizer ?>" nx="<?%f 12*sizer ?>" dy="<?%f 10*sizer ?>" ny="<?%f 12*sizer ?>" /> 
         </None>    
 
@@ -41,6 +41,8 @@
 	</Geometry>
     <Model>
 	    <Params
+            nu="0.1666666"
+
 	    	h_stability_enhancement="1."
 
 	        conductivity="<?%f k_material ?>" 
@@ -56,7 +58,7 @@
     </Model> 
 
 <!-- <Solve Iterations="10" > <VTK Iterations="1"/> </Solve> -->
-	<Failcheck Iterations="10000" nx="<?%f 32*sizer ?>" ny="<?%f 32*sizer ?>" nz="3" />
+	<Failcheck Iterations="1000" nx="<?%f 32*sizer ?>" ny="<?%f 32*sizer ?>" nz="3" />
 <!-- 	<TXT Iterations="100000" what="T,U" />
 	<Log Iterations="100000" /> -->
 	<Solve Iterations="10000">

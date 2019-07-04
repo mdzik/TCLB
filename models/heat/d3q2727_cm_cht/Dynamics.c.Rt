@@ -153,13 +153,12 @@ CudaDeviceFunction void Init() {
 	#endif
 }
 
-CudaDeviceFunction void BounceBack()
+CudaDeviceFunction void HydroBounceBack()
 {
 	<?R 
 		# TODO: BounceBack gets crazy and bounces h_old and f_old in _Outflow mode :/
 		# FullBounceBack()  
 	?> 
-
 
 	real_t tmp;
 	tmp = f001;
@@ -201,7 +200,11 @@ CudaDeviceFunction void BounceBack()
 	tmp = f111;
 	f111 = f222;
 	f222 = tmp;
+}
 
+CudaDeviceFunction void ThermalBounceBack()
+{
+	real_t tmp;
 	tmp = h[14];
 	h[14] = h[7];
 	h[7] = tmp;
@@ -398,46 +401,7 @@ CudaDeviceFunction void HeatFlux()
 {
 	if ((NodeType & NODE_BOUNDARY) != NODE_Wall) // in case of wall, bounce back procedure has been already done
 	{
-		real_t tmp;
-		tmp = h[14];
-		h[14] = h[7];
-		h[7] = tmp;
-		tmp = h[10];
-		h[10] = h[11];
-		h[11] = tmp;
-		tmp = h[20];
-		h[20] = h[21];
-		h[21] = tmp;
-		tmp = h[12];
-		h[12] = h[9];
-		h[9] = tmp;
-		tmp = h[16];
-		h[16] = h[17];
-		h[17] = tmp;
-		tmp = h[24];
-		h[24] = h[25];
-		h[25] = tmp;
-		tmp = h[5];
-		h[5] = h[6];
-		h[6] = tmp;
-		tmp = h[3];
-		h[3] = h[4];
-		h[4] = tmp;
-		tmp = h[23];
-		h[23] = h[26];
-		h[26] = tmp;
-		tmp = h[13];
-		h[13] = h[8];
-		h[8] = tmp;
-		tmp = h[1];
-		h[1] = h[2];
-		h[2] = tmp;
-		tmp = h[19];
-		h[19] = h[22];
-		h[22] = tmp;
-		tmp = h[15];
-		h[15] = h[18];
-		h[18] = tmp;
+		ThermalBounceBack();
 	}
 
 	<?R C(PV(c("const int h_size")), h_pop_size) ?>
@@ -447,12 +411,14 @@ CudaDeviceFunction void HeatFlux()
 
 	real_t rho = getRho();
 	real_t imposed_heat_flux = InitHeatFlux;
-	// real_t first_order_cm = -2.*imposed_heat_flux*h_stability_enhancement;
-	// real_t third_order_cm = -2/3.*imposed_heat_flux*h_stability_enhancement*h_stability_enhancement/(cp*rho);
 	real_t first_order_cm = -2*imposed_heat_flux*h_stability_enhancement;
-	real_t third_order_cm = -2*1/3.*imposed_heat_flux*h_stability_enhancement*h_stability_enhancement/(rho*cp);
-	real_t fifth_order_cm = -2*1/9.*imposed_heat_flux*(h_stability_enhancement*h_stability_enhancement*h_stability_enhancement)/(cp*cp*rho*rho);
-							
+	// real_t third_order_cm = -2*1/3.*imposed_heat_flux*h_stability_enhancement*h_stability_enhancement/(rho*cp);
+	real_t third_order_cm = first_order_cm *1/3.*h_stability_enhancement/(rho*cp);
+	// real_t fifth_order_cm = -2*1/9.*imposed_heat_flux*h_stability_enhancement*h_stability_enhancement*h_stability_enhancement/(cp*cp*rho*rho);
+	real_t fifth_order_cm = third_order_cm *1/3.*h_stability_enhancement/(rho*cp);
+
+	// third_order_cm =0;
+	// fifth_order_cm =0;
 	real_t dx = X - CylinderCenterX;
 	real_t dy = Y - CylinderCenterY;
 
@@ -462,27 +428,6 @@ CudaDeviceFunction void HeatFlux()
 	real_t nz = 0;
 	// set the cm_heat_flux_cht_bc into the temp variables
 	real_t temp[h_size];
-
-	// real_t phi = atan2(dy,dx);
-	// temp[0] = 0;
-	// temp[1] = cos(phi)*first_order_cm; // x-flux: 100
-	// temp[2] = sin(phi)*first_order_cm; // y-flux: 010
-	// temp[3] = 0*first_order_cm; // z-flux: 001 --> skip z in the initial experiment ;p
-	// temp[4] = 0;
-	// temp[5] = 0;
-	// temp[6] = 0;
-	// temp[7] = 0;
-	// temp[8] = 0;
-	// temp[9] = 0;
-	// temp[10] = cos(phi)*third_order_cm; // x-flux: 120
-	// temp[11] = cos(phi)*third_order_cm; // x-flux: 102
-	// temp[12] = sin(phi)*third_order_cm; // y-flux: 210
-	// temp[13] = 0*third_order_cm; 		// z-flux: 201
-	// temp[14] = sin(phi)*third_order_cm; // y-flux: 012
-	// temp[15] = 0*third_order_cm; 		// z-flux: 021
-	// temp[16] = 0;
-	// temp[17] = 0;
-	// temp[18] = 0;
 
 	temp[0] = 0;
 	temp[1] = nx*first_order_cm;
@@ -535,9 +480,9 @@ CudaDeviceFunction void HeatFlux()
 	// temp[20] = 0;
 	// temp[21] = 0;
 	// temp[22] = 0;
-	// temp[23] = -2/9*T*k.x*(cp*gamma**3*rho)/(cp**(-3.0)*rho**(-3.0));
-	// temp[24] = -2/9*T*k.y*(cp*gamma**3*rho)/(cp**(-3.0)*rho**(-3.0));
-	// temp[25] = -2/9*T*k.z*(cp*gamma**3*rho)/(cp**(-3.0)*rho**(-3.0));
+	// temp[23] = -2/9*T*k.x*(cp*gamma**3*rho)/(cp**(3.0)*rho**(3.0));
+	// temp[24] = -2/9*T*k.y*(cp*gamma**3*rho)/(cp**(3.0)*rho**(3.0));
+	// temp[25] = -2/9*T*k.z*(cp*gamma**3*rho)/(cp**(3.0)*rho**(3.0));
 	// temp[26] = 0;
 
 	// we assume that the Neumann BC is not moving, 
@@ -626,46 +571,7 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 
 	if ((NodeType & NODE_BOUNDARY) != NODE_Wall) // in case of wall, bounce back procedure has been already done
 	{
-		real_t tmp;
-		tmp = h[14];
-		h[14] = h[7];
-		h[7] = tmp;
-		tmp = h[10];
-		h[10] = h[11];
-		h[11] = tmp;
-		tmp = h[20];
-		h[20] = h[21];
-		h[21] = tmp;
-		tmp = h[12];
-		h[12] = h[9];
-		h[9] = tmp;
-		tmp = h[16];
-		h[16] = h[17];
-		h[17] = tmp;
-		tmp = h[24];
-		h[24] = h[25];
-		h[25] = tmp;
-		tmp = h[5];
-		h[5] = h[6];
-		h[6] = tmp;
-		tmp = h[3];
-		h[3] = h[4];
-		h[4] = tmp;
-		tmp = h[23];
-		h[23] = h[26];
-		h[26] = tmp;
-		tmp = h[13];
-		h[13] = h[8];
-		h[8] = tmp;
-		tmp = h[1];
-		h[1] = h[2];
-		h[2] = tmp;
-		tmp = h[19];
-		h[19] = h[22];
-		h[22] = tmp;
-		tmp = h[15];
-		h[15] = h[18];
-		h[18] = tmp;
+		ThermalBounceBack();
 	}
 
 	real_t T = InitTemperature;
@@ -704,7 +610,8 @@ CudaDeviceFunction void Run() {
 			EPressure();
 			break;
 		case NODE_Wall:
-			BounceBack(); // Force Measurment here
+			HydroBounceBack(); // Force Measurment here
+			ThermalBounceBack();
 			break;
 		#ifdef OPTIONS_OutFlow
 			case NODE_EConvect:
@@ -721,7 +628,19 @@ CudaDeviceFunction void Run() {
 			CollisionCM();
 			break;
 		case NODE_BGK:
-			CollisionBGK();
+			Collision_thermalBGK();
+			break;
+		case NODE_MRT:
+			Collision_thermalMRT();
+			break;
+		case NODE_CM_SRT:
+			CollisionCM_SRT();
+			break;
+		case NODE_HCM:
+			CollisionHCM();
+			break;
+		case NODE_CM_HIGHER:
+			CollisionCM_HIGHER();
 			break;
 	}
 
@@ -767,7 +686,7 @@ CudaDeviceFunction void set_eq_hydro(real_t rho, real_t Jx, real_t Jy, real_t Jz
 }
 
 CudaDeviceFunction void SetEquilibriumHeat(real_t x_in[<?R C( h_pop_size) ?>], real_t H, real_t rho, vector_t u) 
-	{
+{
 	real_t uxuy = u.x*u.y;
 	real_t uxuz = u.x*u.z;
 	real_t uyuz = u.y*u.z;
@@ -865,6 +784,234 @@ CudaDeviceFunction void SetEquilibriumHeat(real_t x_in[<?R C( h_pop_size) ?>], r
 	x_in[25] = 1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[19] + 1/4.*temp[20] - 1/4.*temp[24] + 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[6];
 	x_in[26] = -1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[19] - 1/4.*temp[20] + 1/4.*temp[24] + 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[6];
 
+
+}
+
+
+CudaDeviceFunction void relax_and_collide_ADE_CM_HIGHER(real_t x_in[<?R C( h_pop_size) ?>], real_t rho, real_t omega_ade, vector_t u) 
+{
+	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
+	real_t uxuy = u.x*u.y;
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+	real_t uxuz = u.x*u.z;
+	real_t uyuz = u.y*u.z;
+	real_t uz2 = u.z*u.z;
+
+	real_t H = x_in[0] + x_in[10] + x_in[11] + x_in[12] + x_in[13] + x_in[14] + x_in[15] + x_in[16] + x_in[17] + x_in[18] + x_in[19] + x_in[1] + x_in[20] + x_in[21] + x_in[22] + x_in[23] + x_in[24] + x_in[25] + x_in[26] + x_in[2] + x_in[3] + x_in[4] + x_in[5] + x_in[6] + x_in[7] + x_in[8] + x_in[9];
+	real_t Sigma2 = (h_stability_enhancement*1./3.)/(cp*rho);
+
+	
+	real_t temp[27];
+	for (int i = 0; i < 27; i++) {
+		temp[i] = x_in[i];}
+	//raw moments from density-probability functions
+	x_in[0] = temp[0] + temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[19] + temp[1] + temp[20] + temp[21] + temp[22] + temp[23] + temp[24] + temp[25] + temp[26] + temp[2] + temp[3] + temp[4] + temp[5] + temp[6] + temp[7] + temp[8] + temp[9];
+	x_in[1] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[15] - temp[16] + temp[17] - temp[18] + temp[19] + temp[1] - temp[20] + temp[21] - temp[22] - temp[2] + temp[7] - temp[8] + temp[9];
+	x_in[2] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[15] + temp[16] - temp[17] - temp[18] + temp[23] - temp[24] + temp[25] - temp[26] + temp[3] - temp[4] + temp[7] + temp[8] - temp[9];
+	x_in[3] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[19] + temp[20] - temp[21] - temp[22] + temp[23] + temp[24] - temp[25] - temp[26] + temp[5] - temp[6] + temp[7] + temp[8] + temp[9];
+	x_in[4] = temp[10] + temp[11] - temp[12] - temp[13] + temp[14] + temp[15] - temp[16] - temp[17] + temp[18] + temp[7] - temp[8] - temp[9];
+	x_in[5] = -temp[10] - temp[11] + temp[12] - temp[13] + temp[14] + temp[19] - temp[20] - temp[21] + temp[22] + temp[7] - temp[8] + temp[9];
+	x_in[6] = -temp[10] - temp[11] - temp[12] + temp[13] + temp[14] + temp[23] - temp[24] - temp[25] + temp[26] + temp[7] + temp[8] - temp[9];
+	x_in[7] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[19] + temp[1] + temp[20] + temp[21] + temp[22] + temp[2] + temp[7] + temp[8] + temp[9];
+	x_in[8] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[23] + temp[24] + temp[25] + temp[26] + temp[3] + temp[4] + temp[7] + temp[8] + temp[9];
+	x_in[9] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[19] + temp[20] + temp[21] + temp[22] + temp[23] + temp[24] + temp[25] + temp[26] + temp[5] + temp[6] + temp[7] + temp[8] + temp[9];
+	x_in[10] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[15] - temp[16] + temp[17] - temp[18] + temp[7] - temp[8] + temp[9];
+	x_in[11] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[19] - temp[20] + temp[21] - temp[22] + temp[7] - temp[8] + temp[9];
+	x_in[12] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[15] + temp[16] - temp[17] - temp[18] + temp[7] + temp[8] - temp[9];
+	x_in[13] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[19] + temp[20] - temp[21] - temp[22] + temp[7] + temp[8] + temp[9];
+	x_in[14] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[23] - temp[24] + temp[25] - temp[26] + temp[7] + temp[8] - temp[9];
+	x_in[15] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[23] + temp[24] - temp[25] - temp[26] + temp[7] + temp[8] + temp[9];
+	x_in[16] = temp[10] - temp[11] + temp[12] + temp[13] - temp[14] + temp[7] - temp[8] - temp[9];
+	x_in[17] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[7] + temp[8] + temp[9];
+	x_in[18] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[19] + temp[20] + temp[21] + temp[22] + temp[7] + temp[8] + temp[9];
+	x_in[19] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[23] + temp[24] + temp[25] + temp[26] + temp[7] + temp[8] + temp[9];
+	x_in[20] = -temp[10] - temp[11] - temp[12] + temp[13] + temp[14] + temp[7] + temp[8] - temp[9];
+	x_in[21] = -temp[10] - temp[11] + temp[12] - temp[13] + temp[14] + temp[7] - temp[8] + temp[9];
+	x_in[22] = temp[10] + temp[11] - temp[12] - temp[13] + temp[14] + temp[7] - temp[8] - temp[9];
+	x_in[23] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[7] - temp[8] + temp[9];
+	x_in[24] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[7] + temp[8] - temp[9];
+	x_in[25] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[7] + temp[8] + temp[9];
+	x_in[26] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[7] + temp[8] + temp[9];
+	//central moments from raw moments
+	temp[0] = x_in[0];
+	temp[1] = -u.x*x_in[0] + x_in[1];
+	temp[2] = -u.y*x_in[0] + x_in[2];
+	temp[3] = -u.z*x_in[0] + x_in[3];
+	temp[4] = uxuy*x_in[0] - u.x*x_in[2] - u.y*x_in[1] + x_in[4];
+	temp[5] = uxuz*x_in[0] - u.x*x_in[3] - u.z*x_in[1] + x_in[5];
+	temp[6] = uyuz*x_in[0] - u.y*x_in[3] - u.z*x_in[2] + x_in[6];
+	temp[7] = ux2*x_in[0] - 2.*u.x*x_in[1] + x_in[7];
+	temp[8] = uy2*x_in[0] - 2.*u.y*x_in[2] + x_in[8];
+	temp[9] = uz2*x_in[0] - 2.*u.z*x_in[3] + x_in[9];
+	temp[10] = -u.x*uy2*x_in[0] + 2.*uxuy*x_in[2] - u.x*x_in[8] + uy2*x_in[1] - 2.*u.y*x_in[4] + x_in[10];
+	temp[11] = -u.x*uz2*x_in[0] + 2.*uxuz*x_in[3] - u.x*x_in[9] + uz2*x_in[1] - 2.*u.z*x_in[5] + x_in[11];
+	temp[12] = -ux2*u.y*x_in[0] + ux2*x_in[2] + 2.*uxuy*x_in[1] - 2.*u.x*x_in[4] - u.y*x_in[7] + x_in[12];
+	temp[13] = -ux2*u.z*x_in[0] + ux2*x_in[3] + 2.*uxuz*x_in[1] - 2.*u.x*x_in[5] - u.z*x_in[7] + x_in[13];
+	temp[14] = -u.y*uz2*x_in[0] + 2.*uyuz*x_in[3] - u.y*x_in[9] + uz2*x_in[2] - 2.*u.z*x_in[6] + x_in[14];
+	temp[15] = -uy2*u.z*x_in[0] + uy2*x_in[3] + 2.*uyuz*x_in[2] - 2.*u.y*x_in[6] - u.z*x_in[8] + x_in[15];
+	temp[16] = -uxuy*u.z*x_in[0] + uxuy*x_in[3] + uxuz*x_in[2] - u.x*x_in[6] + uyuz*x_in[1] - u.y*x_in[5] - u.z*x_in[4] + x_in[16];
+	temp[17] = ux2*uy2*x_in[0] - 2.*ux2*u.y*x_in[2] + ux2*x_in[8] - 2.*u.x*uy2*x_in[1] + 4.*uxuy*x_in[4] - 2.*u.x*x_in[10] + uy2*x_in[7] - 2.*u.y*x_in[12] + x_in[17];
+	temp[18] = ux2*uz2*x_in[0] - 2.*ux2*u.z*x_in[3] + ux2*x_in[9] - 2.*u.x*uz2*x_in[1] + 4.*uxuz*x_in[5] - 2.*u.x*x_in[11] + uz2*x_in[7] - 2.*u.z*x_in[13] + x_in[18];
+	temp[19] = uy2*uz2*x_in[0] - 2.*uy2*u.z*x_in[3] + uy2*x_in[9] - 2.*u.y*uz2*x_in[2] + 4.*uyuz*x_in[6] - 2.*u.y*x_in[14] + uz2*x_in[8] - 2.*u.z*x_in[15] + x_in[19];
+	temp[20] = ux2*uyuz*x_in[0] - ux2*u.y*x_in[3] - ux2*u.z*x_in[2] + ux2*x_in[6] - 2.*uxuy*u.z*x_in[1] + 2.*uxuy*x_in[5] + 2.*uxuz*x_in[4] - 2.*u.x*x_in[16] + uyuz*x_in[7] - u.y*x_in[13] - u.z*x_in[12] + x_in[20];
+	temp[21] = u.x*uy2*u.z*x_in[0] - u.x*uy2*x_in[3] - 2.*uxuy*u.z*x_in[2] + 2.*uxuy*x_in[6] + uxuz*x_in[8] - u.x*x_in[15] - uy2*u.z*x_in[1] + uy2*x_in[5] + 2.*uyuz*x_in[4] - 2.*u.y*x_in[16] - u.z*x_in[10] + x_in[21];
+	temp[22] = uxuy*uz2*x_in[0] - 2.*uxuy*u.z*x_in[3] + uxuy*x_in[9] - u.x*uz2*x_in[2] + 2.*uxuz*x_in[6] - u.x*x_in[14] - u.y*uz2*x_in[1] + 2.*uyuz*x_in[5] - u.y*x_in[11] + uz2*x_in[4] - 2.*u.z*x_in[16] + x_in[22];
+	temp[23] = -u.x*uy2*uz2*x_in[0] + 2.*u.x*uy2*u.z*x_in[3] - u.x*uy2*x_in[9] + 2.*uxuy*uz2*x_in[2] - 4.*uxuy*u.z*x_in[6] + 2.*uxuy*x_in[14] - u.x*uz2*x_in[8] + 2.*uxuz*x_in[15] - u.x*x_in[19] + uy2*uz2*x_in[1] - 2.*uy2*u.z*x_in[5] + uy2*x_in[11] - 2.*u.y*uz2*x_in[4] + 4.*uyuz*x_in[16] - 2.*u.y*x_in[22] + uz2*x_in[10] - 2.*u.z*x_in[21] + x_in[23];
+	temp[24] = -ux2*u.y*uz2*x_in[0] + 2.*ux2*uyuz*x_in[3] - ux2*u.y*x_in[9] + ux2*uz2*x_in[2] - 2.*ux2*u.z*x_in[6] + ux2*x_in[14] + 2.*uxuy*uz2*x_in[1] - 4.*uxuy*u.z*x_in[5] + 2.*uxuy*x_in[11] - 2.*u.x*uz2*x_in[4] + 4.*uxuz*x_in[16] - 2.*u.x*x_in[22] - u.y*uz2*x_in[7] + 2.*uyuz*x_in[13] - u.y*x_in[18] + uz2*x_in[12] - 2.*u.z*x_in[20] + x_in[24];
+	temp[25] = -ux2*uy2*u.z*x_in[0] + ux2*uy2*x_in[3] + 2.*ux2*uyuz*x_in[2] - 2.*ux2*u.y*x_in[6] - ux2*u.z*x_in[8] + ux2*x_in[15] + 2.*u.x*uy2*u.z*x_in[1] - 2.*u.x*uy2*x_in[5] - 4.*uxuy*u.z*x_in[4] + 4.*uxuy*x_in[16] + 2.*uxuz*x_in[10] - 2.*u.x*x_in[21] - uy2*u.z*x_in[7] + uy2*x_in[13] + 2.*uyuz*x_in[12] - 2.*u.y*x_in[20] - u.z*x_in[17] + x_in[25];
+	temp[26] = ux2*uy2*uz2*x_in[0] - 2.*ux2*uy2*u.z*x_in[3] + ux2*uy2*x_in[9] - 2.*ux2*u.y*uz2*x_in[2] + 4.*ux2*uyuz*x_in[6] - 2.*ux2*u.y*x_in[14] + ux2*uz2*x_in[8] - 2.*ux2*u.z*x_in[15] + ux2*x_in[19] - 2.*u.x*uy2*uz2*x_in[1] + 4.*u.x*uy2*u.z*x_in[5] - 2.*u.x*uy2*x_in[11] + 4.*uxuy*uz2*x_in[4] - 8.*uxuy*u.z*x_in[16] + 4.*uxuy*x_in[22] - 2.*u.x*uz2*x_in[10] + 4.*uxuz*x_in[21] - 2.*u.x*x_in[23] + uy2*uz2*x_in[7] - 2.*uy2*u.z*x_in[13] + uy2*x_in[18] - 2.*u.y*uz2*x_in[12] + 4.*uyuz*x_in[20] - 2.*u.y*x_in[24] + uz2*x_in[17] - 2.*u.z*x_in[25] + x_in[26];
+	//collision in central moments space
+	//collide
+	x_in[0] = H;
+	x_in[1] = -temp[1]*(omega_ade - 1.);
+	x_in[2] = -temp[2]*(omega_ade - 1.);
+	x_in[3] = -temp[3]*(omega_ade - 1.);
+	x_in[4] = 0;
+	x_in[5] = 0;
+	x_in[6] = 0;
+	x_in[7] = Sigma2*H;
+	x_in[8] = Sigma2*H;
+	x_in[9] = Sigma2*H;
+	x_in[10] = -temp[10]*(omega_ade - 1.);
+	x_in[11] = -temp[11]*(omega_ade - 1.);
+	x_in[12] = -temp[12]*(omega_ade - 1.);
+	x_in[13] = -temp[13]*(omega_ade - 1.);
+	x_in[14] = -temp[14]*(omega_ade - 1.);
+	x_in[15] = -temp[15]*(omega_ade - 1.);
+	x_in[16] = 0;
+	x_in[17] = Sigma2*Sigma2*H;
+	x_in[18] = Sigma2*Sigma2*H;
+	x_in[19] = Sigma2*Sigma2*H;
+	x_in[20] = 0;
+	x_in[21] = 0;
+	x_in[22] = 0;
+	x_in[23] = 0;
+	x_in[24] = 0;
+	x_in[25] = 0;
+	x_in[23] = -temp[23]*(omega_ade - 1.);
+	x_in[24] = -temp[24]*(omega_ade - 1.);
+	x_in[25] = -temp[25]*(omega_ade - 1.);
+	x_in[26] = Sigma2*Sigma2*Sigma2*H;
+
+
+	// cheat sheet
+	// 	D3Q27
+	// M(1,:)=ex.^0;
+	// M(2,:)=ex; 100
+	// M(3,:)=ey; 010
+	// M(4,:)=ez; 001
+	// 		M(5,:)=ex.*ey; 110 # skipped in D3Q15, D3Q7
+	// 		M(6,:)=ex.*ez; 101 # skipped in D3Q15, D3Q7
+	// 		M(7,:)=ey.*ez; 011 # skipped in D3Q15, D3Q7
+	// M(8,:)=ex.*ex; 200
+	// M(9,:)=ey.*ey; 020
+	// M(10,:)=ez.*ez; 002
+	// 		M(11,:)=ex.*ey.*ey; 120 # skipped in D3Q15, D3Q7
+	// 		M(12,:)=ex.*ez.*ez; 102 # skipped in D3Q15, D3Q7
+	// 		M(13,:)=ey.*ex.*ex; 210 # skipped in D3Q15, D3Q7
+	// 		M(14,:)=ez.*ex.*ex; 201 # skipped in D3Q15, D3Q7
+	// 		M(15,:)=ey.*ez.*ez; 012 # skipped in D3Q15, D3Q7
+	// 		M(16,:)=ez.*ey.*ey; 021 # skipped in D3Q15, D3Q7
+	// M(17,:)=ex.*ey.*ez; 111 # skipped in D3Q19, D3Q7
+	// 		M(18,:)=ex.*ex.*ey.*ey; 220 # skipped in D3Q15, D3Q7
+	// 		M(19,:)=ex.*ex.*ez.*ez; 202 # skipped in D3Q15, D3Q7
+	// 		M(20,:)=ey.*ey.*ez.*ez; 022 # skipped in D3Q15, D3Q7
+	// M(21,:)=ex.*ex.*ey.*ez; 211 # skipped in D3Q19, D3Q7
+	// M(22,:)=ex.*ey.*ey.*ez; 121 # skipped in D3Q19, D3Q7
+	// M(23,:)=ex.*ey.*ez.*ez; 112 # skipped in D3Q19, D3Q7
+	// M(24,:)=ex.*ey.*ey.*ez.*ez; 122 # skipped in D3Q19, D3Q7
+	// M(25,:)=ex.*ex.*ey.*ez.*ez; 212 # skipped in D3Q19, D3Q7
+	// M(26,:)=ex.*ex.*ey.*ey.*ez; 221 # skipped in D3Q19, D3Q7
+	// M(27,:)=ex.*ex.*ey.*ey.*ez.*ez; 222 # skipped in D3Q19, D3Q7
+
+
+	// below is how the candidate for Neumann BC may be implemended:
+
+	// temp[0] = 0;
+	// temp[1] = -2.*T*gamma*k.x;
+	// temp[2] = -2.*T*gamma*k.y;
+	// temp[3] = -2.*T*gamma*k.z;
+	// temp[4] = 0;
+	// temp[5] = 0;
+	// temp[6] = 0;
+	// temp[7] = 0;
+	// temp[8] = 0;
+	// temp[9] = 0;
+	// temp[10] = -2/3.*T*gamma*gamma*k.x/(cp*rho);
+	// temp[11] = -2/3.*T*gamma*gamma*k.x/(cp*rho);
+	// temp[12] = -2/3.*T*gamma*gamma*k.y/(cp*rho);
+	// temp[13] = -2/3.*T*gamma*gamma*k.z/(cp*rho);
+	// temp[14] = -2/3.*T*gamma*gamma*k.y/(cp*rho);
+	// temp[15] = -2/3.*T*gamma*gamma*k.z/(cp*rho);
+	// temp[16] = 0;
+	// temp[17] = 0;
+	// temp[18] = 0;
+	// temp[19] = 0;
+	// temp[20] = 0;
+	// temp[21] = 0;
+	// temp[22] = 0;
+	// temp[23] = -2/9*T*k.x*(cp*gamma**3*rho)/(cp**(3.0)*rho**(3.0));
+	// temp[24] = -2/9*T*k.y*(cp*gamma**3*rho)/(cp**(3.0)*rho**(3.0));
+	// temp[25] = -2/9*T*k.z*(cp*gamma**3*rho)/(cp**(3.0)*rho**(3.0));
+	// temp[26] = 0;
+
+	//back to raw moments
+	temp[0] = x_in[0];
+	temp[1] = u.x*x_in[0] + x_in[1];
+	temp[2] = u.y*x_in[0] + x_in[2];
+	temp[3] = u.z*x_in[0] + x_in[3];
+	temp[4] = uxuy*x_in[0] + u.x*x_in[2] + u.y*x_in[1] + x_in[4];
+	temp[5] = uxuz*x_in[0] + u.x*x_in[3] + u.z*x_in[1] + x_in[5];
+	temp[6] = uyuz*x_in[0] + u.y*x_in[3] + u.z*x_in[2] + x_in[6];
+	temp[7] = ux2*x_in[0] + 2.*u.x*x_in[1] + x_in[7];
+	temp[8] = uy2*x_in[0] + 2.*u.y*x_in[2] + x_in[8];
+	temp[9] = uz2*x_in[0] + 2.*u.z*x_in[3] + x_in[9];
+	temp[10] = u.x*uy2*x_in[0] + 2.*uxuy*x_in[2] + u.x*x_in[8] + uy2*x_in[1] + 2.*u.y*x_in[4] + x_in[10];
+	temp[11] = u.x*uz2*x_in[0] + 2.*uxuz*x_in[3] + u.x*x_in[9] + uz2*x_in[1] + 2.*u.z*x_in[5] + x_in[11];
+	temp[12] = ux2*u.y*x_in[0] + ux2*x_in[2] + 2.*uxuy*x_in[1] + 2.*u.x*x_in[4] + u.y*x_in[7] + x_in[12];
+	temp[13] = ux2*u.z*x_in[0] + ux2*x_in[3] + 2.*uxuz*x_in[1] + 2.*u.x*x_in[5] + u.z*x_in[7] + x_in[13];
+	temp[14] = u.y*uz2*x_in[0] + 2.*uyuz*x_in[3] + u.y*x_in[9] + uz2*x_in[2] + 2.*u.z*x_in[6] + x_in[14];
+	temp[15] = uy2*u.z*x_in[0] + uy2*x_in[3] + 2.*uyuz*x_in[2] + 2.*u.y*x_in[6] + u.z*x_in[8] + x_in[15];
+	temp[16] = uxuy*u.z*x_in[0] + uxuy*x_in[3] + uxuz*x_in[2] + u.x*x_in[6] + uyuz*x_in[1] + u.y*x_in[5] + u.z*x_in[4] + x_in[16];
+	temp[17] = ux2*uy2*x_in[0] + 2.*ux2*u.y*x_in[2] + ux2*x_in[8] + 2.*u.x*uy2*x_in[1] + 4.*uxuy*x_in[4] + 2.*u.x*x_in[10] + uy2*x_in[7] + 2.*u.y*x_in[12] + x_in[17];
+	temp[18] = ux2*uz2*x_in[0] + 2.*ux2*u.z*x_in[3] + ux2*x_in[9] + 2.*u.x*uz2*x_in[1] + 4.*uxuz*x_in[5] + 2.*u.x*x_in[11] + uz2*x_in[7] + 2.*u.z*x_in[13] + x_in[18];
+	temp[19] = uy2*uz2*x_in[0] + 2.*uy2*u.z*x_in[3] + uy2*x_in[9] + 2.*u.y*uz2*x_in[2] + 4.*uyuz*x_in[6] + 2.*u.y*x_in[14] + uz2*x_in[8] + 2.*u.z*x_in[15] + x_in[19];
+	temp[20] = ux2*uyuz*x_in[0] + ux2*u.y*x_in[3] + ux2*u.z*x_in[2] + ux2*x_in[6] + 2.*uxuy*u.z*x_in[1] + 2.*uxuy*x_in[5] + 2.*uxuz*x_in[4] + 2.*u.x*x_in[16] + uyuz*x_in[7] + u.y*x_in[13] + u.z*x_in[12] + x_in[20];
+	temp[21] = u.x*uy2*u.z*x_in[0] + u.x*uy2*x_in[3] + 2.*uxuy*u.z*x_in[2] + 2.*uxuy*x_in[6] + uxuz*x_in[8] + u.x*x_in[15] + uy2*u.z*x_in[1] + uy2*x_in[5] + 2.*uyuz*x_in[4] + 2.*u.y*x_in[16] + u.z*x_in[10] + x_in[21];
+	temp[22] = uxuy*uz2*x_in[0] + 2.*uxuy*u.z*x_in[3] + uxuy*x_in[9] + u.x*uz2*x_in[2] + 2.*uxuz*x_in[6] + u.x*x_in[14] + u.y*uz2*x_in[1] + 2.*uyuz*x_in[5] + u.y*x_in[11] + uz2*x_in[4] + 2.*u.z*x_in[16] + x_in[22];
+	temp[23] = u.x*uy2*uz2*x_in[0] + 2.*u.x*uy2*u.z*x_in[3] + u.x*uy2*x_in[9] + 2.*uxuy*uz2*x_in[2] + 4.*uxuy*u.z*x_in[6] + 2.*uxuy*x_in[14] + u.x*uz2*x_in[8] + 2.*uxuz*x_in[15] + u.x*x_in[19] + uy2*uz2*x_in[1] + 2.*uy2*u.z*x_in[5] + uy2*x_in[11] + 2.*u.y*uz2*x_in[4] + 4.*uyuz*x_in[16] + 2.*u.y*x_in[22] + uz2*x_in[10] + 2.*u.z*x_in[21] + x_in[23];
+	temp[24] = ux2*u.y*uz2*x_in[0] + 2.*ux2*uyuz*x_in[3] + ux2*u.y*x_in[9] + ux2*uz2*x_in[2] + 2.*ux2*u.z*x_in[6] + ux2*x_in[14] + 2.*uxuy*uz2*x_in[1] + 4.*uxuy*u.z*x_in[5] + 2.*uxuy*x_in[11] + 2.*u.x*uz2*x_in[4] + 4.*uxuz*x_in[16] + 2.*u.x*x_in[22] + u.y*uz2*x_in[7] + 2.*uyuz*x_in[13] + u.y*x_in[18] + uz2*x_in[12] + 2.*u.z*x_in[20] + x_in[24];
+	temp[25] = ux2*uy2*u.z*x_in[0] + ux2*uy2*x_in[3] + 2.*ux2*uyuz*x_in[2] + 2.*ux2*u.y*x_in[6] + ux2*u.z*x_in[8] + ux2*x_in[15] + 2.*u.x*uy2*u.z*x_in[1] + 2.*u.x*uy2*x_in[5] + 4.*uxuy*u.z*x_in[4] + 4.*uxuy*x_in[16] + 2.*uxuz*x_in[10] + 2.*u.x*x_in[21] + uy2*u.z*x_in[7] + uy2*x_in[13] + 2.*uyuz*x_in[12] + 2.*u.y*x_in[20] + u.z*x_in[17] + x_in[25];
+	temp[26] = ux2*uy2*uz2*x_in[0] + 2.*ux2*uy2*u.z*x_in[3] + ux2*uy2*x_in[9] + 2.*ux2*u.y*uz2*x_in[2] + 4.*ux2*uyuz*x_in[6] + 2.*ux2*u.y*x_in[14] + ux2*uz2*x_in[8] + 2.*ux2*u.z*x_in[15] + ux2*x_in[19] + 2.*u.x*uy2*uz2*x_in[1] + 4.*u.x*uy2*u.z*x_in[5] + 2.*u.x*uy2*x_in[11] + 4.*uxuy*uz2*x_in[4] + 8.*uxuy*u.z*x_in[16] + 4.*uxuy*x_in[22] + 2.*u.x*uz2*x_in[10] + 4.*uxuz*x_in[21] + 2.*u.x*x_in[23] + uy2*uz2*x_in[7] + 2.*uy2*u.z*x_in[13] + uy2*x_in[18] + 2.*u.y*uz2*x_in[12] + 4.*uyuz*x_in[20] + 2.*u.y*x_in[24] + uz2*x_in[17] + 2.*u.z*x_in[25] + x_in[26];
+	//back to density-probability functions
+	x_in[0] = temp[0] + temp[17] + temp[18] + temp[19] - temp[26] - temp[7] - temp[8] - temp[9];
+	x_in[1] = -1/2.*temp[10] - 1/2.*temp[11] - 1/2.*temp[17] - 1/2.*temp[18] + 1/2.*temp[1] + 1/2.*temp[23] + 1/2.*temp[26] + 1/2.*temp[7];
+	x_in[2] = 1/2.*temp[10] + 1/2.*temp[11] - 1/2.*temp[17] - 1/2.*temp[18] - 1/2.*temp[1] - 1/2.*temp[23] + 1/2.*temp[26] + 1/2.*temp[7];
+	x_in[3] = -1/2.*temp[12] - 1/2.*temp[14] - 1/2.*temp[17] - 1/2.*temp[19] + 1/2.*temp[24] + 1/2.*temp[26] + 1/2.*temp[2] + 1/2.*temp[8];
+	x_in[4] = 1/2.*temp[12] + 1/2.*temp[14] - 1/2.*temp[17] - 1/2.*temp[19] - 1/2.*temp[24] + 1/2.*temp[26] - 1/2.*temp[2] + 1/2.*temp[8];
+	x_in[5] = -1/2.*temp[13] - 1/2.*temp[15] - 1/2.*temp[18] - 1/2.*temp[19] + 1/2.*temp[25] + 1/2.*temp[26] + 1/2.*temp[3] + 1/2.*temp[9];
+	x_in[6] = 1/2.*temp[13] + 1/2.*temp[15] - 1/2.*temp[18] - 1/2.*temp[19] - 1/2.*temp[25] + 1/2.*temp[26] - 1/2.*temp[3] + 1/2.*temp[9];
+	x_in[7] = 1/8.*temp[16] + 1/8.*temp[20] + 1/8.*temp[21] + 1/8.*temp[22] + 1/8.*temp[23] + 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[8] = -1/8.*temp[16] + 1/8.*temp[20] - 1/8.*temp[21] - 1/8.*temp[22] - 1/8.*temp[23] + 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[9] = -1/8.*temp[16] - 1/8.*temp[20] + 1/8.*temp[21] - 1/8.*temp[22] + 1/8.*temp[23] - 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[10] = 1/8.*temp[16] - 1/8.*temp[20] - 1/8.*temp[21] + 1/8.*temp[22] - 1/8.*temp[23] - 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[11] = -1/8.*temp[16] - 1/8.*temp[20] - 1/8.*temp[21] + 1/8.*temp[22] + 1/8.*temp[23] + 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[12] = 1/8.*temp[16] - 1/8.*temp[20] + 1/8.*temp[21] - 1/8.*temp[22] - 1/8.*temp[23] + 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[13] = 1/8.*temp[16] + 1/8.*temp[20] - 1/8.*temp[21] - 1/8.*temp[22] + 1/8.*temp[23] - 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[14] = -1/8.*temp[16] + 1/8.*temp[20] + 1/8.*temp[21] + 1/8.*temp[22] - 1/8.*temp[23] - 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[15] = 1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[17] - 1/4.*temp[22] - 1/4.*temp[23] - 1/4.*temp[24] - 1/4.*temp[26] + 1/4.*temp[4];
+	x_in[16] = -1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[17] + 1/4.*temp[22] + 1/4.*temp[23] - 1/4.*temp[24] - 1/4.*temp[26] - 1/4.*temp[4];
+	x_in[17] = 1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[17] + 1/4.*temp[22] - 1/4.*temp[23] + 1/4.*temp[24] - 1/4.*temp[26] - 1/4.*temp[4];
+	x_in[18] = -1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[17] - 1/4.*temp[22] + 1/4.*temp[23] + 1/4.*temp[24] - 1/4.*temp[26] + 1/4.*temp[4];
+	x_in[19] = 1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[18] - 1/4.*temp[21] - 1/4.*temp[23] - 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[5];
+	x_in[20] = -1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[18] + 1/4.*temp[21] + 1/4.*temp[23] - 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[5];
+	x_in[21] = 1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[18] + 1/4.*temp[21] - 1/4.*temp[23] + 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[5];
+	x_in[22] = -1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[18] - 1/4.*temp[21] + 1/4.*temp[23] + 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[5];
+	x_in[23] = 1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[19] - 1/4.*temp[20] - 1/4.*temp[24] - 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[6];
+	x_in[24] = -1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[19] + 1/4.*temp[20] + 1/4.*temp[24] - 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[6];
+	x_in[25] = 1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[19] + 1/4.*temp[20] - 1/4.*temp[24] + 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[6];
+	x_in[26] = -1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[19] - 1/4.*temp[20] + 1/4.*temp[24] + 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[6];
 
 }
 
@@ -966,6 +1113,9 @@ CudaDeviceFunction void relax_and_collide_ADE(real_t x_in[<?R C( h_pop_size) ?>]
 	x_in[20] = 0;
 	x_in[21] = 0;
 	x_in[22] = 0;
+	x_in[23] = 0;
+	x_in[24] = 0;
+	x_in[25] = 0;
 	x_in[23] = 0;
 	x_in[24] = 0;
 	x_in[25] = 0;
@@ -1263,7 +1413,88 @@ CudaDeviceFunction void CollisionCM(){
 	relax_and_collide_ADE(h, rho, omega_k, u);
 }
 
-CudaDeviceFunction void CollisionBGK(){
+CudaDeviceFunction void CollisionCM_HIGHER(){
+	real_t localTemperature = getT();
+	real_t rho = getRho();
+	vector_t Force = getForce(localTemperature, rho);
+
+	// add Darcy force to stop flow within solid regions
+	if ((NodeType & NODE_ADDITIONALS) == NODE_DarcySolid) 
+	{
+		vector_t u_temp = getRawU();
+		u_temp.x += Force.x/(2*rho);
+		u_temp.y += Force.y/(2*rho);
+		u_temp.z += Force.z/(2*rho);
+
+		vector_t fDarcyStoper = get_fDarcyStoper(rho,  u_temp);
+		Force.x += fDarcyStoper.x;
+		Force.y += fDarcyStoper.y;
+		Force.z += fDarcyStoper.z;
+	} 
+
+	vector_t u = relax_and_collide_hydro(Force, omega_nu);
+	#ifdef OPTIONS_OutFlow
+		U = u.x; // for convective outlet BC
+	#endif	
+	real_t omega_k = 1.0/(3*conductivity+0.5);
+	relax_and_collide_ADE_CM_HIGHER(h, rho, omega_k, u);
+}
+
+CudaDeviceFunction void CollisionCM_SRT(){
+	real_t localTemperature = getT();
+	real_t rho = getRho();
+	vector_t Force = getForce(localTemperature, rho);
+
+	// add Darcy force to stop flow within solid regions
+	if ((NodeType & NODE_ADDITIONALS) == NODE_DarcySolid) 
+	{
+		vector_t u_temp = getRawU();
+		u_temp.x += Force.x/(2*rho);
+		u_temp.y += Force.y/(2*rho);
+		u_temp.z += Force.z/(2*rho);
+
+		vector_t fDarcyStoper = get_fDarcyStoper(rho,  u_temp);
+		Force.x += fDarcyStoper.x;
+		Force.y += fDarcyStoper.y;
+		Force.z += fDarcyStoper.z;
+	} 
+
+	vector_t u = relax_and_collide_hydro(Force, omega_nu);
+	#ifdef OPTIONS_OutFlow
+		U = u.x; // for convective outlet BC
+	#endif	
+	real_t omega_k = 1.0/(3*conductivity+0.5);
+	relax_and_collide_ADE_CM_SRT(h, rho, omega_k, u);
+}
+
+CudaDeviceFunction void CollisionHCM(){
+	real_t localTemperature = getT();
+	real_t rho = getRho();
+	vector_t Force = getForce(localTemperature, rho);
+
+	// add Darcy force to stop flow within solid regions
+	if ((NodeType & NODE_ADDITIONALS) == NODE_DarcySolid) 
+	{
+		vector_t u_temp = getRawU();
+		u_temp.x += Force.x/(2*rho);
+		u_temp.y += Force.y/(2*rho);
+		u_temp.z += Force.z/(2*rho);
+
+		vector_t fDarcyStoper = get_fDarcyStoper(rho,  u_temp);
+		Force.x += fDarcyStoper.x;
+		Force.y += fDarcyStoper.y;
+		Force.z += fDarcyStoper.z;
+	} 
+
+	vector_t u = relax_and_collide_hydro(Force, omega_nu);
+	#ifdef OPTIONS_OutFlow
+		U = u.x; // for convective outlet BC
+	#endif	
+	real_t omega_k = 1.0/(3*conductivity+0.5);
+	relax_and_collide_ADE_HCM(h, rho, omega_k, u);
+}
+
+CudaDeviceFunction void Collision_thermalBGK(){
 	real_t localTemperature = getT();
 	real_t rho = getRho();
 	vector_t Force = getForce(localTemperature, rho);
@@ -1296,4 +1527,476 @@ CudaDeviceFunction void CollisionBGK(){
 	for (int i = 0; i < h_size; i++) {
 		h[i] = h[i] + omega_k*(h_eq[i]-h[i]);	
 	}
+}
+
+
+CudaDeviceFunction void Collision_thermalMRT(){
+	real_t localTemperature = getT();
+	real_t rho = getRho();
+	vector_t Force = getForce(localTemperature, rho);
+
+	// add Darcy force to stop flow within solid regions
+	if ((NodeType & NODE_ADDITIONALS) == NODE_DarcySolid) 
+	{
+		vector_t u_temp = getRawU();
+		u_temp.x += Force.x/(2*rho);
+		u_temp.y += Force.y/(2*rho);
+		u_temp.z += Force.z/(2*rho);
+
+		vector_t fDarcyStoper = get_fDarcyStoper(rho,  u_temp);
+		Force.x += fDarcyStoper.x;
+		Force.y += fDarcyStoper.y;
+		Force.z += fDarcyStoper.z;
+	} 
+
+	vector_t u = relax_and_collide_hydro(Force, omega_nu);
+	#ifdef OPTIONS_OutFlow
+		U = u.x; // for convective outlet BC
+	#endif	
+	real_t omega_k = 1.0/(3*conductivity+0.5);
+	relax_and_collide_rawmom_ADE(h, omega_k, u);  // we skip rho
+}
+
+CudaDeviceFunction void relax_and_collide_rawmom_ADE(real_t x_in[27], real_t omega_ade, vector_t u) 
+{
+	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
+	real_t uxuy = u.x*u.y;
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+	real_t uxuz = u.x*u.z;
+	real_t uyuz = u.y*u.z;
+	real_t uz2 = u.z*u.z;
+	real_t m00 = x_in[0] + x_in[10] + x_in[11] + x_in[12] + x_in[13] + x_in[14] + x_in[15] + x_in[16] + x_in[17] + x_in[18] + x_in[19] + x_in[1] + x_in[20] + x_in[21] + x_in[22] + x_in[23] + x_in[24] + x_in[25] + x_in[26] + x_in[2] + x_in[3] + x_in[4] + x_in[5] + x_in[6] + x_in[7] + x_in[8] + x_in[9];
+	
+	real_t temp[27];
+	for (int i = 0; i < 27; i++) {
+		temp[i] = x_in[i];}
+	//raw moments from density-probability functions
+	x_in[0] = m00;
+	x_in[1] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[15] - temp[16] + temp[17] - temp[18] + temp[19] + temp[1] - temp[20] + temp[21] - temp[22] - temp[2] + temp[7] - temp[8] + temp[9];
+	x_in[2] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[15] + temp[16] - temp[17] - temp[18] + temp[23] - temp[24] + temp[25] - temp[26] + temp[3] - temp[4] + temp[7] + temp[8] - temp[9];
+	x_in[3] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[19] + temp[20] - temp[21] - temp[22] + temp[23] + temp[24] - temp[25] - temp[26] + temp[5] - temp[6] + temp[7] + temp[8] + temp[9];
+	x_in[4] = temp[10] + temp[11] - temp[12] - temp[13] + temp[14] + temp[15] - temp[16] - temp[17] + temp[18] + temp[7] - temp[8] - temp[9];
+	x_in[5] = -temp[10] - temp[11] + temp[12] - temp[13] + temp[14] + temp[19] - temp[20] - temp[21] + temp[22] + temp[7] - temp[8] + temp[9];
+	x_in[6] = -temp[10] - temp[11] - temp[12] + temp[13] + temp[14] + temp[23] - temp[24] - temp[25] + temp[26] + temp[7] + temp[8] - temp[9];
+	x_in[7] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[19] + temp[1] + temp[20] + temp[21] + temp[22] + temp[2] + temp[7] + temp[8] + temp[9];
+	x_in[8] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[23] + temp[24] + temp[25] + temp[26] + temp[3] + temp[4] + temp[7] + temp[8] + temp[9];
+	x_in[9] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[19] + temp[20] + temp[21] + temp[22] + temp[23] + temp[24] + temp[25] + temp[26] + temp[5] + temp[6] + temp[7] + temp[8] + temp[9];
+	x_in[10] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[15] - temp[16] + temp[17] - temp[18] + temp[7] - temp[8] + temp[9];
+	x_in[11] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[19] - temp[20] + temp[21] - temp[22] + temp[7] - temp[8] + temp[9];
+	x_in[12] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[15] + temp[16] - temp[17] - temp[18] + temp[7] + temp[8] - temp[9];
+	x_in[13] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[19] + temp[20] - temp[21] - temp[22] + temp[7] + temp[8] + temp[9];
+	x_in[14] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[23] - temp[24] + temp[25] - temp[26] + temp[7] + temp[8] - temp[9];
+	x_in[15] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[23] + temp[24] - temp[25] - temp[26] + temp[7] + temp[8] + temp[9];
+	x_in[16] = temp[10] - temp[11] + temp[12] + temp[13] - temp[14] + temp[7] - temp[8] - temp[9];
+	x_in[17] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[7] + temp[8] + temp[9];
+	x_in[18] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[19] + temp[20] + temp[21] + temp[22] + temp[7] + temp[8] + temp[9];
+	x_in[19] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[23] + temp[24] + temp[25] + temp[26] + temp[7] + temp[8] + temp[9];
+	x_in[20] = -temp[10] - temp[11] - temp[12] + temp[13] + temp[14] + temp[7] + temp[8] - temp[9];
+	x_in[21] = -temp[10] - temp[11] + temp[12] - temp[13] + temp[14] + temp[7] - temp[8] + temp[9];
+	x_in[22] = temp[10] + temp[11] - temp[12] - temp[13] + temp[14] + temp[7] - temp[8] - temp[9];
+	x_in[23] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[7] - temp[8] + temp[9];
+	x_in[24] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[7] + temp[8] - temp[9];
+	x_in[25] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[7] + temp[8] + temp[9];
+	x_in[26] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[7] + temp[8] + temp[9];
+	//collision in moments space
+	//collide
+	x_in[0] = m00;
+	x_in[1] = m00*omega_ade*u.x - temp[1]*(omega_ade - 1.);
+	x_in[2] = m00*omega_ade*u.y - temp[2]*(omega_ade - 1.);
+	x_in[3] = m00*omega_ade*u.z - temp[3]*(omega_ade - 1.);
+	x_in[4] = m00*uxuy;
+	x_in[5] = m00*uxuz;
+	x_in[6] = m00*uyuz;
+	x_in[7] = m00*(ux2 + 1/3.);
+	x_in[8] = m00*(uy2 + 1/3.);
+	x_in[9] = m00*(uz2 + 1/3.);
+	x_in[10] = m00*u.x*(uy2 + 1/3.);
+	x_in[11] = m00*u.x*(uz2 + 1/3.);
+	x_in[12] = m00*u.y*(ux2 + 1/3.);
+	x_in[13] = m00*u.z*(ux2 + 1/3.);
+	x_in[14] = m00*u.y*(uz2 + 1/3.);
+	x_in[15] = m00*u.z*(uy2 + 1/3.);
+	x_in[16] = m00*u.z*uxuy;
+	x_in[17] = m00*(ux2*uy2 + 1/3.*ux2 + 1/3.*uy2 + 1/9.);
+	x_in[18] = m00*(ux2*uz2 + 1/3.*ux2 + 1/3.*uz2 + 1/9.);
+	x_in[19] = m00*(uy2*uz2 + 1/3.*uy2 + 1/3.*uz2 + 1/9.);
+	x_in[20] = m00*uyuz*(ux2 + 1/3.);
+	x_in[21] = m00*uxuz*(uy2 + 1/3.);
+	x_in[22] = m00*uxuy*(uz2 + 1/3.);
+	x_in[23] = m00*u.x*(uy2*uz2 + 1/3.*uy2 + 1/3.*uz2 + 1/9.);
+	x_in[24] = m00*u.y*(ux2*uz2 + 1/3.*ux2 + 1/3.*uz2 + 1/9.);
+	x_in[25] = m00*u.z*(ux2*uy2 + 1/3.*ux2 + 1/3.*uy2 + 1/9.);
+	x_in[26] = m00*(ux2*uy2*uz2 + 1/3.*ux2*uy2 + 1/3.*ux2*uz2 + 1/9.*ux2 + 1/3.*uy2*uz2 + 1/9.*uy2 + 1/9.*uz2 + 1/27.);
+	//back to density-probability functions
+	x_in[0] = temp[0] + temp[17] + temp[18] + temp[19] - temp[26] - temp[7] - temp[8] - temp[9];
+	x_in[1] = -1/2.*temp[10] - 1/2.*temp[11] - 1/2.*temp[17] - 1/2.*temp[18] + 1/2.*temp[1] + 1/2.*temp[23] + 1/2.*temp[26] + 1/2.*temp[7];
+	x_in[2] = 1/2.*temp[10] + 1/2.*temp[11] - 1/2.*temp[17] - 1/2.*temp[18] - 1/2.*temp[1] - 1/2.*temp[23] + 1/2.*temp[26] + 1/2.*temp[7];
+	x_in[3] = -1/2.*temp[12] - 1/2.*temp[14] - 1/2.*temp[17] - 1/2.*temp[19] + 1/2.*temp[24] + 1/2.*temp[26] + 1/2.*temp[2] + 1/2.*temp[8];
+	x_in[4] = 1/2.*temp[12] + 1/2.*temp[14] - 1/2.*temp[17] - 1/2.*temp[19] - 1/2.*temp[24] + 1/2.*temp[26] - 1/2.*temp[2] + 1/2.*temp[8];
+	x_in[5] = -1/2.*temp[13] - 1/2.*temp[15] - 1/2.*temp[18] - 1/2.*temp[19] + 1/2.*temp[25] + 1/2.*temp[26] + 1/2.*temp[3] + 1/2.*temp[9];
+	x_in[6] = 1/2.*temp[13] + 1/2.*temp[15] - 1/2.*temp[18] - 1/2.*temp[19] - 1/2.*temp[25] + 1/2.*temp[26] - 1/2.*temp[3] + 1/2.*temp[9];
+	x_in[7] = 1/8.*temp[16] + 1/8.*temp[20] + 1/8.*temp[21] + 1/8.*temp[22] + 1/8.*temp[23] + 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[8] = -1/8.*temp[16] + 1/8.*temp[20] - 1/8.*temp[21] - 1/8.*temp[22] - 1/8.*temp[23] + 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[9] = -1/8.*temp[16] - 1/8.*temp[20] + 1/8.*temp[21] - 1/8.*temp[22] + 1/8.*temp[23] - 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[10] = 1/8.*temp[16] - 1/8.*temp[20] - 1/8.*temp[21] + 1/8.*temp[22] - 1/8.*temp[23] - 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[11] = -1/8.*temp[16] - 1/8.*temp[20] - 1/8.*temp[21] + 1/8.*temp[22] + 1/8.*temp[23] + 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[12] = 1/8.*temp[16] - 1/8.*temp[20] + 1/8.*temp[21] - 1/8.*temp[22] - 1/8.*temp[23] + 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[13] = 1/8.*temp[16] + 1/8.*temp[20] - 1/8.*temp[21] - 1/8.*temp[22] + 1/8.*temp[23] - 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[14] = -1/8.*temp[16] + 1/8.*temp[20] + 1/8.*temp[21] + 1/8.*temp[22] - 1/8.*temp[23] - 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[15] = 1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[17] - 1/4.*temp[22] - 1/4.*temp[23] - 1/4.*temp[24] - 1/4.*temp[26] + 1/4.*temp[4];
+	x_in[16] = -1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[17] + 1/4.*temp[22] + 1/4.*temp[23] - 1/4.*temp[24] - 1/4.*temp[26] - 1/4.*temp[4];
+	x_in[17] = 1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[17] + 1/4.*temp[22] - 1/4.*temp[23] + 1/4.*temp[24] - 1/4.*temp[26] - 1/4.*temp[4];
+	x_in[18] = -1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[17] - 1/4.*temp[22] + 1/4.*temp[23] + 1/4.*temp[24] - 1/4.*temp[26] + 1/4.*temp[4];
+	x_in[19] = 1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[18] - 1/4.*temp[21] - 1/4.*temp[23] - 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[5];
+	x_in[20] = -1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[18] + 1/4.*temp[21] + 1/4.*temp[23] - 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[5];
+	x_in[21] = 1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[18] + 1/4.*temp[21] - 1/4.*temp[23] + 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[5];
+	x_in[22] = -1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[18] - 1/4.*temp[21] + 1/4.*temp[23] + 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[5];
+	x_in[23] = 1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[19] - 1/4.*temp[20] - 1/4.*temp[24] - 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[6];
+	x_in[24] = -1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[19] + 1/4.*temp[20] + 1/4.*temp[24] - 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[6];
+	x_in[25] = 1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[19] + 1/4.*temp[20] - 1/4.*temp[24] + 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[6];
+	x_in[26] = -1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[19] - 1/4.*temp[20] + 1/4.*temp[24] + 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[6];
+}
+
+
+CudaDeviceFunction void relax_and_collide_ADE_CM_SRT(real_t x_in[<?R C( h_pop_size) ?>], real_t rho, real_t omega_ade, vector_t u) 
+{
+	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
+	real_t uxuy = u.x*u.y;
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+	real_t uxuz = u.x*u.z;
+	real_t uyuz = u.y*u.z;
+	real_t uz2 = u.z*u.z;
+
+	real_t H = x_in[0] + x_in[10] + x_in[11] + x_in[12] + x_in[13] + x_in[14] + x_in[15] + x_in[16] + x_in[17] + x_in[18] + x_in[19] + x_in[1] + x_in[20] + x_in[21] + x_in[22] + x_in[23] + x_in[24] + x_in[25] + x_in[26] + x_in[2] + x_in[3] + x_in[4] + x_in[5] + x_in[6] + x_in[7] + x_in[8] + x_in[9];
+	real_t Sigma2 = (h_stability_enhancement*1./3.)/(cp*rho);
+
+	real_t temp[27];
+	for (int i = 0; i < 27; i++) {
+		temp[i] = x_in[i];}
+	//raw moments from density-probability functions
+	x_in[0] = temp[0] + temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[19] + temp[1] + temp[20] + temp[21] + temp[22] + temp[23] + temp[24] + temp[25] + temp[26] + temp[2] + temp[3] + temp[4] + temp[5] + temp[6] + temp[7] + temp[8] + temp[9];
+	x_in[1] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[15] - temp[16] + temp[17] - temp[18] + temp[19] + temp[1] - temp[20] + temp[21] - temp[22] - temp[2] + temp[7] - temp[8] + temp[9];
+	x_in[2] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[15] + temp[16] - temp[17] - temp[18] + temp[23] - temp[24] + temp[25] - temp[26] + temp[3] - temp[4] + temp[7] + temp[8] - temp[9];
+	x_in[3] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[19] + temp[20] - temp[21] - temp[22] + temp[23] + temp[24] - temp[25] - temp[26] + temp[5] - temp[6] + temp[7] + temp[8] + temp[9];
+	x_in[4] = temp[10] + temp[11] - temp[12] - temp[13] + temp[14] + temp[15] - temp[16] - temp[17] + temp[18] + temp[7] - temp[8] - temp[9];
+	x_in[5] = -temp[10] - temp[11] + temp[12] - temp[13] + temp[14] + temp[19] - temp[20] - temp[21] + temp[22] + temp[7] - temp[8] + temp[9];
+	x_in[6] = -temp[10] - temp[11] - temp[12] + temp[13] + temp[14] + temp[23] - temp[24] - temp[25] + temp[26] + temp[7] + temp[8] - temp[9];
+	x_in[7] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[19] + temp[1] + temp[20] + temp[21] + temp[22] + temp[2] + temp[7] + temp[8] + temp[9];
+	x_in[8] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[23] + temp[24] + temp[25] + temp[26] + temp[3] + temp[4] + temp[7] + temp[8] + temp[9];
+	x_in[9] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[19] + temp[20] + temp[21] + temp[22] + temp[23] + temp[24] + temp[25] + temp[26] + temp[5] + temp[6] + temp[7] + temp[8] + temp[9];
+	x_in[10] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[15] - temp[16] + temp[17] - temp[18] + temp[7] - temp[8] + temp[9];
+	x_in[11] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[19] - temp[20] + temp[21] - temp[22] + temp[7] - temp[8] + temp[9];
+	x_in[12] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[15] + temp[16] - temp[17] - temp[18] + temp[7] + temp[8] - temp[9];
+	x_in[13] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[19] + temp[20] - temp[21] - temp[22] + temp[7] + temp[8] + temp[9];
+	x_in[14] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[23] - temp[24] + temp[25] - temp[26] + temp[7] + temp[8] - temp[9];
+	x_in[15] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[23] + temp[24] - temp[25] - temp[26] + temp[7] + temp[8] + temp[9];
+	x_in[16] = temp[10] - temp[11] + temp[12] + temp[13] - temp[14] + temp[7] - temp[8] - temp[9];
+	x_in[17] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[7] + temp[8] + temp[9];
+	x_in[18] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[19] + temp[20] + temp[21] + temp[22] + temp[7] + temp[8] + temp[9];
+	x_in[19] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[23] + temp[24] + temp[25] + temp[26] + temp[7] + temp[8] + temp[9];
+	x_in[20] = -temp[10] - temp[11] - temp[12] + temp[13] + temp[14] + temp[7] + temp[8] - temp[9];
+	x_in[21] = -temp[10] - temp[11] + temp[12] - temp[13] + temp[14] + temp[7] - temp[8] + temp[9];
+	x_in[22] = temp[10] + temp[11] - temp[12] - temp[13] + temp[14] + temp[7] - temp[8] - temp[9];
+	x_in[23] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[7] - temp[8] + temp[9];
+	x_in[24] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[7] + temp[8] - temp[9];
+	x_in[25] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[7] + temp[8] + temp[9];
+	x_in[26] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[7] + temp[8] + temp[9];
+	//central moments from raw moments
+	temp[0] = x_in[0];
+	temp[1] = -u.x*x_in[0] + x_in[1];
+	temp[2] = -u.y*x_in[0] + x_in[2];
+	temp[3] = -u.z*x_in[0] + x_in[3];
+	temp[4] = uxuy*x_in[0] - u.x*x_in[2] - u.y*x_in[1] + x_in[4];
+	temp[5] = uxuz*x_in[0] - u.x*x_in[3] - u.z*x_in[1] + x_in[5];
+	temp[6] = uyuz*x_in[0] - u.y*x_in[3] - u.z*x_in[2] + x_in[6];
+	temp[7] = ux2*x_in[0] - 2.*u.x*x_in[1] + x_in[7];
+	temp[8] = uy2*x_in[0] - 2.*u.y*x_in[2] + x_in[8];
+	temp[9] = uz2*x_in[0] - 2.*u.z*x_in[3] + x_in[9];
+	temp[10] = -u.x*uy2*x_in[0] + 2.*uxuy*x_in[2] - u.x*x_in[8] + uy2*x_in[1] - 2.*u.y*x_in[4] + x_in[10];
+	temp[11] = -u.x*uz2*x_in[0] + 2.*uxuz*x_in[3] - u.x*x_in[9] + uz2*x_in[1] - 2.*u.z*x_in[5] + x_in[11];
+	temp[12] = -ux2*u.y*x_in[0] + ux2*x_in[2] + 2.*uxuy*x_in[1] - 2.*u.x*x_in[4] - u.y*x_in[7] + x_in[12];
+	temp[13] = -ux2*u.z*x_in[0] + ux2*x_in[3] + 2.*uxuz*x_in[1] - 2.*u.x*x_in[5] - u.z*x_in[7] + x_in[13];
+	temp[14] = -u.y*uz2*x_in[0] + 2.*uyuz*x_in[3] - u.y*x_in[9] + uz2*x_in[2] - 2.*u.z*x_in[6] + x_in[14];
+	temp[15] = -uy2*u.z*x_in[0] + uy2*x_in[3] + 2.*uyuz*x_in[2] - 2.*u.y*x_in[6] - u.z*x_in[8] + x_in[15];
+	temp[16] = -uxuy*u.z*x_in[0] + uxuy*x_in[3] + uxuz*x_in[2] - u.x*x_in[6] + uyuz*x_in[1] - u.y*x_in[5] - u.z*x_in[4] + x_in[16];
+	temp[17] = ux2*uy2*x_in[0] - 2.*ux2*u.y*x_in[2] + ux2*x_in[8] - 2.*u.x*uy2*x_in[1] + 4.*uxuy*x_in[4] - 2.*u.x*x_in[10] + uy2*x_in[7] - 2.*u.y*x_in[12] + x_in[17];
+	temp[18] = ux2*uz2*x_in[0] - 2.*ux2*u.z*x_in[3] + ux2*x_in[9] - 2.*u.x*uz2*x_in[1] + 4.*uxuz*x_in[5] - 2.*u.x*x_in[11] + uz2*x_in[7] - 2.*u.z*x_in[13] + x_in[18];
+	temp[19] = uy2*uz2*x_in[0] - 2.*uy2*u.z*x_in[3] + uy2*x_in[9] - 2.*u.y*uz2*x_in[2] + 4.*uyuz*x_in[6] - 2.*u.y*x_in[14] + uz2*x_in[8] - 2.*u.z*x_in[15] + x_in[19];
+	temp[20] = ux2*uyuz*x_in[0] - ux2*u.y*x_in[3] - ux2*u.z*x_in[2] + ux2*x_in[6] - 2.*uxuy*u.z*x_in[1] + 2.*uxuy*x_in[5] + 2.*uxuz*x_in[4] - 2.*u.x*x_in[16] + uyuz*x_in[7] - u.y*x_in[13] - u.z*x_in[12] + x_in[20];
+	temp[21] = u.x*uy2*u.z*x_in[0] - u.x*uy2*x_in[3] - 2.*uxuy*u.z*x_in[2] + 2.*uxuy*x_in[6] + uxuz*x_in[8] - u.x*x_in[15] - uy2*u.z*x_in[1] + uy2*x_in[5] + 2.*uyuz*x_in[4] - 2.*u.y*x_in[16] - u.z*x_in[10] + x_in[21];
+	temp[22] = uxuy*uz2*x_in[0] - 2.*uxuy*u.z*x_in[3] + uxuy*x_in[9] - u.x*uz2*x_in[2] + 2.*uxuz*x_in[6] - u.x*x_in[14] - u.y*uz2*x_in[1] + 2.*uyuz*x_in[5] - u.y*x_in[11] + uz2*x_in[4] - 2.*u.z*x_in[16] + x_in[22];
+	temp[23] = -u.x*uy2*uz2*x_in[0] + 2.*u.x*uy2*u.z*x_in[3] - u.x*uy2*x_in[9] + 2.*uxuy*uz2*x_in[2] - 4.*uxuy*u.z*x_in[6] + 2.*uxuy*x_in[14] - u.x*uz2*x_in[8] + 2.*uxuz*x_in[15] - u.x*x_in[19] + uy2*uz2*x_in[1] - 2.*uy2*u.z*x_in[5] + uy2*x_in[11] - 2.*u.y*uz2*x_in[4] + 4.*uyuz*x_in[16] - 2.*u.y*x_in[22] + uz2*x_in[10] - 2.*u.z*x_in[21] + x_in[23];
+	temp[24] = -ux2*u.y*uz2*x_in[0] + 2.*ux2*uyuz*x_in[3] - ux2*u.y*x_in[9] + ux2*uz2*x_in[2] - 2.*ux2*u.z*x_in[6] + ux2*x_in[14] + 2.*uxuy*uz2*x_in[1] - 4.*uxuy*u.z*x_in[5] + 2.*uxuy*x_in[11] - 2.*u.x*uz2*x_in[4] + 4.*uxuz*x_in[16] - 2.*u.x*x_in[22] - u.y*uz2*x_in[7] + 2.*uyuz*x_in[13] - u.y*x_in[18] + uz2*x_in[12] - 2.*u.z*x_in[20] + x_in[24];
+	temp[25] = -ux2*uy2*u.z*x_in[0] + ux2*uy2*x_in[3] + 2.*ux2*uyuz*x_in[2] - 2.*ux2*u.y*x_in[6] - ux2*u.z*x_in[8] + ux2*x_in[15] + 2.*u.x*uy2*u.z*x_in[1] - 2.*u.x*uy2*x_in[5] - 4.*uxuy*u.z*x_in[4] + 4.*uxuy*x_in[16] + 2.*uxuz*x_in[10] - 2.*u.x*x_in[21] - uy2*u.z*x_in[7] + uy2*x_in[13] + 2.*uyuz*x_in[12] - 2.*u.y*x_in[20] - u.z*x_in[17] + x_in[25];
+	temp[26] = ux2*uy2*uz2*x_in[0] - 2.*ux2*uy2*u.z*x_in[3] + ux2*uy2*x_in[9] - 2.*ux2*u.y*uz2*x_in[2] + 4.*ux2*uyuz*x_in[6] - 2.*ux2*u.y*x_in[14] + ux2*uz2*x_in[8] - 2.*ux2*u.z*x_in[15] + ux2*x_in[19] - 2.*u.x*uy2*uz2*x_in[1] + 4.*u.x*uy2*u.z*x_in[5] - 2.*u.x*uy2*x_in[11] + 4.*uxuy*uz2*x_in[4] - 8.*uxuy*u.z*x_in[16] + 4.*uxuy*x_in[22] - 2.*u.x*uz2*x_in[10] + 4.*uxuz*x_in[21] - 2.*u.x*x_in[23] + uy2*uz2*x_in[7] - 2.*uy2*u.z*x_in[13] + uy2*x_in[18] - 2.*u.y*uz2*x_in[12] + 4.*uyuz*x_in[20] - 2.*u.y*x_in[24] + uz2*x_in[17] - 2.*u.z*x_in[25] + x_in[26];
+	//collision in central moments space
+	//collide
+	x_in[0] = H*omega_ade -temp[0]*(omega_ade - 1.);
+	x_in[1] = -temp[1]*(omega_ade - 1.);
+	x_in[2] = -temp[2]*(omega_ade - 1.);
+	x_in[3] = -temp[3]*(omega_ade - 1.);
+	x_in[4] = -temp[4]*(omega_ade - 1.);
+	x_in[5] = -temp[5]*(omega_ade - 1.);
+	x_in[6] = -temp[6]*(omega_ade - 1.);
+	x_in[7] = Sigma2*H*omega_ade -temp[7]*(omega_ade - 1.);
+	x_in[8] = Sigma2*H*omega_ade -temp[8]*(omega_ade - 1.);
+	x_in[9] = Sigma2*H*omega_ade -temp[9]*(omega_ade - 1.);
+	x_in[10] = -temp[10]*(omega_ade - 1.);
+	x_in[11] = -temp[11]*(omega_ade - 1.);
+	x_in[12] = -temp[12]*(omega_ade - 1.);
+	x_in[13] = -temp[13]*(omega_ade - 1.);
+	x_in[14] = -temp[14]*(omega_ade - 1.);
+	x_in[15] = -temp[15]*(omega_ade - 1.);
+	x_in[16] = -temp[16]*(omega_ade - 1.);
+	x_in[17] = Sigma2*Sigma2*H*omega_ade -temp[17]*(omega_ade - 1.);
+	x_in[18] = Sigma2*Sigma2*H*omega_ade -temp[18]*(omega_ade - 1.);
+	x_in[19] = Sigma2*Sigma2*H*omega_ade -temp[19]*(omega_ade - 1.);
+	x_in[20] = -temp[20]*(omega_ade - 1.);
+	x_in[21] = -temp[21]*(omega_ade - 1.);
+	x_in[22] = -temp[22]*(omega_ade - 1.);
+	x_in[23] = -temp[23]*(omega_ade - 1.);
+	x_in[24] = -temp[24]*(omega_ade - 1.);
+	x_in[25] = -temp[25]*(omega_ade - 1.);
+	x_in[26] = Sigma2*Sigma2*Sigma2*H*omega_ade -temp[26]*(omega_ade - 1.);
+
+	//back to raw moments
+	temp[0] = x_in[0];
+	temp[1] = u.x*x_in[0] + x_in[1];
+	temp[2] = u.y*x_in[0] + x_in[2];
+	temp[3] = u.z*x_in[0] + x_in[3];
+	temp[4] = uxuy*x_in[0] + u.x*x_in[2] + u.y*x_in[1] + x_in[4];
+	temp[5] = uxuz*x_in[0] + u.x*x_in[3] + u.z*x_in[1] + x_in[5];
+	temp[6] = uyuz*x_in[0] + u.y*x_in[3] + u.z*x_in[2] + x_in[6];
+	temp[7] = ux2*x_in[0] + 2.*u.x*x_in[1] + x_in[7];
+	temp[8] = uy2*x_in[0] + 2.*u.y*x_in[2] + x_in[8];
+	temp[9] = uz2*x_in[0] + 2.*u.z*x_in[3] + x_in[9];
+	temp[10] = u.x*uy2*x_in[0] + 2.*uxuy*x_in[2] + u.x*x_in[8] + uy2*x_in[1] + 2.*u.y*x_in[4] + x_in[10];
+	temp[11] = u.x*uz2*x_in[0] + 2.*uxuz*x_in[3] + u.x*x_in[9] + uz2*x_in[1] + 2.*u.z*x_in[5] + x_in[11];
+	temp[12] = ux2*u.y*x_in[0] + ux2*x_in[2] + 2.*uxuy*x_in[1] + 2.*u.x*x_in[4] + u.y*x_in[7] + x_in[12];
+	temp[13] = ux2*u.z*x_in[0] + ux2*x_in[3] + 2.*uxuz*x_in[1] + 2.*u.x*x_in[5] + u.z*x_in[7] + x_in[13];
+	temp[14] = u.y*uz2*x_in[0] + 2.*uyuz*x_in[3] + u.y*x_in[9] + uz2*x_in[2] + 2.*u.z*x_in[6] + x_in[14];
+	temp[15] = uy2*u.z*x_in[0] + uy2*x_in[3] + 2.*uyuz*x_in[2] + 2.*u.y*x_in[6] + u.z*x_in[8] + x_in[15];
+	temp[16] = uxuy*u.z*x_in[0] + uxuy*x_in[3] + uxuz*x_in[2] + u.x*x_in[6] + uyuz*x_in[1] + u.y*x_in[5] + u.z*x_in[4] + x_in[16];
+	temp[17] = ux2*uy2*x_in[0] + 2.*ux2*u.y*x_in[2] + ux2*x_in[8] + 2.*u.x*uy2*x_in[1] + 4.*uxuy*x_in[4] + 2.*u.x*x_in[10] + uy2*x_in[7] + 2.*u.y*x_in[12] + x_in[17];
+	temp[18] = ux2*uz2*x_in[0] + 2.*ux2*u.z*x_in[3] + ux2*x_in[9] + 2.*u.x*uz2*x_in[1] + 4.*uxuz*x_in[5] + 2.*u.x*x_in[11] + uz2*x_in[7] + 2.*u.z*x_in[13] + x_in[18];
+	temp[19] = uy2*uz2*x_in[0] + 2.*uy2*u.z*x_in[3] + uy2*x_in[9] + 2.*u.y*uz2*x_in[2] + 4.*uyuz*x_in[6] + 2.*u.y*x_in[14] + uz2*x_in[8] + 2.*u.z*x_in[15] + x_in[19];
+	temp[20] = ux2*uyuz*x_in[0] + ux2*u.y*x_in[3] + ux2*u.z*x_in[2] + ux2*x_in[6] + 2.*uxuy*u.z*x_in[1] + 2.*uxuy*x_in[5] + 2.*uxuz*x_in[4] + 2.*u.x*x_in[16] + uyuz*x_in[7] + u.y*x_in[13] + u.z*x_in[12] + x_in[20];
+	temp[21] = u.x*uy2*u.z*x_in[0] + u.x*uy2*x_in[3] + 2.*uxuy*u.z*x_in[2] + 2.*uxuy*x_in[6] + uxuz*x_in[8] + u.x*x_in[15] + uy2*u.z*x_in[1] + uy2*x_in[5] + 2.*uyuz*x_in[4] + 2.*u.y*x_in[16] + u.z*x_in[10] + x_in[21];
+	temp[22] = uxuy*uz2*x_in[0] + 2.*uxuy*u.z*x_in[3] + uxuy*x_in[9] + u.x*uz2*x_in[2] + 2.*uxuz*x_in[6] + u.x*x_in[14] + u.y*uz2*x_in[1] + 2.*uyuz*x_in[5] + u.y*x_in[11] + uz2*x_in[4] + 2.*u.z*x_in[16] + x_in[22];
+	temp[23] = u.x*uy2*uz2*x_in[0] + 2.*u.x*uy2*u.z*x_in[3] + u.x*uy2*x_in[9] + 2.*uxuy*uz2*x_in[2] + 4.*uxuy*u.z*x_in[6] + 2.*uxuy*x_in[14] + u.x*uz2*x_in[8] + 2.*uxuz*x_in[15] + u.x*x_in[19] + uy2*uz2*x_in[1] + 2.*uy2*u.z*x_in[5] + uy2*x_in[11] + 2.*u.y*uz2*x_in[4] + 4.*uyuz*x_in[16] + 2.*u.y*x_in[22] + uz2*x_in[10] + 2.*u.z*x_in[21] + x_in[23];
+	temp[24] = ux2*u.y*uz2*x_in[0] + 2.*ux2*uyuz*x_in[3] + ux2*u.y*x_in[9] + ux2*uz2*x_in[2] + 2.*ux2*u.z*x_in[6] + ux2*x_in[14] + 2.*uxuy*uz2*x_in[1] + 4.*uxuy*u.z*x_in[5] + 2.*uxuy*x_in[11] + 2.*u.x*uz2*x_in[4] + 4.*uxuz*x_in[16] + 2.*u.x*x_in[22] + u.y*uz2*x_in[7] + 2.*uyuz*x_in[13] + u.y*x_in[18] + uz2*x_in[12] + 2.*u.z*x_in[20] + x_in[24];
+	temp[25] = ux2*uy2*u.z*x_in[0] + ux2*uy2*x_in[3] + 2.*ux2*uyuz*x_in[2] + 2.*ux2*u.y*x_in[6] + ux2*u.z*x_in[8] + ux2*x_in[15] + 2.*u.x*uy2*u.z*x_in[1] + 2.*u.x*uy2*x_in[5] + 4.*uxuy*u.z*x_in[4] + 4.*uxuy*x_in[16] + 2.*uxuz*x_in[10] + 2.*u.x*x_in[21] + uy2*u.z*x_in[7] + uy2*x_in[13] + 2.*uyuz*x_in[12] + 2.*u.y*x_in[20] + u.z*x_in[17] + x_in[25];
+	temp[26] = ux2*uy2*uz2*x_in[0] + 2.*ux2*uy2*u.z*x_in[3] + ux2*uy2*x_in[9] + 2.*ux2*u.y*uz2*x_in[2] + 4.*ux2*uyuz*x_in[6] + 2.*ux2*u.y*x_in[14] + ux2*uz2*x_in[8] + 2.*ux2*u.z*x_in[15] + ux2*x_in[19] + 2.*u.x*uy2*uz2*x_in[1] + 4.*u.x*uy2*u.z*x_in[5] + 2.*u.x*uy2*x_in[11] + 4.*uxuy*uz2*x_in[4] + 8.*uxuy*u.z*x_in[16] + 4.*uxuy*x_in[22] + 2.*u.x*uz2*x_in[10] + 4.*uxuz*x_in[21] + 2.*u.x*x_in[23] + uy2*uz2*x_in[7] + 2.*uy2*u.z*x_in[13] + uy2*x_in[18] + 2.*u.y*uz2*x_in[12] + 4.*uyuz*x_in[20] + 2.*u.y*x_in[24] + uz2*x_in[17] + 2.*u.z*x_in[25] + x_in[26];
+	//back to density-probability functions
+	x_in[0] = temp[0] + temp[17] + temp[18] + temp[19] - temp[26] - temp[7] - temp[8] - temp[9];
+	x_in[1] = -1/2.*temp[10] - 1/2.*temp[11] - 1/2.*temp[17] - 1/2.*temp[18] + 1/2.*temp[1] + 1/2.*temp[23] + 1/2.*temp[26] + 1/2.*temp[7];
+	x_in[2] = 1/2.*temp[10] + 1/2.*temp[11] - 1/2.*temp[17] - 1/2.*temp[18] - 1/2.*temp[1] - 1/2.*temp[23] + 1/2.*temp[26] + 1/2.*temp[7];
+	x_in[3] = -1/2.*temp[12] - 1/2.*temp[14] - 1/2.*temp[17] - 1/2.*temp[19] + 1/2.*temp[24] + 1/2.*temp[26] + 1/2.*temp[2] + 1/2.*temp[8];
+	x_in[4] = 1/2.*temp[12] + 1/2.*temp[14] - 1/2.*temp[17] - 1/2.*temp[19] - 1/2.*temp[24] + 1/2.*temp[26] - 1/2.*temp[2] + 1/2.*temp[8];
+	x_in[5] = -1/2.*temp[13] - 1/2.*temp[15] - 1/2.*temp[18] - 1/2.*temp[19] + 1/2.*temp[25] + 1/2.*temp[26] + 1/2.*temp[3] + 1/2.*temp[9];
+	x_in[6] = 1/2.*temp[13] + 1/2.*temp[15] - 1/2.*temp[18] - 1/2.*temp[19] - 1/2.*temp[25] + 1/2.*temp[26] - 1/2.*temp[3] + 1/2.*temp[9];
+	x_in[7] = 1/8.*temp[16] + 1/8.*temp[20] + 1/8.*temp[21] + 1/8.*temp[22] + 1/8.*temp[23] + 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[8] = -1/8.*temp[16] + 1/8.*temp[20] - 1/8.*temp[21] - 1/8.*temp[22] - 1/8.*temp[23] + 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[9] = -1/8.*temp[16] - 1/8.*temp[20] + 1/8.*temp[21] - 1/8.*temp[22] + 1/8.*temp[23] - 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[10] = 1/8.*temp[16] - 1/8.*temp[20] - 1/8.*temp[21] + 1/8.*temp[22] - 1/8.*temp[23] - 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[11] = -1/8.*temp[16] - 1/8.*temp[20] - 1/8.*temp[21] + 1/8.*temp[22] + 1/8.*temp[23] + 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[12] = 1/8.*temp[16] - 1/8.*temp[20] + 1/8.*temp[21] - 1/8.*temp[22] - 1/8.*temp[23] + 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[13] = 1/8.*temp[16] + 1/8.*temp[20] - 1/8.*temp[21] - 1/8.*temp[22] + 1/8.*temp[23] - 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[14] = -1/8.*temp[16] + 1/8.*temp[20] + 1/8.*temp[21] + 1/8.*temp[22] - 1/8.*temp[23] - 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[15] = 1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[17] - 1/4.*temp[22] - 1/4.*temp[23] - 1/4.*temp[24] - 1/4.*temp[26] + 1/4.*temp[4];
+	x_in[16] = -1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[17] + 1/4.*temp[22] + 1/4.*temp[23] - 1/4.*temp[24] - 1/4.*temp[26] - 1/4.*temp[4];
+	x_in[17] = 1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[17] + 1/4.*temp[22] - 1/4.*temp[23] + 1/4.*temp[24] - 1/4.*temp[26] - 1/4.*temp[4];
+	x_in[18] = -1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[17] - 1/4.*temp[22] + 1/4.*temp[23] + 1/4.*temp[24] - 1/4.*temp[26] + 1/4.*temp[4];
+	x_in[19] = 1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[18] - 1/4.*temp[21] - 1/4.*temp[23] - 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[5];
+	x_in[20] = -1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[18] + 1/4.*temp[21] + 1/4.*temp[23] - 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[5];
+	x_in[21] = 1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[18] + 1/4.*temp[21] - 1/4.*temp[23] + 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[5];
+	x_in[22] = -1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[18] - 1/4.*temp[21] + 1/4.*temp[23] + 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[5];
+	x_in[23] = 1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[19] - 1/4.*temp[20] - 1/4.*temp[24] - 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[6];
+	x_in[24] = -1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[19] + 1/4.*temp[20] + 1/4.*temp[24] - 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[6];
+	x_in[25] = 1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[19] + 1/4.*temp[20] - 1/4.*temp[24] + 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[6];
+	x_in[26] = -1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[19] - 1/4.*temp[20] + 1/4.*temp[24] + 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[6];
+
+}
+
+
+CudaDeviceFunction void relax_and_collide_ADE_HCM(real_t x_in[<?R C( h_pop_size) ?>], real_t rho, real_t omega_ade, vector_t u_hydro) 
+{
+	real_t H = x_in[0] + x_in[10] + x_in[11] + x_in[12] + x_in[13] + x_in[14] + x_in[15] + x_in[16] + x_in[17] + x_in[18] + x_in[19] + x_in[1] + x_in[20] + x_in[21] + x_in[22] + x_in[23] + x_in[24] + x_in[25] + x_in[26] + x_in[2] + x_in[3] + x_in[4] + x_in[5] + x_in[6] + x_in[7] + x_in[8] + x_in[9];
+	real_t Sigma2 = (h_stability_enhancement*1./3.)/(cp*rho);
+	
+	real_t temp[27];
+	for (int i = 0; i < 27; i++) {
+		temp[i] = x_in[i];}
+	//raw moments from density-probability functions
+	x_in[0] = temp[0] + temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[19] + temp[1] + temp[20] + temp[21] + temp[22] + temp[23] + temp[24] + temp[25] + temp[26] + temp[2] + temp[3] + temp[4] + temp[5] + temp[6] + temp[7] + temp[8] + temp[9];
+	x_in[1] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[15] - temp[16] + temp[17] - temp[18] + temp[19] + temp[1] - temp[20] + temp[21] - temp[22] - temp[2] + temp[7] - temp[8] + temp[9];
+	x_in[2] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[15] + temp[16] - temp[17] - temp[18] + temp[23] - temp[24] + temp[25] - temp[26] + temp[3] - temp[4] + temp[7] + temp[8] - temp[9];
+	x_in[3] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[19] + temp[20] - temp[21] - temp[22] + temp[23] + temp[24] - temp[25] - temp[26] + temp[5] - temp[6] + temp[7] + temp[8] + temp[9];
+	x_in[4] = temp[10] + temp[11] - temp[12] - temp[13] + temp[14] + temp[15] - temp[16] - temp[17] + temp[18] + temp[7] - temp[8] - temp[9];
+	x_in[5] = -temp[10] - temp[11] + temp[12] - temp[13] + temp[14] + temp[19] - temp[20] - temp[21] + temp[22] + temp[7] - temp[8] + temp[9];
+	x_in[6] = -temp[10] - temp[11] - temp[12] + temp[13] + temp[14] + temp[23] - temp[24] - temp[25] + temp[26] + temp[7] + temp[8] - temp[9];
+	x_in[7] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[19] + temp[1] + temp[20] + temp[21] + temp[22] + temp[2] + temp[7] + temp[8] + temp[9];
+	x_in[8] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[23] + temp[24] + temp[25] + temp[26] + temp[3] + temp[4] + temp[7] + temp[8] + temp[9];
+	x_in[9] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[19] + temp[20] + temp[21] + temp[22] + temp[23] + temp[24] + temp[25] + temp[26] + temp[5] + temp[6] + temp[7] + temp[8] + temp[9];
+	x_in[10] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[15] - temp[16] + temp[17] - temp[18] + temp[7] - temp[8] + temp[9];
+	x_in[11] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[19] - temp[20] + temp[21] - temp[22] + temp[7] - temp[8] + temp[9];
+	x_in[12] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[15] + temp[16] - temp[17] - temp[18] + temp[7] + temp[8] - temp[9];
+	x_in[13] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[19] + temp[20] - temp[21] - temp[22] + temp[7] + temp[8] + temp[9];
+	x_in[14] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[23] - temp[24] + temp[25] - temp[26] + temp[7] + temp[8] - temp[9];
+	x_in[15] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[23] + temp[24] - temp[25] - temp[26] + temp[7] + temp[8] + temp[9];
+	x_in[16] = temp[10] - temp[11] + temp[12] + temp[13] - temp[14] + temp[7] - temp[8] - temp[9];
+	x_in[17] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[15] + temp[16] + temp[17] + temp[18] + temp[7] + temp[8] + temp[9];
+	x_in[18] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[19] + temp[20] + temp[21] + temp[22] + temp[7] + temp[8] + temp[9];
+	x_in[19] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[23] + temp[24] + temp[25] + temp[26] + temp[7] + temp[8] + temp[9];
+	x_in[20] = -temp[10] - temp[11] - temp[12] + temp[13] + temp[14] + temp[7] + temp[8] - temp[9];
+	x_in[21] = -temp[10] - temp[11] + temp[12] - temp[13] + temp[14] + temp[7] - temp[8] + temp[9];
+	x_in[22] = temp[10] + temp[11] - temp[12] - temp[13] + temp[14] + temp[7] - temp[8] - temp[9];
+	x_in[23] = -temp[10] + temp[11] - temp[12] + temp[13] - temp[14] + temp[7] - temp[8] + temp[9];
+	x_in[24] = -temp[10] + temp[11] + temp[12] - temp[13] - temp[14] + temp[7] + temp[8] - temp[9];
+	x_in[25] = temp[10] - temp[11] - temp[12] - temp[13] - temp[14] + temp[7] + temp[8] + temp[9];
+	x_in[26] = temp[10] + temp[11] + temp[12] + temp[13] + temp[14] + temp[7] + temp[8] + temp[9];
+	
+	vector_t u;
+
+	u.x = x_in[1]/x_in[0];
+	u.y = x_in[2]/x_in[0];
+	u.z = x_in[3]/x_in[0];
+
+	real_t uxuy = u.x*u.y;
+	real_t uxuz = u.x*u.z;
+	real_t uyuz = u.y*u.z;
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+	real_t uz2 = u.z*u.z;
+
+	//central moments from raw moments
+	temp[0] = x_in[0];
+	temp[1] = -u.x*x_in[0] + x_in[1];
+	temp[2] = -u.y*x_in[0] + x_in[2];
+	temp[3] = -u.z*x_in[0] + x_in[3];
+	temp[4] = uxuy*x_in[0] - u.x*x_in[2] - u.y*x_in[1] + x_in[4];
+	temp[5] = uxuz*x_in[0] - u.x*x_in[3] - u.z*x_in[1] + x_in[5];
+	temp[6] = uyuz*x_in[0] - u.y*x_in[3] - u.z*x_in[2] + x_in[6];
+	temp[7] = ux2*x_in[0] - 2.*u.x*x_in[1] + x_in[7];
+	temp[8] = uy2*x_in[0] - 2.*u.y*x_in[2] + x_in[8];
+	temp[9] = uz2*x_in[0] - 2.*u.z*x_in[3] + x_in[9];
+	temp[10] = -u.x*uy2*x_in[0] + 2.*uxuy*x_in[2] - u.x*x_in[8] + uy2*x_in[1] - 2.*u.y*x_in[4] + x_in[10];
+	temp[11] = -u.x*uz2*x_in[0] + 2.*uxuz*x_in[3] - u.x*x_in[9] + uz2*x_in[1] - 2.*u.z*x_in[5] + x_in[11];
+	temp[12] = -ux2*u.y*x_in[0] + ux2*x_in[2] + 2.*uxuy*x_in[1] - 2.*u.x*x_in[4] - u.y*x_in[7] + x_in[12];
+	temp[13] = -ux2*u.z*x_in[0] + ux2*x_in[3] + 2.*uxuz*x_in[1] - 2.*u.x*x_in[5] - u.z*x_in[7] + x_in[13];
+	temp[14] = -u.y*uz2*x_in[0] + 2.*uyuz*x_in[3] - u.y*x_in[9] + uz2*x_in[2] - 2.*u.z*x_in[6] + x_in[14];
+	temp[15] = -uy2*u.z*x_in[0] + uy2*x_in[3] + 2.*uyuz*x_in[2] - 2.*u.y*x_in[6] - u.z*x_in[8] + x_in[15];
+	temp[16] = -uxuy*u.z*x_in[0] + uxuy*x_in[3] + uxuz*x_in[2] - u.x*x_in[6] + uyuz*x_in[1] - u.y*x_in[5] - u.z*x_in[4] + x_in[16];
+	temp[17] = ux2*uy2*x_in[0] - 2.*ux2*u.y*x_in[2] + ux2*x_in[8] - 2.*u.x*uy2*x_in[1] + 4.*uxuy*x_in[4] - 2.*u.x*x_in[10] + uy2*x_in[7] - 2.*u.y*x_in[12] + x_in[17];
+	temp[18] = ux2*uz2*x_in[0] - 2.*ux2*u.z*x_in[3] + ux2*x_in[9] - 2.*u.x*uz2*x_in[1] + 4.*uxuz*x_in[5] - 2.*u.x*x_in[11] + uz2*x_in[7] - 2.*u.z*x_in[13] + x_in[18];
+	temp[19] = uy2*uz2*x_in[0] - 2.*uy2*u.z*x_in[3] + uy2*x_in[9] - 2.*u.y*uz2*x_in[2] + 4.*uyuz*x_in[6] - 2.*u.y*x_in[14] + uz2*x_in[8] - 2.*u.z*x_in[15] + x_in[19];
+	temp[20] = ux2*uyuz*x_in[0] - ux2*u.y*x_in[3] - ux2*u.z*x_in[2] + ux2*x_in[6] - 2.*uxuy*u.z*x_in[1] + 2.*uxuy*x_in[5] + 2.*uxuz*x_in[4] - 2.*u.x*x_in[16] + uyuz*x_in[7] - u.y*x_in[13] - u.z*x_in[12] + x_in[20];
+	temp[21] = u.x*uy2*u.z*x_in[0] - u.x*uy2*x_in[3] - 2.*uxuy*u.z*x_in[2] + 2.*uxuy*x_in[6] + uxuz*x_in[8] - u.x*x_in[15] - uy2*u.z*x_in[1] + uy2*x_in[5] + 2.*uyuz*x_in[4] - 2.*u.y*x_in[16] - u.z*x_in[10] + x_in[21];
+	temp[22] = uxuy*uz2*x_in[0] - 2.*uxuy*u.z*x_in[3] + uxuy*x_in[9] - u.x*uz2*x_in[2] + 2.*uxuz*x_in[6] - u.x*x_in[14] - u.y*uz2*x_in[1] + 2.*uyuz*x_in[5] - u.y*x_in[11] + uz2*x_in[4] - 2.*u.z*x_in[16] + x_in[22];
+	temp[23] = -u.x*uy2*uz2*x_in[0] + 2.*u.x*uy2*u.z*x_in[3] - u.x*uy2*x_in[9] + 2.*uxuy*uz2*x_in[2] - 4.*uxuy*u.z*x_in[6] + 2.*uxuy*x_in[14] - u.x*uz2*x_in[8] + 2.*uxuz*x_in[15] - u.x*x_in[19] + uy2*uz2*x_in[1] - 2.*uy2*u.z*x_in[5] + uy2*x_in[11] - 2.*u.y*uz2*x_in[4] + 4.*uyuz*x_in[16] - 2.*u.y*x_in[22] + uz2*x_in[10] - 2.*u.z*x_in[21] + x_in[23];
+	temp[24] = -ux2*u.y*uz2*x_in[0] + 2.*ux2*uyuz*x_in[3] - ux2*u.y*x_in[9] + ux2*uz2*x_in[2] - 2.*ux2*u.z*x_in[6] + ux2*x_in[14] + 2.*uxuy*uz2*x_in[1] - 4.*uxuy*u.z*x_in[5] + 2.*uxuy*x_in[11] - 2.*u.x*uz2*x_in[4] + 4.*uxuz*x_in[16] - 2.*u.x*x_in[22] - u.y*uz2*x_in[7] + 2.*uyuz*x_in[13] - u.y*x_in[18] + uz2*x_in[12] - 2.*u.z*x_in[20] + x_in[24];
+	temp[25] = -ux2*uy2*u.z*x_in[0] + ux2*uy2*x_in[3] + 2.*ux2*uyuz*x_in[2] - 2.*ux2*u.y*x_in[6] - ux2*u.z*x_in[8] + ux2*x_in[15] + 2.*u.x*uy2*u.z*x_in[1] - 2.*u.x*uy2*x_in[5] - 4.*uxuy*u.z*x_in[4] + 4.*uxuy*x_in[16] + 2.*uxuz*x_in[10] - 2.*u.x*x_in[21] - uy2*u.z*x_in[7] + uy2*x_in[13] + 2.*uyuz*x_in[12] - 2.*u.y*x_in[20] - u.z*x_in[17] + x_in[25];
+	temp[26] = ux2*uy2*uz2*x_in[0] - 2.*ux2*uy2*u.z*x_in[3] + ux2*uy2*x_in[9] - 2.*ux2*u.y*uz2*x_in[2] + 4.*ux2*uyuz*x_in[6] - 2.*ux2*u.y*x_in[14] + ux2*uz2*x_in[8] - 2.*ux2*u.z*x_in[15] + ux2*x_in[19] - 2.*u.x*uy2*uz2*x_in[1] + 4.*u.x*uy2*u.z*x_in[5] - 2.*u.x*uy2*x_in[11] + 4.*uxuy*uz2*x_in[4] - 8.*uxuy*u.z*x_in[16] + 4.*uxuy*x_in[22] - 2.*u.x*uz2*x_in[10] + 4.*uxuz*x_in[21] - 2.*u.x*x_in[23] + uy2*uz2*x_in[7] - 2.*uy2*u.z*x_in[13] + uy2*x_in[18] - 2.*u.y*uz2*x_in[12] + 4.*uyuz*x_in[20] - 2.*u.y*x_in[24] + uz2*x_in[17] - 2.*u.z*x_in[25] + x_in[26];
+	
+	
+	u.x = u.x + omega_ade*(u_hydro.x - u.x);
+	u.y = u.y + omega_ade*(u_hydro.y - u.y);
+	u.z = u.z + omega_ade*(u_hydro.z - u.z);
+
+	uxuy = u.x*u.y;
+	uxuz = u.x*u.z;
+	uyuz = u.y*u.z;
+	ux2 = u.x*u.x;
+	uy2 = u.y*u.y;
+	uz2 = u.z*u.z;
+
+	//collision in central moments space
+	//collide
+	x_in[0] = H;
+	x_in[1] = 0;
+	x_in[2] = 0;
+	x_in[3] = 0;
+	x_in[4] = 0;
+	x_in[5] = 0;
+	x_in[6] = 0;
+	x_in[7] = Sigma2*H;
+	x_in[8] = Sigma2*H;
+	x_in[9] = Sigma2*H;
+	x_in[10] = 0;
+	x_in[11] = 0;
+	x_in[12] = 0;
+	x_in[13] = 0;
+	x_in[14] = 0;
+	x_in[15] = 0;
+	x_in[16] = 0;
+	x_in[17] = Sigma2*Sigma2*H;
+	x_in[18] = Sigma2*Sigma2*H;
+	x_in[19] = Sigma2*Sigma2*H;
+	x_in[20] = 0;
+	x_in[21] = 0;
+	x_in[22] = 0;
+	x_in[23] = 0;
+	x_in[24] = 0;
+	x_in[25] = 0;
+	x_in[26] = Sigma2*Sigma2*Sigma2*H;
+
+	//back to raw moments
+	temp[0] = x_in[0];
+	temp[1] = u.x*x_in[0] + x_in[1];
+	temp[2] = u.y*x_in[0] + x_in[2];
+	temp[3] = u.z*x_in[0] + x_in[3];
+	temp[4] = uxuy*x_in[0] + u.x*x_in[2] + u.y*x_in[1] + x_in[4];
+	temp[5] = uxuz*x_in[0] + u.x*x_in[3] + u.z*x_in[1] + x_in[5];
+	temp[6] = uyuz*x_in[0] + u.y*x_in[3] + u.z*x_in[2] + x_in[6];
+	temp[7] = ux2*x_in[0] + 2.*u.x*x_in[1] + x_in[7];
+	temp[8] = uy2*x_in[0] + 2.*u.y*x_in[2] + x_in[8];
+	temp[9] = uz2*x_in[0] + 2.*u.z*x_in[3] + x_in[9];
+	temp[10] = u.x*uy2*x_in[0] + 2.*uxuy*x_in[2] + u.x*x_in[8] + uy2*x_in[1] + 2.*u.y*x_in[4] + x_in[10];
+	temp[11] = u.x*uz2*x_in[0] + 2.*uxuz*x_in[3] + u.x*x_in[9] + uz2*x_in[1] + 2.*u.z*x_in[5] + x_in[11];
+	temp[12] = ux2*u.y*x_in[0] + ux2*x_in[2] + 2.*uxuy*x_in[1] + 2.*u.x*x_in[4] + u.y*x_in[7] + x_in[12];
+	temp[13] = ux2*u.z*x_in[0] + ux2*x_in[3] + 2.*uxuz*x_in[1] + 2.*u.x*x_in[5] + u.z*x_in[7] + x_in[13];
+	temp[14] = u.y*uz2*x_in[0] + 2.*uyuz*x_in[3] + u.y*x_in[9] + uz2*x_in[2] + 2.*u.z*x_in[6] + x_in[14];
+	temp[15] = uy2*u.z*x_in[0] + uy2*x_in[3] + 2.*uyuz*x_in[2] + 2.*u.y*x_in[6] + u.z*x_in[8] + x_in[15];
+	temp[16] = uxuy*u.z*x_in[0] + uxuy*x_in[3] + uxuz*x_in[2] + u.x*x_in[6] + uyuz*x_in[1] + u.y*x_in[5] + u.z*x_in[4] + x_in[16];
+	temp[17] = ux2*uy2*x_in[0] + 2.*ux2*u.y*x_in[2] + ux2*x_in[8] + 2.*u.x*uy2*x_in[1] + 4.*uxuy*x_in[4] + 2.*u.x*x_in[10] + uy2*x_in[7] + 2.*u.y*x_in[12] + x_in[17];
+	temp[18] = ux2*uz2*x_in[0] + 2.*ux2*u.z*x_in[3] + ux2*x_in[9] + 2.*u.x*uz2*x_in[1] + 4.*uxuz*x_in[5] + 2.*u.x*x_in[11] + uz2*x_in[7] + 2.*u.z*x_in[13] + x_in[18];
+	temp[19] = uy2*uz2*x_in[0] + 2.*uy2*u.z*x_in[3] + uy2*x_in[9] + 2.*u.y*uz2*x_in[2] + 4.*uyuz*x_in[6] + 2.*u.y*x_in[14] + uz2*x_in[8] + 2.*u.z*x_in[15] + x_in[19];
+	temp[20] = ux2*uyuz*x_in[0] + ux2*u.y*x_in[3] + ux2*u.z*x_in[2] + ux2*x_in[6] + 2.*uxuy*u.z*x_in[1] + 2.*uxuy*x_in[5] + 2.*uxuz*x_in[4] + 2.*u.x*x_in[16] + uyuz*x_in[7] + u.y*x_in[13] + u.z*x_in[12] + x_in[20];
+	temp[21] = u.x*uy2*u.z*x_in[0] + u.x*uy2*x_in[3] + 2.*uxuy*u.z*x_in[2] + 2.*uxuy*x_in[6] + uxuz*x_in[8] + u.x*x_in[15] + uy2*u.z*x_in[1] + uy2*x_in[5] + 2.*uyuz*x_in[4] + 2.*u.y*x_in[16] + u.z*x_in[10] + x_in[21];
+	temp[22] = uxuy*uz2*x_in[0] + 2.*uxuy*u.z*x_in[3] + uxuy*x_in[9] + u.x*uz2*x_in[2] + 2.*uxuz*x_in[6] + u.x*x_in[14] + u.y*uz2*x_in[1] + 2.*uyuz*x_in[5] + u.y*x_in[11] + uz2*x_in[4] + 2.*u.z*x_in[16] + x_in[22];
+	temp[23] = u.x*uy2*uz2*x_in[0] + 2.*u.x*uy2*u.z*x_in[3] + u.x*uy2*x_in[9] + 2.*uxuy*uz2*x_in[2] + 4.*uxuy*u.z*x_in[6] + 2.*uxuy*x_in[14] + u.x*uz2*x_in[8] + 2.*uxuz*x_in[15] + u.x*x_in[19] + uy2*uz2*x_in[1] + 2.*uy2*u.z*x_in[5] + uy2*x_in[11] + 2.*u.y*uz2*x_in[4] + 4.*uyuz*x_in[16] + 2.*u.y*x_in[22] + uz2*x_in[10] + 2.*u.z*x_in[21] + x_in[23];
+	temp[24] = ux2*u.y*uz2*x_in[0] + 2.*ux2*uyuz*x_in[3] + ux2*u.y*x_in[9] + ux2*uz2*x_in[2] + 2.*ux2*u.z*x_in[6] + ux2*x_in[14] + 2.*uxuy*uz2*x_in[1] + 4.*uxuy*u.z*x_in[5] + 2.*uxuy*x_in[11] + 2.*u.x*uz2*x_in[4] + 4.*uxuz*x_in[16] + 2.*u.x*x_in[22] + u.y*uz2*x_in[7] + 2.*uyuz*x_in[13] + u.y*x_in[18] + uz2*x_in[12] + 2.*u.z*x_in[20] + x_in[24];
+	temp[25] = ux2*uy2*u.z*x_in[0] + ux2*uy2*x_in[3] + 2.*ux2*uyuz*x_in[2] + 2.*ux2*u.y*x_in[6] + ux2*u.z*x_in[8] + ux2*x_in[15] + 2.*u.x*uy2*u.z*x_in[1] + 2.*u.x*uy2*x_in[5] + 4.*uxuy*u.z*x_in[4] + 4.*uxuy*x_in[16] + 2.*uxuz*x_in[10] + 2.*u.x*x_in[21] + uy2*u.z*x_in[7] + uy2*x_in[13] + 2.*uyuz*x_in[12] + 2.*u.y*x_in[20] + u.z*x_in[17] + x_in[25];
+	temp[26] = ux2*uy2*uz2*x_in[0] + 2.*ux2*uy2*u.z*x_in[3] + ux2*uy2*x_in[9] + 2.*ux2*u.y*uz2*x_in[2] + 4.*ux2*uyuz*x_in[6] + 2.*ux2*u.y*x_in[14] + ux2*uz2*x_in[8] + 2.*ux2*u.z*x_in[15] + ux2*x_in[19] + 2.*u.x*uy2*uz2*x_in[1] + 4.*u.x*uy2*u.z*x_in[5] + 2.*u.x*uy2*x_in[11] + 4.*uxuy*uz2*x_in[4] + 8.*uxuy*u.z*x_in[16] + 4.*uxuy*x_in[22] + 2.*u.x*uz2*x_in[10] + 4.*uxuz*x_in[21] + 2.*u.x*x_in[23] + uy2*uz2*x_in[7] + 2.*uy2*u.z*x_in[13] + uy2*x_in[18] + 2.*u.y*uz2*x_in[12] + 4.*uyuz*x_in[20] + 2.*u.y*x_in[24] + uz2*x_in[17] + 2.*u.z*x_in[25] + x_in[26];
+	//back to density-probability functions
+	x_in[0] = temp[0] + temp[17] + temp[18] + temp[19] - temp[26] - temp[7] - temp[8] - temp[9];
+	x_in[1] = -1/2.*temp[10] - 1/2.*temp[11] - 1/2.*temp[17] - 1/2.*temp[18] + 1/2.*temp[1] + 1/2.*temp[23] + 1/2.*temp[26] + 1/2.*temp[7];
+	x_in[2] = 1/2.*temp[10] + 1/2.*temp[11] - 1/2.*temp[17] - 1/2.*temp[18] - 1/2.*temp[1] - 1/2.*temp[23] + 1/2.*temp[26] + 1/2.*temp[7];
+	x_in[3] = -1/2.*temp[12] - 1/2.*temp[14] - 1/2.*temp[17] - 1/2.*temp[19] + 1/2.*temp[24] + 1/2.*temp[26] + 1/2.*temp[2] + 1/2.*temp[8];
+	x_in[4] = 1/2.*temp[12] + 1/2.*temp[14] - 1/2.*temp[17] - 1/2.*temp[19] - 1/2.*temp[24] + 1/2.*temp[26] - 1/2.*temp[2] + 1/2.*temp[8];
+	x_in[5] = -1/2.*temp[13] - 1/2.*temp[15] - 1/2.*temp[18] - 1/2.*temp[19] + 1/2.*temp[25] + 1/2.*temp[26] + 1/2.*temp[3] + 1/2.*temp[9];
+	x_in[6] = 1/2.*temp[13] + 1/2.*temp[15] - 1/2.*temp[18] - 1/2.*temp[19] - 1/2.*temp[25] + 1/2.*temp[26] - 1/2.*temp[3] + 1/2.*temp[9];
+	x_in[7] = 1/8.*temp[16] + 1/8.*temp[20] + 1/8.*temp[21] + 1/8.*temp[22] + 1/8.*temp[23] + 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[8] = -1/8.*temp[16] + 1/8.*temp[20] - 1/8.*temp[21] - 1/8.*temp[22] - 1/8.*temp[23] + 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[9] = -1/8.*temp[16] - 1/8.*temp[20] + 1/8.*temp[21] - 1/8.*temp[22] + 1/8.*temp[23] - 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[10] = 1/8.*temp[16] - 1/8.*temp[20] - 1/8.*temp[21] + 1/8.*temp[22] - 1/8.*temp[23] - 1/8.*temp[24] + 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[11] = -1/8.*temp[16] - 1/8.*temp[20] - 1/8.*temp[21] + 1/8.*temp[22] + 1/8.*temp[23] + 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[12] = 1/8.*temp[16] - 1/8.*temp[20] + 1/8.*temp[21] - 1/8.*temp[22] - 1/8.*temp[23] + 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[13] = 1/8.*temp[16] + 1/8.*temp[20] - 1/8.*temp[21] - 1/8.*temp[22] + 1/8.*temp[23] - 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[14] = -1/8.*temp[16] + 1/8.*temp[20] + 1/8.*temp[21] + 1/8.*temp[22] - 1/8.*temp[23] - 1/8.*temp[24] - 1/8.*temp[25] + 1/8.*temp[26];
+	x_in[15] = 1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[17] - 1/4.*temp[22] - 1/4.*temp[23] - 1/4.*temp[24] - 1/4.*temp[26] + 1/4.*temp[4];
+	x_in[16] = -1/4.*temp[10] + 1/4.*temp[12] + 1/4.*temp[17] + 1/4.*temp[22] + 1/4.*temp[23] - 1/4.*temp[24] - 1/4.*temp[26] - 1/4.*temp[4];
+	x_in[17] = 1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[17] + 1/4.*temp[22] - 1/4.*temp[23] + 1/4.*temp[24] - 1/4.*temp[26] - 1/4.*temp[4];
+	x_in[18] = -1/4.*temp[10] - 1/4.*temp[12] + 1/4.*temp[17] - 1/4.*temp[22] + 1/4.*temp[23] + 1/4.*temp[24] - 1/4.*temp[26] + 1/4.*temp[4];
+	x_in[19] = 1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[18] - 1/4.*temp[21] - 1/4.*temp[23] - 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[5];
+	x_in[20] = -1/4.*temp[11] + 1/4.*temp[13] + 1/4.*temp[18] + 1/4.*temp[21] + 1/4.*temp[23] - 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[5];
+	x_in[21] = 1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[18] + 1/4.*temp[21] - 1/4.*temp[23] + 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[5];
+	x_in[22] = -1/4.*temp[11] - 1/4.*temp[13] + 1/4.*temp[18] - 1/4.*temp[21] + 1/4.*temp[23] + 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[5];
+	x_in[23] = 1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[19] - 1/4.*temp[20] - 1/4.*temp[24] - 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[6];
+	x_in[24] = -1/4.*temp[14] + 1/4.*temp[15] + 1/4.*temp[19] + 1/4.*temp[20] + 1/4.*temp[24] - 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[6];
+	x_in[25] = 1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[19] + 1/4.*temp[20] - 1/4.*temp[24] + 1/4.*temp[25] - 1/4.*temp[26] - 1/4.*temp[6];
+	x_in[26] = -1/4.*temp[14] - 1/4.*temp[15] + 1/4.*temp[19] - 1/4.*temp[20] + 1/4.*temp[24] + 1/4.*temp[25] - 1/4.*temp[26] + 1/4.*temp[6];
+
 }
