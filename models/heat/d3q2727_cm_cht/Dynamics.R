@@ -110,7 +110,8 @@ AddNodeType(name="DarcySolid", group="ADDITIONALS")
 AddNodeType(name="Smoothing", group="ADDITIONALS")
 AddNodeType(name="HeaterDirichletTemperature", group="ADDITIONALS_HEAT")
 AddNodeType(name="HeaterSource", group="ADDITIONALS_HEAT")
-AddNodeType(name="HeaterNeumannHeatFlux", group="ADDITIONALS_HEAT")
+AddNodeType(name="HeaterNeumannHeatFluxCylinder", group="ADDITIONALS_HEAT")
+AddNodeType(name="HeaterNeumannHeatFluxEast", group="ADDITIONALS_HEAT")
 AddNodeType("CM","COLLISION")
 
 # Benchmark things

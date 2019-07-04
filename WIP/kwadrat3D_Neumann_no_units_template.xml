@@ -1,7 +1,7 @@
 <?R
     tab = expand.grid(sizer=c(1,2,4,8), k_material=c(0.1666666))
 
-    dir_name <- "batch_ruraWrurze_NeumannBC"
+    dir_name <- "batch_kwadrat_NeumannBC"
     dir.create(dir_name)
 
     tab$name = paste0("k_", tab$k_material, "_size_",32*tab$sizer, "lu")
@@ -24,32 +24,21 @@
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="<?%s output ?>">
 	<Units>
-    <Params size="1m" gauge="<?%f sizer ?>"/>
+<!--     <Params size="1m" gauge="<?%f sizer ?>"/> -->
 <!--     
     <Params conductivity="1.0W/m/K" gauge="1E-0"/> 
 	<Params cp="1.0J/kg/K" gauge="1E-0"/>
 	<Params	material_density="1.0kg/m3" gauge="1E-0"/> -->
   </Units>
-	<Geometry nx="32m" ny="32m" nz="3" >  
-     	<HeaterDirichletTemperature mask="COLLISION" name="dirichlet_cold"> 
-            <Box />
+	<Geometry nx="<?%f 32*sizer ?>" ny="32" nz="3" >
+      <CM><Box/></CM>    
+     	<HeaterDirichletTemperature name="dirichlet_cold"> 
+            <Box nx="2"/>
         </HeaterDirichletTemperature>
 
-     	<CM>
-     		<Cylinder ny="120" nx="120" dx="4" dy="4"/>
-     	</CM>    
-
-		<None mask="ADDITIONALS_HEAT">
-			<Cylinder ny="30m" nx="30m" dx="1m" dy="1m"/>
-		</None>
-
-        <HeaterNeumannHeatFluxCylinder mask="COLLISION" name="neumann_hot"> 
-        	<Cylinder ny="8m" nx="8m" dx="12m" dy="12m"/>
-        </HeaterNeumannHeatFluxCylinder> 
-
-<!--       	<DarcySolid name="darcy_solid_region">
-        	<Cylinder ny="20m" nx="20m" dx="6m" dy="6m"/>
-      	</DarcySolid>   -->
+        <HeaterNeumannHeatFluxEast mask="COLLISION" name="neumann_hot"> 
+           <Box dx="-2"/>
+        </HeaterNeumannHeatFluxEast> 
 	</Geometry>
     <Model>
 	    <Params
@@ -59,22 +48,20 @@
 	        cp="1"
 			material_density="1"
 
-	        InitTemperature="0.0"
+	        InitTemperature="2.0"
 	        InitHeatFlux-neumann_hot="1.0"
-	        InitTemperature-dirichlet_cold="0.0"
+	        InitTemperature-dirichlet_cold="0.5"
 	        />
 	    <Params />
-	    <Params CylinderCenterX="16m"/>
-	    <Params CylinderCenterY="16m"/>
 	        <!-- <Params GravitationX="-1.0E-5" /> -->
     </Model> 
 
 <!-- <Solve Iterations="10" > <VTK Iterations="1"/> </Solve> -->
-	<Failcheck Iterations="10000" nx="32m" ny="32m" nz="3" />
-	<TXT Iterations="100000" what="T,U" />
-	<Log Iterations="100000" />
-	<Solve Iterations="10000">
-		<VTK Iterations="100" />
+	<Failcheck Iterations="1000" nx="<?%f 32*sizer ?>" ny="32" nz="3" />
+	<!-- <TXT Iterations="1000" what="T,U" /> -->
+	<!-- <Log Iterations="1000" /> -->
+	<Solve Iterations="500000">
+		<VTK Iterations="1000" />
 	</Solve>
 </CLBConfig>
 
