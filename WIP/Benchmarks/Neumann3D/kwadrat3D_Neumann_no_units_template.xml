@@ -1,10 +1,10 @@
 <?R
-    tab = expand.grid(sizer=c(1,2,4,8), k_material=c(0.1666666))
+    tab = expand.grid(sizer=c(1,2,4), k_material=c(0.1666666), J=c(1,2,4))
 
     dir_name <- "batch_kwadrat_NeumannBC"
     dir.create(dir_name)
 
-    tab$name = paste0("k_", tab$k_material, "_size_",32*tab$sizer, "lu")
+    tab$name = paste0("k_", tab$k_material, "_size_",32*tab$sizer, "lu","_J",tab$J)
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
     tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
 
@@ -32,11 +32,11 @@
   </Units>
 	<Geometry nx="<?%f 32*sizer ?>" ny="32" nz="3" >
       <CM><Box/></CM>    
-     	<HeaterDirichletTemperature name="dirichlet_cold"> 
+     	<HeaterDirichletTemperature name="dirichlet"> 
             <Box nx="2"/>
         </HeaterDirichletTemperature>
 
-        <HeaterNeumannHeatFluxEast mask="COLLISION" name="neumann_hot"> 
+        <HeaterNeumannHeatFluxEast mask="COLLISION" name="neumann"> 
            <Box dx="-2"/>
         </HeaterNeumannHeatFluxEast> 
 	</Geometry>
@@ -49,8 +49,8 @@
 			material_density="1"
 
 	        InitTemperature="2.0"
-	        InitHeatFlux-neumann_hot="1.0"
-	        InitTemperature-dirichlet_cold="0.5"
+	        InitHeatFlux-neumann="<?%f J ?>"
+	        InitTemperature-dirichlet="0.5"
 	        />
 	    <Params />
 	        <!-- <Params GravitationX="-1.0E-5" /> -->

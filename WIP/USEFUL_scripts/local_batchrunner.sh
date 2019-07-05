@@ -6,7 +6,7 @@ set -e
 DIRNAME=$1
 
 TCLB_PATH="~/GITHUB/TCLB/CLB"
-MODEL="d3q2727_cm_cht"
+MODEL="d3q2727_cm_cht_OutFlow_IBB"
 
 
 if test -d $DIRNAME
@@ -19,6 +19,8 @@ then
 		# echo -e $log_name
 		eval "CLB/$MODEL/main $i | tee $log_name"
 		# eval "CLB/$MODEL/main $i > $log_name 2>&1"
+		# sleep 1
+		# tsp "CLB/$MODEL/main $i"
     done
 else
 	echo directory doesnt exists

@@ -1,42 +1,31 @@
 
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="/output/chipset150/">
-  <Units>
-    <Params size="1m" gauge="150"/>
-    <Params nu="1.4e-5m2/s" gauge="0.0001"/>
-  </Units>
-  <Geometry nx="1m" ny="1m" nz="1m">
-    <CM><Box/></CM>    
-    <!-- <Smoothing><Box /></Smoothing>  -->
+<CLBConfig version="2.0" output="output/test/">
+      <Geometry nx="256" ny="100" nz="3">
+      <CM><Box /></CM>    
+      <!-- <Smoothing><Box /></Smoothing>  -->
 
-    <Wall mask="ALL" name="border" >
-<!--       <Box nx="1"/>
-      <Box dx="-1"/> -->
-      <Box ny="0.01m"/>
-      <Box dy="-0.01m"/>
-<!--       <Box nz="1"/>
-      <Box dz="-1"/> -->
-    </Wall>
+        <Wall mask="ALL" name="box" >   
+            <Box ny="1"/>
+			<Box dy="-1"/>   
+			<Box nx="1"/>  
+			<Box dx="-1"/>  
+        </Wall>
 
-  
-    <Wall mask="ALL">
-      <STL file="example/data/chipset_radiator.stl" scale="0.001m" Xrot="-0d" x="0.7m" y="0.01m" z="0.5m"/>
-    </Wall>
-    <HeaterDirichletTemperature  name="dirichlet_hot"> 
-      <STL file="example/data/chipset_radiator.stl" scale="0.001m" Xrot="-0d" x="0.7m" y="0.01m" z="0.5m"/>
-    </HeaterDirichletTemperature> 
 
-<!--         
-<HeaterDirichletTemperature  name="dirichlet_hot"> 
-          <Box dy="-2"/>
+        <HeaterDirichletTemperature mask="COLLISION" name="dirichletL"> 
+			<Box nx="2"/>
         </HeaterDirichletTemperature>
 
-        <HeaterDirichletTemperature  name="dirichlet_cold"> 
-            <Box nx="1"/>
-            <Box dx="-1"/>
-            <Box ny="2"/>
-        </HeaterDirichletTemperature> 
-  -->
+        <HeaterDirichletTemperature mask="COLLISION" name="dirichletR"> 
+     		<Box dx="-2"/>
+        </HeaterDirichletTemperature>
+
+        <HeaterNeumannHeatFluxEast mask="COLLISION" name="neumann"> 
+<!--            <Box dx="-2"/>
+           <Box dx="-2"/> -->
+            <Box dx="126" nx="4" dy="25" ny="50" />
+        </HeaterNeumannHeatFluxEast> 
 
   </Geometry>
     <Model>
@@ -44,14 +33,19 @@
         k="0.1666666" 
         cp="1.0"
 
+
         InitTemperature="0.0"
-        InitTemperature-dirichlet_hot="1.0"
-        InitTemperature-dirichlet_cold="0.0"
-    />
-    <Params />
-    <Params GravitationY="-1.0E-05" />
-    <Params BoussinesqCoeff="1"/>
-    <!-- <Params VelocityX="-1.0E-01" /> -->
+
+        InitTemperature-dirichletL="0.0"
+        InitTemperature-dirichletR="0.0"
+
+		InitHeatFlux-neumann="0.1"
+        />
+    <Params  />
+    <!-- <Params GravitationX="-1.0E-5" /> -->
+    <!-- <Params GravitationY="-1.0E-7" /> -->
+    <!-- <Params BoussinesqCoeff="1"/> -->
+    <!-- <Params VelocityX="-1.0E-1" /> -->
 
     </Model> 
 <!-- 
@@ -62,9 +56,8 @@
   </None>
 </Geometry> -->
 
-<Solve Iterations="1"> <VTK Iterations="1"/> </Solve>
-<Failcheck Iterations="1000" nx="1m" ny="1m" nz="1m"/>
+<!-- <Solve Iterations="10" output="output/"> <VTK Iterations="1"/> </Solve>
+<Failcheck Iterations="10" nx="500" ny="100" /> -->
 <Log Iterations="10000"/>
-<Solve Iterations="50000"> <VTK Iterations="1000"/> </Solve>
+<Solve Iterations="10000" output="output/"> <VTK Iterations="100"/> </Solve>
 </CLBConfig>
-

@@ -139,6 +139,14 @@ CudaDeviceFunction void Init() {
 		set_eq_hydro(rho + pressure * 3.0, VelocityX, 0, 0);
 	}
 
+	if(CylinderCenterX_GH > 0 && Y >= CylinderCenterY_GH && Sigma_GH > 0){ 
+
+		real_t dx = X - CylinderCenterX_GH;
+		real_t dy = Y - CylinderCenterY_GH;
+		real_t L = dx*dx + dy*dy;
+		H = H * exp(-L/(2*Sigma_GH));
+	}
+
 	SetEquilibriumHeat(h,H,rho,u);
 
 	#ifdef OPTIONS_OutFlow
@@ -580,11 +588,68 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	AddToHeatSource(h2-h1);
 }
 
+#ifdef OPTIONS_IBB
+CudaDeviceFunction void InterpolatedBounceBack()
+{
+	real_t q;
+	vector_t F;
+	F.x = F.y = F.z = 0.0;
+	<?R
+        bounce = Bounce(U);
+        sel = DensityAll$group=="f"
+        attach(DensityAll[sel,])
+        f = PV(name)
+        fold = PV(name,"(0,0,0)")
+        fpre = PV(name,"(",-dx,",",-dy,",",-dz,")")
+        QU = cbind(dx,dy,dz)
+        detach()
+        Qw = PV( paste("Q",P$x,P$y,P$z,sep=""))
+        Q = PV( "q")
+		F = PV("F.",c("x","y","z"))
+        for (i in 2:length(Qw)) {
+                C(Q,Qw[i]);
+	?>
+			if (q != NO_CUT) {
+					real_t p = ((real_t)q) * (2.0 /CUT_MAX); // q * 0.005 * 2 <?R p = PV("p"); op = p^(-1); ?>
+					real_t fa = <?R C(fold[i]) ?>; <?R fa = PV("fa"); ?>
+					if (p > 1.0) { <?R
+				C(f[bounce[i]],fa*op + fold[bounce[i]]*(p-1)*op) ?>
+					} else { <?R
+				C(f[bounce[i]],fa*p + f[i]*(1-p)) ?>
+					}
+				<?R
+							v = (f[bounce[i]] - fa) * QU[i,]
+							for (j in 1:3) if (! is.zero(v[j])) C(F[j],F[j] + v[j]) 
+				?>
+			}
+		<?R
+		}
+		?>
+
+
+	// force measurment tkes place in Run()
+	// if((NodeType & NODE_BODY) == NODE_MeasurmentArea) { 
+	// 	AddToFDrag(F.x); 
+	// 	AddToFLateral(F.y); 
+	// 	AddToFLift(F.z); 
+	// }
+}
+#endif
+
 CudaDeviceFunction void Run() {
 	vector_t p1;
 	if((NodeType & NODE_OBJECTIVE) == NODE_MeasurmentArea) {
 		<?R C(PV(c("p1.x","p1.y", "p1.z")), f %*% U) ?>
 	}
+
+	#ifdef OPTIONS_IBB
+		switch (NodeType & NODE_HO_BOUNDARY) {
+		case NODE_IBB:
+				InterpolatedBounceBack();
+				ThermalBounceBack();
+				break;
+		}
+	#endif
 
     switch (NodeType & NODE_BOUNDARY) {
 		case NODE_EVelocity:
@@ -600,7 +665,7 @@ CudaDeviceFunction void Run() {
 			EPressure();
 			break;
 		case NODE_Wall:
-			HydroBounceBack(); // Force Measurment here
+			HydroBounceBack();
 			ThermalBounceBack();
 			break;
 		#ifdef OPTIONS_OutFlow

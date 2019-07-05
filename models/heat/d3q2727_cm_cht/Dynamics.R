@@ -121,7 +121,16 @@ AddNodeType("HCM","COLLISION")
 AddSetting(name="CylinderCenterX", default="0", comment='X coord of cylinder with imposed heat flux')
 AddSetting(name="CylinderCenterY", default="0", comment='Y coord of cylinder with imposed heat flux')
 
+AddSetting(name="CylinderCenterX_GH", default="0", comment='X coord of Gaussian Hill')
+AddSetting(name="CylinderCenterY_GH", default="0", comment='Y coord of Gaussian Hill')
+AddSetting(name="Sigma_GH", default="1", comment='Initial width of the Gaussian Hill', zonal=T)
+
 ##########OPTIONAL VALUES##########
+
+#Interpolated BounceBack Node
+if(Options$IBB){
+	AddNodeType("IBB", group="HO_BOUNDARY") 
+}
 
 #Smagorinsky coefficient
 if(Options$SMAG)
