@@ -139,12 +139,12 @@ CudaDeviceFunction void Init() {
 		set_eq_hydro(rho + pressure * 3.0, VelocityX, 0, 0);
 	}
 
-	if(CylinderCenterX_GH > 0 && Y >= CylinderCenterY_GH && Sigma_GH > 0){ 
+	if(CylinderCenterX_GH > 0 && CylinderCenterY_GH > 0 && Sigma_GH > 0){ 
 
 		real_t dx = X - CylinderCenterX_GH;
 		real_t dy = Y - CylinderCenterY_GH;
 		real_t L = dx*dx + dy*dy;
-		H = H * exp(-L/(2*Sigma_GH));
+		H *= exp(-L/(2*Sigma_GH));
 	}
 
 	SetEquilibriumHeat(h,H,rho,u);
@@ -380,6 +380,8 @@ CudaDeviceFunction void EPressure()
 
 CudaDeviceFunction void EConvect()
 {
+	// See 'Evaluation of outflow boundary conditions for two-phase lattice Boltzmann equation' 
+	// by Qin Lou, Zhaoli Guo and Baochang Shi from 2013 for details.
 	real_t U_local = myMax(0, U(-1,0,0)); 
 	real_t invU = 1.0/(1+ U_local);
 
@@ -396,6 +398,8 @@ CudaDeviceFunction void EConvect()
 
 CudaDeviceFunction void ENeumann()
 {
+	// See 'Evaluation of outflow boundary conditions for two-phase lattice Boltzmann equation' 
+	// by Qin Lou, Zhaoli Guo and Baochang Shi from 2013 for details.
 	<?R
 		if (Options$OutFlow){
 			C(f, PV(paste0(f_neighbours,"(",-Density$dx[Density$group=="f"]-1,",",-Density$dy[Density$group=="f"],",",-Density$dz[Density$group=="f"],")")))
@@ -591,6 +595,9 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 #ifdef OPTIONS_IBB
 CudaDeviceFunction void InterpolatedBounceBack()
 {
+	// See 'Momentum transfer of a Boltzmann-lattice fluid with boundaries'
+	// by M. Bouzidi, M. Firdaouss, P. Lallemand, 2001
+
 	real_t q;
 	vector_t F;
 	F.x = F.y = F.z = 0.0;
@@ -642,14 +649,7 @@ CudaDeviceFunction void Run() {
 		<?R C(PV(c("p1.x","p1.y", "p1.z")), f %*% U) ?>
 	}
 
-	#ifdef OPTIONS_IBB
-		switch (NodeType & NODE_HO_BOUNDARY) {
-		case NODE_IBB:
-				InterpolatedBounceBack();
-				ThermalBounceBack();
-				break;
-		}
-	#endif
+
 
     switch (NodeType & NODE_BOUNDARY) {
 		case NODE_EVelocity:
@@ -668,6 +668,12 @@ CudaDeviceFunction void Run() {
 			HydroBounceBack();
 			ThermalBounceBack();
 			break;
+		#ifdef OPTIONS_IBB
+		case NODE_IBB:
+				InterpolatedBounceBack();
+				ThermalBounceBack();
+				break;
+		#endif
 		#ifdef OPTIONS_OutFlow
 			case NODE_EConvect:
 				EConvect();

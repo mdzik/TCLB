@@ -1,7 +1,7 @@
 <?R
     tab = expand.grid(sizer=c(1,2,4), k_material=c(0.1666666, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5), collision=c("CM","CM_HIGHER"))
 
-    dir_name <- "batch_ruraWrurze_NeumannBC"
+    dir_name <- "batch_ruraWrurze_DirichletBC"
     dir.create(dir_name)
 
     tab$name = paste0(tab$collision,"_k_", tab$k_material, "_size_",32*tab$sizer, "lu")
@@ -10,7 +10,7 @@
 
     # tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name,"/"))
 
-    write.csv(tab, "ruraWrurze_Neumann_k_template.csv", row.names=FALSE)
+    write.csv(tab, "ruraWrurze_variable_k_template.csv", row.names=FALSE)
     for (i in 1:nrow(tab)) {
         attach(tab[i,,drop=FALSE])
         print(xml)
@@ -24,7 +24,7 @@
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="<?%s output ?>">
 	<Units>
-    <!-- <Params size="1m" gauge="<?%f sizer ?>"/> -->
+    <Params size="1m" gauge="<?%f sizer ?>"/>
 <!--     
     <Params conductivity="1.0W/m/K" gauge="1E-0"/> 
 	<Params cp="1.0J/kg/K" gauge="1E-0"/>
@@ -43,9 +43,9 @@
 			<Cylinder ny="<?%f 30*sizer ?>" nx="<?%f 30*sizer ?>" dx="<?%f 1*sizer ?>" dy="<?%f 1*sizer ?>"/>
 		</None>
 
-        <HeaterNeumannHeatFluxCylinder mask="COLLISION" name="neumann_hot"> 
+        <HeaterDirichletTemperature mask="COLLISION" name="dirichlet_hot"> 
         	<Cylinder ny="<?%f 8*sizer ?>" nx="<?%f 8*sizer ?>" dx="<?%f 12*sizer ?>" dy="<?%f 12*sizer ?>"/>
-        </HeaterNeumannHeatFluxCylinder> 
+        </HeaterDirichletTemperature> 
 
 <!--       	<DarcySolid name="darcy_solid_region">
         	<Cylinder ny="20m" nx="20m" dx="6m" dy="6m"/>
@@ -60,12 +60,12 @@
 			material_density="1"
 
 	        InitTemperature="0.0"
-	        InitHeatFlux-neumann_hot="0.1"
+	        InitTemperature-dirichlet_hot="1.0"
 	        InitTemperature-dirichlet_cold="0.0"
 	        />
 	    <Params />
-	    <Params CylinderCenterX="<?%f 16*sizer ?>"/>
-	    <Params CylinderCenterY="<?%f 16*sizer ?>"/>
+<!-- 	    <Params CylinderCenterX="16m"/>
+	    <Params CylinderCenterY="16m"/> -->
 	        <!-- <Params GravitationX="-1.0E-5" /> -->
     </Model> 
 

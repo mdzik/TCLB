@@ -1,5 +1,7 @@
 <?R
-    tab = expand.grid(sizer=c(4), ux=c(0.01), k_material=c(1e-02,1e-03,1e-04,1e-05), collision=c("BGK","MRT","CM","CM_SRT", "HCM", "CM_HIGHER"))
+    # tab = expand.grid(sizer=c(4), ux=c(0.0), k_material=c(1e-02,1e-03,1e-04,1e-05), collision=c("BGK","MRT","CM","CM_SRT", "HCM", "CM_HIGHER"))
+    tab = expand.grid(sizer=c(4), ux=c(0.0, 0.1), k_material=c(1e-02,1e-03,1e-04,1e-05), collision=c("BGK","CM","CM_HIGHER"))
+ 
 
     dir_name <- "batch_square_advection"
     dir.create(dir_name)
@@ -62,7 +64,7 @@
 <!-- 	<TXT Iterations="100000" what="T,U" />
 	<Log Iterations="100000" /> -->
 	<Solve Iterations="10000">
-		<VTK Iterations="100" />
+		<VTK Iterations="1000" />
 	</Solve>
 </CLBConfig>
 

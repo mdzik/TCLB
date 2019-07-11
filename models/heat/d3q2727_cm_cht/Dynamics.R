@@ -129,7 +129,7 @@ AddSetting(name="Sigma_GH", default="1", comment='Initial width of the Gaussian 
 
 #Interpolated BounceBack Node
 if(Options$IBB){
-	AddNodeType("IBB", group="HO_BOUNDARY") 
+	AddNodeType("IBB", group="BOUNDARY") 
 }
 
 #Smagorinsky coefficient
