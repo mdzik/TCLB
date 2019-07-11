@@ -1,6 +1,6 @@
 <?R
 
-    tab = expand.grid(sizer=c(8), ux=c(0.0, 0.01, 0.1), k_material=c(1e-02,1e-03,1e-04,1e-05), collision=c("CM","CM_HIGHER"), sigma=c(50, 75, 100))
+    tab = expand.grid(sizer=c(8), ux=c(0.0, 0.1), k_material=c(1e-02,1e-03,1e-04,1e-05), collision=c("CM","CM_HIGHER"), sigma=c(50, 75, 100))
  
     dir_name <- "batch_GaussianHill_advection"
     dir.create(dir_name)
@@ -64,7 +64,7 @@
 <!-- 	<TXT Iterations="100000" what="T,U" />
 	<Log Iterations="100000" /> -->
 	<Solve Iterations="20000">
-		<VTK Iterations="100" />
+		<VTK Iterations="5000" />
 	</Solve>
 </CLBConfig>
 
