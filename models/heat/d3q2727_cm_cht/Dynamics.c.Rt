@@ -62,6 +62,7 @@
 #endif
 
 CudaDeviceFunction real_t getRho(){
+	// #TODO: run boundaries - this happens before Run and collision
 	real_t rho = <?R C(sum(f)) ?>;
 	return rho;
 }
@@ -706,7 +707,7 @@ CudaDeviceFunction void Run() {
 	}
 
 	switch (NodeType & NODE_ADDITIONALS_HEAT) {
-		case NODE_HeaterDirichletTemperature:
+		case NODE_HeaterDirichletTemperature:		
 			HeatDirichletEquilibriumScheme();
 			// alternatively:
 			//HeatDirichletAntiBounceBackScheme();
