@@ -5,7 +5,7 @@
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/chipset150gauge_cht/">
   <Units>
-    <Params size="1m" gauge="100"/>
+    <Params size="1m" gauge="25"/>
     <!-- <Params nu="1.4e-5m2/s" gauge="0.0001"/> -->
 
     <Params conductivity="1.0W/m/K" gauge="1E-4"/> 
