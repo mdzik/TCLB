@@ -30,8 +30,10 @@
 	{
 		f_neighbours = Density$nicename[Density$group =="f"]
 		h_neighbours = Density$nicename[Density$group =="h"]
-		f_old = PV(Density$name[Density$group == "fold"])
-		h_old = PV(Density$name[Density$group == "hold"])
+
+		f_old = PV(paste(f_neighbours,"(0,0,0)",sep=""))
+		h_old = PV(paste(h_neighbours,"(0,0,0)",sep=""))
+	
 		f_n = PV(paste(f_neighbours,"(",-Density$dx[Density$group=="f"]-1,",",-Density$dy[Density$group=="f"],",",-Density$dz[Density$group=="f"],")",sep=""))
 		h_n = PV(paste(h_neighbours,"(",-Density$dx[Density$group=="h"]-1,",",-Density$dy[Density$group=="h"],",",-Density$dz[Density$group=="h"],")",sep=""))
 		U_loc = PV("U_local")
@@ -131,38 +133,27 @@ CudaDeviceFunction float2 Color() {
 
 
 CudaDeviceFunction void Init() {
+	real_t pressure = Pressure;
 	real_t rho = 1.0*material_density;
 	real_t H = rho*cp*InitTemperature;
-	vector_t u; u.x = VelocityX; u.y = 0; u.z = 0;
-
-	if((NodeType & NODE_BOUNDARY) == NODE_Wall){
-		set_eq_hydro(rho,0,0,0);
-	}
-	else{	
-		real_t pressure = 0;
-		set_eq_hydro(rho + pressure * 3.0, VelocityX, 0, 0);
-	}
+	vector_t u; u.x = VelocityX; u.y = VelocityY; u.z = VelocityZ;
 
 	if(CylinderCenterX_GH > 0 && CylinderCenterY_GH > 0 && Sigma_GH > 0){ 
-
+		// Gaussian Hill Benchmark
 		real_t dx = X - CylinderCenterX_GH;
 		real_t dy = Y - CylinderCenterY_GH;
 		real_t L = dx*dx + dy*dy;
 		H *= exp(-L/(2*Sigma_GH));
 	}
 
+	if((NodeType & NODE_BOUNDARY) == NODE_Wall){
+		u.x = 0; u.y = 0; u.z = 0;
+		pressure = 0;
+	}
+	
+	set_eq_hydro(rho + pressure * 3.0, u.x, u.y, u.z);
 	SetEquilibriumHeat(h,H,rho,u);
 
-	#ifdef OPTIONS_OutFlow
-	if ((NodeType & NODE_BOUNDARY) == NODE_EConvect){
-			<?R if (Options$OutFlow)
-				{
-					C(f_old, f)
-					C(h_old, h)     
-				}       
-			?>
-	}
-	#endif
 }
 
 CudaDeviceFunction void HydroBounceBack()
@@ -392,10 +383,7 @@ CudaDeviceFunction void EConvect()
 	<?R
 		if (Options$OutFlow) {
 			C(f, (f_old + U_loc*f_n)*U_inv)
-			C(f_old, f)
-
 			C(h, (h_old + U_loc*h_n)*U_inv)
-			C(h_old, h)
 		}
 	?>
 }
@@ -718,7 +706,7 @@ CudaDeviceFunction void InterpolatedBounceBack()
 		?>
 
 
-	// force measurment tkes place in Run()
+	// force measurment takes place in Run()
 	// if((NodeType & NODE_BODY) == NODE_MeasurmentArea) { 
 	// 	AddToFDrag(F.x); 
 	// 	AddToFLateral(F.y); 

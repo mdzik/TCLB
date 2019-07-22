@@ -4,14 +4,14 @@
 		<Params size="1m" gauge="32"/>
 		<Params nu="1.4e-5m2/s" gauge="0.0001"/>
 	</Units>
-        <Geometry nx="6m" ny="1m" nz="1m">
+        <Geometry nx="4m" ny="1m" nz="1m">
 		<CM><Box/></CM>
 		<WVelocity><Inlet/></WVelocity>
 		<EConvect><Outlet/></EConvect>
 		
-		<IBB>
+<!-- 		<IBB>
 			<STL file="example/data/ahmed.stl" scale="1mm" Xrot="-90d" x="1m" y="5cm" z="0.5m" side="surface"/>
-		</IBB>
+		</IBB> -->
 		<Wall mask="ALL">
 			<Channel/>
 			<STL file="example/data/ahmed.stl" scale="1mm" Xrot="-90d" x="1m" y="5cm" z="0.5m"/>
@@ -22,7 +22,7 @@
 	    </HeaterDirichletTemperature>  
 	</Geometry>
 	<Model>
-		<Params VelocityX="0.01"
+		<Params VelocityX="0.1"
      			
 
 			conductivity="0.001666666" 
@@ -32,7 +32,8 @@
 			InitTemperature-dirichlet_cold="0.0"
 		/>
 	</Model>
+	<Solve Iterations="100"> <VTK Iterations="1"/> </Solve>
 	<Failcheck Iterations="1000" nx="1m" ny="1m" nz="1m"/>
-	<VTK Iterations="500"/>
-	<Solve Iterations="5000"/>
+	<VTK Iterations="1000"/>
+	<Solve Iterations="15000"/>
 </CLBConfig>

@@ -1,6 +1,6 @@
 
 <?R
-    tab = expand.grid(PeriodX=c(32,64,128,256))
+    tab = expand.grid(PeriodX=c(32,64,128))
 
     dir_name <- "batch_laplace_benchmark"
     dir.create(dir_name)
@@ -26,11 +26,11 @@
 			<Box dy="-1"/> 
         </Wall>
 
-        <HeaterDirichletTemperature  name="dirichlet_hot"> 
+        <HeaterDirichletTemperature mask="COLLISION"  name="dirichlet_hot"> 
         	<Box dy="-2"/>
         </HeaterDirichletTemperature>
 
-        <HeaterDirichletTemperature  name="dirichlet_cold"> 
+        <HeaterDirichletTemperature mask="COLLISION" name="dirichlet_cold"> 
             <Box nx="1"/>
             <Box dx="-1"/>
             <Box ny="2"/>

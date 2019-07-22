@@ -1,14 +1,5 @@
 source("lib/lattice.R")
 
-# AddDensity(
-# 	name = paste("f",1:19-1,sep=""),
-# 	dx   = d3q19[,1],
-# 	dy   = d3q19[,2],
-# 	dz   = d3q19[,3],
-# 	comment=paste("flow LB density F",1:19-1),
-# 	group="f"
-# )
-
 x = c(0,1,-1);
 P = expand.grid(x=0:2,y=0:2,z=0:2)
 U = expand.grid(x,x,x)
@@ -19,16 +10,17 @@ AddDensity(
 	dx   = U[,1],
 	dy   = U[,2],
 	dz   = U[,3],
-	comment=paste("density F",1:27-1),
+	comment=paste("flow LB density F",1:27-1),
 	group="f"
 )
 
 for (f in fname) AddField(f,dx=0,dy=0,dz=0) # Make f accessible also in present node (not only streamed)
 
 # Manually: AddDensity( name="h[0]", dx= 0, dy= 0, group="h")
+# name = paste("h",1:19-1,sep=""),  # without brackets
+hname = paste("h[",1:27-1,"]",sep="")
 AddDensity(
-	# name = paste("h",1:19-1,sep=""),  # without brackets
-	name = paste("h[",1:27-1,"]",sep=""),
+	name = hname,
 	dx   = d3q27[,1],
 	dy   = d3q27[,2],
 	dz   = d3q27[,3],
@@ -36,6 +28,7 @@ AddDensity(
 	group="h"
 )
 
+for (h in hname) AddField(h,dx=0,dy=0,dz=0) # Make h accessible also in present node (not only streamed)
 
 # # initialisation
 # AddStage("BaseInit"  , "Init_distributions" , save=Fields$group %in% c("f","h","Vel"))
@@ -49,10 +42,10 @@ AddDensity(
 # AddAction("Iteration", c("HydroIter", "HeatIter"))
 
 #	Inputs: Flow Properties
-AddSetting(name="VelocityX", default=0.0, comment='inlet/outlet/init x-velocity component', zonal=TRUE)
-AddSetting(name="VelocityY", default=0.0, comment='inlet/outlet/init velocity', zonal=T)
-AddSetting(name="VelocityZ", default=0.0, comment='inlet/outlet/init velocity', zonal=T)
-AddSetting(name="Pressure" , default=0.0, comment='inlet/outlet/init density', zonal=T)
+AddSetting(name="VelocityX", default="0m/s", comment='inlet/outlet/init x-velocity component', zonal=TRUE)
+AddSetting(name="VelocityY", default="0m/s", comment='inlet/outlet/init y-velocity component', zonal=TRUE)
+AddSetting(name="VelocityZ", default="0m/s", comment='inlet/outlet/init z-velocity component', zonal=TRUE)
+AddSetting(name="Pressure" , default="0Pa", comment='inlet/outlet/init pressure', zonal=TRUE)
 AddSetting(name="GravitationX", default=0.0, comment='applied rho*GravitationX')
 AddSetting(name="GravitationY", default=0.0, comment='applied rho*GravitationY')
 AddSetting(name="GravitationZ", default=0.0, comment='applied rho*GravitationZ')
@@ -140,20 +133,16 @@ if(Options$SMAG)
 	AddSetting(name="Smag", default=0, comment='Smagorinsky coefficient for SGS modeling')
 }
 
-#	Velocity Fields # TODO: do I need this?
 AddDensity(name="U", dx=0, dy=0, dz=0, group="Vel")  
 # AddDensity(name="V", dx=0, dy=0, dz=0, group="Vel")
 # AddDensity(name="W", dx=0, dy=0, dz=0, group="Vel")
 if (Options$OutFlow)
 {
-	AddDensity(name=paste("fold",0:26,sep=""), dx=0,dy=0,dz=0,group="fold")
-	AddDensity(name=paste("hold",0:26,sep=""), dx=0,dy=0,dz=0,group="hold")
-
 	for (d in rows(DensityAll)) {
 		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy, dz=-d$dz )
 	}
 
-	AddField(name="U",dx=c(-1,0,0)) # TODO: do I need this?
+	AddField(name="U",dx=c(-1,0,0))  
 
 	AddNodeType(name="ENeumann", group="BOUNDARY")
 	AddNodeType(name="EConvect", group="BOUNDARY")
