@@ -1,14 +1,5 @@
 source("lib/lattice.R")
 
-# AddDensity(
-# 	name = paste("f",1:19-1,sep=""),
-# 	dx   = d3q19[,1],
-# 	dy   = d3q19[,2],
-# 	dz   = d3q19[,3],
-# 	comment=paste("flow LB density F",1:19-1),
-# 	group="f"
-# )
-
 x = c(0,1,-1);
 P = expand.grid(x=0:2,y=0:2,z=0:2)
 U = expand.grid(x,x,x)
@@ -19,16 +10,17 @@ AddDensity(
 	dx   = U[,1],
 	dy   = U[,2],
 	dz   = U[,3],
-	comment=paste("density F",1:27-1),
+	comment=paste("flow LB density F",1:27-1),
 	group="f"
 )
 
 for (f in fname) AddField(f,dx=0,dy=0,dz=0) # Make f accessible also in present node (not only streamed)
 
 # Manually: AddDensity( name="h[0]", dx= 0, dy= 0, group="h")
+# name = paste("h",1:19-1,sep=""),  # without brackets
+hname = paste("h[",1:27-1,"]",sep="")
 AddDensity(
-	# name = paste("h",1:19-1,sep=""),  # without brackets
-	name = paste("h[",1:27-1,"]",sep=""),
+	name = hname,
 	dx   = d3q27[,1],
 	dy   = d3q27[,2],
 	dz   = d3q27[,3],
@@ -36,6 +28,7 @@ AddDensity(
 	group="h"
 )
 
+for (h in hname) AddField(h,dx=0,dy=0,dz=0) # Make h accessible also in present node (not only streamed)
 
 # # initialisation
 # AddStage("BaseInit"  , "Init_distributions" , save=Fields$group %in% c("f","h","Vel"))
@@ -146,14 +139,11 @@ AddDensity(name="U", dx=0, dy=0, dz=0, group="Vel")
 # AddDensity(name="W", dx=0, dy=0, dz=0, group="Vel")
 if (Options$OutFlow)
 {
-	AddDensity(name=paste("fold",0:26,sep=""), dx=0,dy=0,dz=0,group="fold")
-	AddDensity(name=paste("hold",0:26,sep=""), dx=0,dy=0,dz=0,group="hold")
-
 	for (d in rows(DensityAll)) {
 		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy, dz=-d$dz )
 	}
 
-	AddField(name="U",dx=c(-1,0,0)) # TODO: do I need this?
+	AddField(name="U",dx=c(-1,0,0)) # TODO: do I need this? maybe AddDensity(name="U", dx=1, dy=0, dz=0, group="Vel") would be enought?  
 
 	AddNodeType(name="ENeumann", group="BOUNDARY")
 	AddNodeType(name="EConvect", group="BOUNDARY")

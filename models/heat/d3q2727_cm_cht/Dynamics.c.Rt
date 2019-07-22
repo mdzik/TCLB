@@ -30,8 +30,10 @@
 	{
 		f_neighbours = Density$nicename[Density$group =="f"]
 		h_neighbours = Density$nicename[Density$group =="h"]
-		f_old = PV(Density$name[Density$group == "fold"])
-		h_old = PV(Density$name[Density$group == "hold"])
+
+		f_old = PV(paste(f_neighbours,"(0,0,0)",sep=""))
+		h_old = PV(paste(h_neighbours,"(0,0,0)",sep=""))
+	
 		f_n = PV(paste(f_neighbours,"(",-Density$dx[Density$group=="f"]-1,",",-Density$dy[Density$group=="f"],",",-Density$dz[Density$group=="f"],")",sep=""))
 		h_n = PV(paste(h_neighbours,"(",-Density$dx[Density$group=="h"]-1,",",-Density$dy[Density$group=="h"],",",-Density$dz[Density$group=="h"],")",sep=""))
 		U_loc = PV("U_local")
@@ -152,17 +154,6 @@ CudaDeviceFunction void Init() {
 	}
 
 	SetEquilibriumHeat(h,H,rho,u);
-
-	#ifdef OPTIONS_OutFlow
-	if ((NodeType & NODE_BOUNDARY) == NODE_EConvect){
-			<?R if (Options$OutFlow)
-				{
-					C(f_old, f)
-					C(h_old, h)     
-				}       
-			?>
-	}
-	#endif
 }
 
 CudaDeviceFunction void HydroBounceBack()
@@ -392,10 +383,7 @@ CudaDeviceFunction void EConvect()
 	<?R
 		if (Options$OutFlow) {
 			C(f, (f_old + U_loc*f_n)*U_inv)
-			C(f_old, f)
-
 			C(h, (h_old + U_loc*h_n)*U_inv)
-			C(h_old, h)
 		}
 	?>
 }
@@ -718,7 +706,7 @@ CudaDeviceFunction void InterpolatedBounceBack()
 		?>
 
 
-	// force measurment tkes place in Run()
+	// force measurment takes place in Run()
 	// if((NodeType & NODE_BODY) == NODE_MeasurmentArea) { 
 	// 	AddToFDrag(F.x); 
 	// 	AddToFLateral(F.y); 
