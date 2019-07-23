@@ -142,11 +142,7 @@ if (Options$OutFlow)
 		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy, dz=-d$dz )
 	}
 
-<<<<<<< HEAD
-	AddField(name="U",dx=c(-1,0,0))  
-=======
-	AddField(name="U",dx=c(-1,0,0)) # TODO: do I need this? maybe AddDensity(name="U", dx=1, dy=0, dz=0, group="Vel") would be enought?  
->>>>>>> 529758dbf72cda15729d8d50e235992a83186009
+	AddField(name="U",dx=c(-1,0,0)) 
 
 	AddNodeType(name="ENeumann", group="BOUNDARY")
 	AddNodeType(name="EConvect", group="BOUNDARY")
