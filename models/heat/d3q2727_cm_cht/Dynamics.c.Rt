@@ -766,7 +766,8 @@ CudaDeviceFunction void RunBoundariesHeat()
 			ImposeHeatFlux(get_n_cylinder());
 			break;
 		case NODE_HeaterNeumannHeatFluxEast:
-			ImposeHeatFlux(vector_t {-1.,0,0});
+			vector_t n{-1.,0,0};
+			ImposeHeatFlux(n);
 			break;
 	}
 }
