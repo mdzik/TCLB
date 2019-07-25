@@ -138,6 +138,9 @@ AddDensity(name="U", dx=0, dy=0, dz=0, group="Vel")
 # AddDensity(name="W", dx=0, dy=0, dz=0, group="Vel")
 if (Options$OutFlow)
 {
+	AddDensity(name=paste("fold",0:26,sep=""), dx=0,dy=0,dz=0,group="fold")
+	AddDensity(name=paste("hold",0:6,sep=""), dx=0,dy=0,dz=0,group="hold")
+
 	for (d in rows(DensityAll)) {
 		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy, dz=-d$dz )
 	}

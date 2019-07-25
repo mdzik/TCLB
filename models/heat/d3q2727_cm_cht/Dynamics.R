@@ -56,8 +56,9 @@ AddSetting(name="nu", omega_nu='1.0/(3*nu+0.5)',  default=0.16666666,  comment='
 
 # Inputs: CFD Enhancements ;-)
 AddSetting(name="GalileanCorrection",default=1.,comment='Galilean correction term')
-AddSetting(name="nubuffer",default=0.01, comment='kinematic viscosity in the buffer layer')
+AddSetting(name="nu_buffer",default=0.01, comment='kinematic viscosity in the buffer layer')
 AddSetting(name="Omegafor3rdCumulants", default=1, comment='relaxation rate for 3rd order cumulants')
+AddSetting(name="conductivity_buffer",default=0.01, comment='thermal conductivity in the buffer layer')
 AddSetting(name="h_stability_enhancement", default=1.0, comment='magic stability enhancement')
 
 # 	Inputs: General Thermal Properties

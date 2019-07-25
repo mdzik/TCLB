@@ -6,7 +6,7 @@ set -e
 DIRNAME=$1
 
 TCLB_PATH="~/GITHUB/TCLB/CLB"
-MODEL="d3q2727_cm_cht"
+MODEL="d3q2727_cm_cht_OutFlowNew"
 
 
 if test -d $DIRNAME
