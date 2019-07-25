@@ -796,7 +796,7 @@ CudaDeviceFunction void Run() {
 		AddToFLift(-(p2.z-p1.z));
 	}
 
-	#ifdef OPTIONS_OutFlow
+	#if defined(OPTIONS_OutFlow) || defined(OPTIONS_OutFlowNew)
 		if((NodeType & NODE_BOUNDARY) == NODE_EConvect || (NodeType & NODE_BOUNDARY) == NODE_ENeumann) 
 		{
 			vector_t h2;
