@@ -1,12 +1,12 @@
 
 <?R
     tab = expand.grid(
-	    nu=c(3e-04), 
-	    k=c(3e-05), 
+	    nu=c(3e-05), 
+	    k=c(3e-06), 
 	    sizer=c(0.25), 
-	    Re=c(100), 
+	    Re=c(25000), 
 	    collision=c("CM","CM_HIGHER"), 
-	    is_nu_limiter=c(T),
+	    is_nu_limiter=c(F),
 	    is_k_limiter=c(F,T)
     )
 
@@ -60,7 +60,7 @@
         <Params
             InitTemperature="0"
             InitTemperature-dirichlet_hot="1"
-            InitTemperature-dirichlet_cold="0"
+            InitTemperature-dirichlet_cold="-10"
             />
         <Params/>
 
@@ -91,11 +91,17 @@
         <!-- <Params VelocityX="1.0E-02" /> -->
     </Model>
 
-<Failcheck Iterations="100" nx="<?%f 1000*sizer ?>" ny="<?%f 150*sizer ?>" nz="3" />
+
+<Solve Iterations="5000"> 
+	<Failcheck Iterations="500" nx="<?%f 1000*sizer ?>" ny="<?%f 150*sizer ?>" nz="3" />
+	<Log Iterations="100"/>
+	<VTK Iterations="100"/> 
+</Solve>
 <!-- <TXT Iterations="50000" what="T,U"/> -->
-<Log Iterations="100"/>
 <!-- <Solve Iterations="120000"> </Solve> -->
-<Solve Iterations="500000"> <VTK Iterations="100"/> </Solve>
+<Solve Iterations="10000"> 
+	<VTK Iterations="110"/> 
+</Solve>
 </CLBConfig>
 
 <?R

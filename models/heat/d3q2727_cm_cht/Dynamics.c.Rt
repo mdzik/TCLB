@@ -704,32 +704,17 @@ CudaDeviceFunction void RunBoundariesHydrodynamics()
 				ENeumann();
 				break;
 		#endif
-		// #ifdef OPTIONS_OutFlow
-		// case NODE_EConvect:
-		// 	EConvect();
-		// 	break;
-		// case NODE_ENeumann:
-		// 	ENeumann();
-		// 	break;
-		// #endif
-		// #ifdef OPTIONS_OutFlowNew
-		// case NODE_EConvect:
-		// 	EConvect();
-		// 	break;
-		// case NODE_ENeumann:
-		// 	ENeumann();
-		// 	break;
-		// #endif
 	}
 }
 
 CudaDeviceFunction void RunBoundariesHeat()
 {	
 	switch (NodeType & NODE_ADDITIONALS_HEAT) {
-		case NODE_HeaterDirichletTemperature:		
+		case NODE_HeaterDirichletTemperatureEQ:		
 			HeatDirichletEquilibriumScheme();
-			// alternatively:
-			//HeatDirichletAntiBounceBackScheme();
+			break;
+		case NODE_HeaterDirichletTemperatureABB:		
+			HeatDirichletAntiBounceBackScheme();
 			break;
 		case NODE_HeaterSource:
 			HeaterSource();
@@ -751,7 +736,8 @@ CudaDeviceFunction void Run() {
 	}
 
 	RunBoundariesHydrodynamics();
-	
+	RunBoundariesHeat();	
+
     switch (NodeType & NODE_COLLISION) {
 		case NODE_CM:
 			CollisionCM();
@@ -773,8 +759,6 @@ CudaDeviceFunction void Run() {
 			break;
 	}
 
-	RunBoundariesHeat();	
-
 	if((NodeType & NODE_OBJECTIVE) == NODE_MeasurmentArea) {
 		// vector_t h2;
 		<?R 
@@ -789,7 +773,7 @@ CudaDeviceFunction void Run() {
 		// AddToHeatFluxZ(-h2.z);
 
 		vector_t p2;
-		<?R # C(PV(c("p2.x","p2.y", "p2.z")), f %*% U) ?>
+		<?R C(PV(c("p2.x","p2.y", "p2.z")), f %*% U) ?>
 		//Summing the difference in momentum before/after collision
 		AddToFDrag(-(p2.x-p1.x));
 		AddToFLateral(-(p2.y-p1.y));
