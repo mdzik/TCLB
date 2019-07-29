@@ -18,7 +18,7 @@
 <!-- <CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/laplace_template/"> -->
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/laplace_template/">
-    <Geometry nx="<?%f PeriodX ?>" ny="<?%f PeriodX +2 ?>" >
+    <Geometry nx="<?%f PeriodX ?>" ny="<?%f PeriodX +2 ?>" nz="3" >
       <CM><Box /></CM>    
 
          <Wall mask="ALL" name="border" >
@@ -26,15 +26,15 @@
 			<Box dy="-1"/> 
         </Wall>
 
-        <HeaterDirichletTemperature mask="COLLISION"  name="dirichlet_hot"> 
+        <HeaterDirichletTemperatureEQ mask="COLLISION"  name="dirichlet_hot"> 
         	<Box dy="-2"/>
-        </HeaterDirichletTemperature>
+        </HeaterDirichletTemperatureEQ>
 
-        <HeaterDirichletTemperature mask="COLLISION" name="dirichlet_cold"> 
+        <HeaterDirichletTemperatureEQ mask="COLLISION" name="dirichlet_cold"> 
             <Box nx="1"/>
             <Box dx="-1"/>
             <Box ny="2"/>
-        </HeaterDirichletTemperature>
+        </HeaterDirichletTemperatureEQ>
 
     </Geometry>
     <Model>
@@ -52,7 +52,7 @@
         <Params PeriodY="<?%f PeriodX ?>"/>
     </Model>
 
-<Failcheck Iterations="50000" nx="<?%f PeriodX ?>" ny="<?%f PeriodX +2 ?>" />
+<Failcheck Iterations="50000" nx="<?%f PeriodX ?>" ny="<?%f PeriodX +2 ?>" nz="3" />
 <TXT Iterations="50000" what="T,U"/>
 <Log Iterations="50000"/>
 <Solve Iterations="250000"> <VTK Iterations="50000"/> </Solve>

@@ -349,7 +349,7 @@ CudaDeviceFunction void ENeumann()
 	// See 'Evaluation of outflow boundary conditions for two-phase lattice Boltzmann equation' 
 	// by Qin Lou, Zhaoli Guo and Baochang Shi from 2013 for details.
 	<?R
-		if (Options$OutFlow){
+		if (Options$OutFlow || Options$OutFlowNew){
 			C(f, PV(paste0(f_neighbours,"(",-Density$dx[Density$group=="f"]-1,",",-Density$dy[Density$group=="f"],",",-Density$dz[Density$group=="f"],")")))
 			C(h, PV(paste0(h_neighbours,"(",-Density$dx[Density$group=="h"]-1,",",-Density$dy[Density$group=="h"],",",-Density$dz[Density$group=="h"],")")))
 		}
@@ -1395,7 +1395,7 @@ CudaDeviceFunction vector_t relax_and_collide_hydro(vector_t Force, real_t omega
 		tau_t = 0.5 * (sqrt( tau_0 * tau_0 + 18 * Smag * Smag * q) - tau_0);
 		w[0] = 1.0 / (tau_0 + tau_t);
 
-		if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nubuffer+0.5);
+		if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nu_buffer+0.5);
 	#endif
 	
 	// Galilean Correction 
@@ -1537,7 +1537,7 @@ CudaDeviceFunction void CollisionCM(){
 	} 
 
 	vector_t u = relax_and_collide_hydro(Force, omega_nu);
-	#ifdef OPTIONS_OutFlow
+	#if defined(OPTIONS_OutFlow) || defined(OPTIONS_OutFlowNew)
 		U = u.x; // for convective outlet BC
 	#endif	
 
@@ -1567,7 +1567,7 @@ CudaDeviceFunction void CollisionCM_HIGHER(){
 	} 
 
 	vector_t u = relax_and_collide_hydro(Force, omega_nu);
-	#ifdef OPTIONS_OutFlow
+	#if defined(OPTIONS_OutFlow) || defined(OPTIONS_OutFlowNew)
 		U = u.x; // for convective outlet BC
 	#endif	
 
@@ -1597,7 +1597,7 @@ CudaDeviceFunction void CollisionCM_SRT(){
 	} 
 
 	vector_t u = relax_and_collide_hydro(Force, omega_nu);
-	#ifdef OPTIONS_OutFlow
+	#if defined(OPTIONS_OutFlow) || defined(OPTIONS_OutFlowNew)
 		U = u.x; // for convective outlet BC
 	#endif	
 	real_t omega_k = 1.0/(3*conductivity+0.5);
@@ -1624,7 +1624,7 @@ CudaDeviceFunction void CollisionHCM(){
 	} 
 
 	vector_t u = relax_and_collide_hydro(Force, omega_nu);
-	#ifdef OPTIONS_OutFlow
+	#if defined(OPTIONS_OutFlow) || defined(OPTIONS_OutFlowNew)
 		U = u.x; // for convective outlet BC
 	#endif	
 	real_t omega_k = 1.0/(3*conductivity+0.5);
@@ -1651,7 +1651,7 @@ CudaDeviceFunction void Collision_thermalBGK(){
 	} 
 
 	vector_t u = relax_and_collide_hydro(Force, omega_nu);
-	#ifdef OPTIONS_OutFlow
+	#if defined(OPTIONS_OutFlow) || defined(OPTIONS_OutFlowNew)
 		U = u.x; // for convective outlet BC
 	#endif	
 	real_t omega_k = 1.0/(3*conductivity+0.5);
@@ -1686,7 +1686,7 @@ CudaDeviceFunction void Collision_thermalMRT(){
 	} 
 
 	vector_t u = relax_and_collide_hydro(Force, omega_nu);
-	#ifdef OPTIONS_OutFlow
+	#if defined(OPTIONS_OutFlow) || defined(OPTIONS_OutFlowNew)
 		U = u.x; // for convective outlet BC
 	#endif	
 	real_t omega_k = 1.0/(3*conductivity+0.5);
