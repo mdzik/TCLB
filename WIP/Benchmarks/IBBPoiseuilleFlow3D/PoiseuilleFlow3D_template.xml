@@ -1,15 +1,16 @@
 
 <?R
-    tab = expand.grid(nu=c(1e-01, 0.1666666, 1e-02, 1e-03, 1e-04), y=c(0.75, 1, 1.25), diam=c(64))
+    tab = expand.grid(nu=c(1e-01, 0.1666666, 1e-02, 1e-03, 1e-04), y=c(0.75, 1, 1.25), diam=c(16,32,64))
 
     dir_name <- "batch_IBB_Poiseuille"
     dir.create(dir_name)
-    tab$name = paste0("ibb_Poiseuille","_nu_",tab$nu, "_effdiam_", tab$diam-2*(2-tab$y))
+    tab$name = paste0("ibb_Poiseuille","_nu_",tab$nu, "_effdiam_", tab$diam-2*(2.-tab$y))
     # tab$xml = paste0(tab$name,".xml")
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
     tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
     #tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/"))
 
+    options(digits=10)
     write.csv(tab, "HotKarman3D_template.csv", row.names=FALSE)
     for (i in 1:nrow(tab)) {
         attach(tab[i,,drop=FALSE])
@@ -24,7 +25,7 @@
 
 		<IBB mask="ALL" name="border" >
 			<STL file="WIP/Plate_128x2x128.stl" scale="1m" Xrot="0d" x="0" y="<?%f -y ?>" z="0" side="surface"/>
-      		<STL file="WIP/Plate_128x2x128.stl" scale="1m" Xrot="0d" x="0" y="<?%f diam -(2-y) ?>" z="0" side="surface"/>
+      		<STL file="WIP/Plate_128x2x128.stl" scale="1m" Xrot="0d" x="0" y="<?%f diam -(2.-y) ?>" z="0" side="surface"/>
 		</IBB>
 
 	     <Wall mask="ALL" name="border" >
@@ -52,7 +53,7 @@
             material_density="1"
             />
         <Params/>
-	    <Params GravitationX="<?%f 2*1.0E-02*nu/((diam-2*(2-y))*(diam-2*(2-y))) ?>" />
+	    <Params GravitationX="<?%e 2*0.01*nu/((diam-2.*(2.-y))*(diam-2.*(2.-y))) ?>" />
 	    <Params BoussinesqCoeff="1"/>
         <!-- gx = 2 * uc * (mu_l + mu_h) / ((rho_l + rho_h) * h * h) -->
         <!-- we set uc=0.01 -->
