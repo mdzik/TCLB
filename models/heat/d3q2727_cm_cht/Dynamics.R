@@ -28,7 +28,7 @@ AddDensity(
 	group="h"
 )
 
-if (Options$OutFlowNew)
+if (Options$OutFlow || Options$OutFlowNew)
 {
 	for (h in hname) AddField(h,dx=0,dy=0,dz=0) # Make h accessible also in present node (not only streamed)
 }
