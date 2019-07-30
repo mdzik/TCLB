@@ -77,6 +77,10 @@ AddGlobal(name="FDrag",    comment='Force exerted on body in X-direction', unit=
 AddGlobal(name="FLateral", comment='Force exerted on body in Y-direction', unit="N")
 AddGlobal(name="FLift",    comment='Force exerted on body in Z-direction', unit="N")
 
+AddGlobal(name="XHydroFLux",    comment='XHydroFLux', unit="kg/s")
+AddGlobal(name="YHydroFLux",    comment='YHydroFLux', unit="kg/s")
+AddGlobal(name="ZHydroFLux",    comment='ZHydroFLux', unit="kg/s")
+
 AddGlobal(name="HeatFluxX",    comment='Heat flux from body in X-direction', unit="W")
 AddGlobal(name="HeatFluxY",    comment='Heat flux from body in Y-direction', unit="W")
 AddGlobal(name="HeatFluxZ",    comment='Heat flux from body in Z-direction', unit="W")
@@ -101,6 +105,7 @@ if(Options$DEBUG){
 }
 
 # Boundary things
+AddNodeType("FluxMeasurment", "OBJECTIVEHYDRO")
 AddNodeType("MeasurmentArea", "OBJECTIVE")
 AddNodeType(name="DarcySolid", group="ADDITIONALS")
 AddNodeType(name="Smoothing", group="ADDITIONALS")

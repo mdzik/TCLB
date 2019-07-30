@@ -626,7 +626,7 @@ CudaDeviceFunction void InterpolatedBounceBack()
 	// See 'Momentum transfer of a Boltzmann-lattice fluid with boundaries'
 	// by M. Bouzidi, M. Firdaouss, P. Lallemand, 2001
 
-	real_t q;
+	cut_t q;
 	vector_t F;
 	F.x = F.y = F.z = 0.0;
 	<?R
@@ -645,7 +645,7 @@ CudaDeviceFunction void InterpolatedBounceBack()
                 C(Q,Qw[i]);
 	?>
 			if (q != NO_CUT) {
-					real_t p = ((real_t)q) * (2.0 /CUT_MAX); // q * 0.005 * 2 <?R p = PV("p"); op = p^(-1); ?>
+/*					real_t p = ((real_t)q) * (2.0 /CUT_MAX); // q * 0.005 * 2 <?R p = PV("p"); op = p^(-1); ?>
 					real_t fa = <?R C(fold[i]) ?>; <?R fa = PV("fa"); ?>
 					if (p > 1.0) { <?R
 				C(f[bounce[i]],fa*op + fold[bounce[i]]*(p-1)*op) ?>
@@ -656,6 +656,8 @@ CudaDeviceFunction void InterpolatedBounceBack()
 					v = (f[bounce[i]] - fa) * QU[i,]
 					for (j in 1:3) if (! is.zero(v[j])) C(F[j],F[j] + v[j]) 
 				?>
+				*/
+				<?R C(f[bounce[i]], fold[i]); ?>
 			}
 		<?R
 		}
@@ -794,6 +796,16 @@ CudaDeviceFunction void Run() {
 			AddToHeatFluxZ(-h2.z);
 		}
 	#endif
+
+
+	if((NodeType & NODE_OBJECTIVEHYDRO) == NODE_FluxMeasurment) {
+		vector_t p2;
+		<?R C(PV(c("p2.x","p2.y", "p2.z")), f %*% U) ?>
+		//Summing the difference in momentum before/after collision
+		AddToXHydroFLux(-(p2.x));
+		AddToYHydroFLux(-(p2.y));
+		AddToZHydroFLux(-(p2.z));
+	}
 }
 
 CudaDeviceFunction vector_t get_n_cylinder()
@@ -1314,7 +1326,7 @@ CudaDeviceFunction void relax_and_collide_ADE(real_t x_in[<?R C( h_pop_size) ?>]
 CudaDeviceFunction vector_t relax_and_collide_hydro(vector_t Force, real_t omega)
 {	
  	real_t w[10] = {omega,1.,1.,1.,1.,1.,1.,1.,1.,1.};
-	if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nu_buffer+0.5);
+//	if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nu_buffer+0.5);
 	  
 	f000 = f200 + f100 + f000; f100 = -f200 + f100; f200 = f100 + f200*2.; 
 	f010 = f210 + f110 + f010; f110 = -f210 + f110; f210 = f110 + f210*2.; 
@@ -1395,7 +1407,7 @@ CudaDeviceFunction vector_t relax_and_collide_hydro(vector_t Force, real_t omega
 		tau_t = 0.5 * (sqrt( tau_0 * tau_0 + 18 * Smag * Smag * q) - tau_0);
 		w[0] = 1.0 / (tau_0 + tau_t);
 
-		if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nu_buffer+0.5);
+//		if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nu_buffer+0.5);
 	#endif
 	
 	// Galilean Correction 
