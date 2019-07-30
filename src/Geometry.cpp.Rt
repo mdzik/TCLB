@@ -1010,6 +1010,12 @@ Geometry::~Geometry()
     if (Q != NULL) delete[] Q;
 }
 
+int nicefun (int i) {
+	if (i == 0) return 0;
+	if (i == 1) return 1;
+	if (i == -1) return 2;
+}
+
 /// Dumps the Geometry to a vti file
 void Geometry::writeVTI(const char *name)
 {
@@ -1026,8 +1032,9 @@ void Geometry::writeVTI(const char *name)
         size_t regsize = region.size();
         for (int d=0;d<26;d++) {
             char nm[20];
-//            sprintf(nm,"Q(%2d,%2d,%2d)",d3q27_vec[(d+1)+3],d3q27_vec[(d+1)*3+1],d3q27_vec[(d+1)*3+2]);
-            sprintf(nm,"Q_%d",d);
+
+	sprintf(nm,"Q%d%d%d",nicefun(d3q27_vec[(d+1)*3+0]),nicefun(d3q27_vec[(d+1)*3+1]),nicefun(d3q27_vec[(d+1)*3+2]));
+//            sprintf(nm,"Q_%d",d);
             vtkFile.WriteField(nm, Q + regsize*d);
         }
     }
