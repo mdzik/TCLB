@@ -1326,7 +1326,7 @@ CudaDeviceFunction void relax_and_collide_ADE(real_t x_in[<?R C( h_pop_size) ?>]
 CudaDeviceFunction vector_t relax_and_collide_hydro(vector_t Force, real_t omega)
 {	
  	real_t w[10] = {omega,1.,1.,1.,1.,1.,1.,1.,1.,1.};
-//	if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nu_buffer+0.5);
+	if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nu_buffer+0.5);
 	  
 	f000 = f200 + f100 + f000; f100 = -f200 + f100; f200 = f100 + f200*2.; 
 	f010 = f210 + f110 + f010; f110 = -f210 + f110; f210 = f110 + f210*2.; 
@@ -1407,7 +1407,7 @@ CudaDeviceFunction vector_t relax_and_collide_hydro(vector_t Force, real_t omega
 		tau_t = 0.5 * (sqrt( tau_0 * tau_0 + 18 * Smag * Smag * q) - tau_0);
 		w[0] = 1.0 / (tau_0 + tau_t);
 
-//		if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nu_buffer+0.5);
+		if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nu_buffer+0.5);
 	#endif
 	
 	// Galilean Correction 

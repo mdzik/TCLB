@@ -21,7 +21,7 @@
   </Geometry>
     <Model>
       <Params
-          k="0.1666666" 
+          conductivity="0.1666666" 
           cp="1.0"
           nu="0.166666"
 
@@ -39,7 +39,7 @@
 <Failcheck Iterations="10000" nx="64" ny="64" nz="3" />
 <!-- <TXT Iterations="10000" what="T,U"/> -->
 <Log Iterations="1000"/>
-<Stop XHydroFLuxChange="1e-5" Times="5" Iterations="1000"/>
+<Stop XHydroFLuxChange="1e-10" Times="5" Iterations="1000"/>
 <Solve Iterations="100000"> <VTK Iterations="10000"/> </Solve>
 <!-- <Solve Iterations="100000"> <VTK Iterations="1000"/> </Solve> -->
 </CLBConfig>
