@@ -1,6 +1,6 @@
 
 <?R
-    tab = expand.grid(nu=c(1e-01, 0.1666666, 1e-02, 1e-03, 1e-04), y=c(0.75, 1, 1.25), diam=c(15,31,63))
+    tab = expand.grid(nu=c(1e-03, 1e-04), y=c(0.75, 1, 1.25), diam=c(15,31,63))
 
     dir_name <- "batch_IBB_Poiseuille"
     dir.create(dir_name)
@@ -61,9 +61,10 @@
 <Failcheck Iterations="10000" nx="32" ny="<?%f diam ?>" nz="3" />
 <!-- <TXT Iterations="50000" what="T,U"/> -->
 <Solve Iterations="1"> <VTK Iterations="1"/> </Solve>
-<Log Iterations="1000"/>
-<Stop XHydroFLuxChange="1e-8" Times="5" Iterations="5000"/>
-<Solve Iterations="2000000"> <VTK Iterations="10000"  what="T,U,Rho"/> </Solve>
+<Log Iterations="5000"/>
+<Solve Iterations="100000"/>
+<Stop XHydroFLuxChange="1e-10" Times="6" Iterations="10000"/>
+<Solve Iterations="10000000"> <VTK Iterations="20000" what="T,U,Rho"/> </Solve>
 </CLBConfig>
 
 <?R

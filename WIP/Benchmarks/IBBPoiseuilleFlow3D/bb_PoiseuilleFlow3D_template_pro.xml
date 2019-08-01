@@ -1,14 +1,14 @@
 
 <?R
-    tab = expand.grid(nu=c(1e-01, 0.1666666, 1e-02, 1e-03, 1e-04), y=c(0.75, 1, 1.25), diam=c(15,31,63))
+    tab = expand.grid(nu=c(1e-03, 1e-04), y=c(0.75, 1, 1.25), diam=c(15,31,63))
 
-    dir_name <- "batch_IBB_Poiseuille"
+    dir_name <- "batch_BB_Poiseuille"
     dir.create(dir_name)
-    tab$name = paste0("ibb_Poiseuille","_nu_",tab$nu, "_effdiam_", tab$diam-2*(2.-tab$y))
+    tab$name = paste0("bb_Poiseuille","_nu_",tab$nu, "_effdiam_", tab$diam-2*(2.-tab$y))
     # tab$xml = paste0(tab$name,".xml")
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
-    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
-    #tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/"))
+    # tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+    tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/"))
 
     options(digits=10)
     write.csv(tab, "HotKarman3D_template.csv", row.names=FALSE)
@@ -23,15 +23,15 @@
     <Geometry nx="32" ny="<?%f diam ?>"  nz="3">
         <CM_HIGHER><Box/></CM_HIGHER>
 		<FluxMeasurment> <Box nx="1"/> </FluxMeasurment>
-		<IBB name="border" >
+<!-- 		<IBB name="border" >
 			<STL file="WIP/Plate_128x2x128.stl" scale="1m" Xrot="0d" x="-2" y="<?%f -y ?>" z="-2" side="surface"/>
       		<STL file="WIP/Plate_128x2x128.stl" scale="1m" Xrot="0d" x="-2" y="<?%f diam -(2.-y) ?>" z="-2" side="surface"/>
-		</IBB>
-<!-- 
+		</IBB> -->
+
 	     <Wall mask="ALL" name="border" >
 	        <Box ny="1"/>
 	        <Box dy="-1"/>
-	    </Wall> -->
+	    </Wall>
 
     </Geometry>
 
@@ -61,9 +61,10 @@
 <Failcheck Iterations="10000" nx="32" ny="<?%f diam ?>" nz="3" />
 <!-- <TXT Iterations="50000" what="T,U"/> -->
 <Solve Iterations="1"> <VTK Iterations="1"/> </Solve>
-<Log Iterations="1000"/>
-<Stop XHydroFLuxChange="1e-8" Times="5" Iterations="5000"/>
-<Solve Iterations="2000000"> <VTK Iterations="10000"  what="T,U,Rho"/> </Solve>
+<Log Iterations="5000"/>
+<Solve Iterations="100000"/>
+<Stop XHydroFLuxChange="1e-10" Times="6" Iterations="10000"/>
+<Solve Iterations="10000000"> <VTK Iterations="20000" what="T,U,Rho"/> </Solve>
 </CLBConfig>
 
 <?R
