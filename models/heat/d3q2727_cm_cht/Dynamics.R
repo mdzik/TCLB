@@ -57,8 +57,8 @@ AddSetting(name="nu", omega_nu='1.0/(3*nu+0.5)',  default=0.16666666,  comment='
 # Inputs: CFD Enhancements ;-)
 AddSetting(name="GalileanCorrection",default=1.,comment='Galilean correction term')
 AddSetting(name="nu_buffer",default=0.01, comment='kinematic viscosity in the buffer layer')
-AddSetting(name="Omegafor3rdCumulants", default=1, comment='relaxation rate for 3rd order cumulants')
 AddSetting(name="conductivity_buffer",default=0.01, comment='thermal conductivity in the buffer layer')
+AddSetting(name="Omegafor3rdCumulants", default=1, comment='relaxation rate for 3rd order cumulants')
 AddSetting(name="h_stability_enhancement", default=1.0, comment='magic stability enhancement')
 
 # 	Inputs: General Thermal Properties
@@ -115,11 +115,8 @@ AddNodeType(name="HeaterSource", group="ADDITIONALS_HEAT")
 AddNodeType(name="HeaterNeumannHeatFluxCylinder", group="ADDITIONALS_HEAT")
 AddNodeType(name="HeaterNeumannHeatFluxEast", group="ADDITIONALS_HEAT")
 AddNodeType("CM","COLLISION")
-
-# Benchmark things
-AddNodeType("CM_SRT","COLLISION")
 AddNodeType("CM_HIGHER","COLLISION")
-AddNodeType("HCM","COLLISION")
+# Benchmark things
 AddSetting(name="CylinderCenterX", default="0", comment='X coord of cylinder with imposed heat flux')
 AddSetting(name="CylinderCenterY", default="0", comment='Y coord of cylinder with imposed heat flux')
 
