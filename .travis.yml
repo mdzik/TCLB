@@ -42,6 +42,9 @@ env:
     - MODEL=d3q27 
     - MODEL=d3q27_cumulant 
     - MODEL=d3q27_cumulant_AVG_IB_SMAG
+    - MODEL=d3q27q27_cm_cht
+    - MODEL=d3q27q27_cm_cht_IBB
+    - MODEL=d3q27q27_cm_cht_OutFlowNew
 
 before_install:
     - sudo tools/install.sh r

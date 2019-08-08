@@ -1001,7 +1001,7 @@ CudaDeviceFunction void relax_and_collide_ADE_Cumulants(real_t x_in[<?R C( h_pop
 
 	#ifdef OPTIONS_SMAG
 		//Calculating turbulent viscosity for Smagorinsky  turbulence model
-		real_t tau_0 = 1./omega;
+		real_t tau_0 = 1./omega_ade;
 		real_t tau_t;
 		real_t q;
 
@@ -1009,7 +1009,7 @@ CudaDeviceFunction void relax_and_collide_ADE_Cumulants(real_t x_in[<?R C( h_pop
 		tau_t = 0.5 * (sqrt( tau_0 * tau_0 + 18 * Smag * Smag * q) - tau_0);
 		w[0] = 1.0 / (tau_0 + tau_t);
 
-		if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nu_buffer+0.5);
+		if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*conductivity_buffer+0.5);
 	#endif
 
 	// Galilean Correction
