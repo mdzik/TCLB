@@ -116,6 +116,9 @@ AddNodeType(name="HeaterNeumannHeatFluxCylinder", group="ADDITIONALS_HEAT")
 AddNodeType(name="HeaterNeumannHeatFluxEast", group="ADDITIONALS_HEAT")
 AddNodeType("CM","COLLISION")
 AddNodeType("CM_HIGHER","COLLISION")
+AddNodeType("CM_HIGHER_NONLINEAR","COLLISION")
+AddNodeType("Cumulants","COLLISION")
+
 # Benchmark things
 AddSetting(name="CylinderCenterX", default="0", comment='X coord of cylinder with imposed heat flux')
 AddSetting(name="CylinderCenterY", default="0", comment='Y coord of cylinder with imposed heat flux')
