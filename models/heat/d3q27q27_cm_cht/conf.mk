@@ -1,4 +1,4 @@
 ADJOINT=0
 TEST=TRUE
 # OPT="OutFlow*IB*SMAG*DEBUG*autosym"
-OPT="OutFlow*IBB*SMAG*DEBUG+OutFlowNew"
+OPT="OutFlowConvective*OutFlowNeumann*IBB*SMAG*DEBUG"

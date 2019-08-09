@@ -1,6 +1,6 @@
 
 <?R
-    tab = expand.grid(nu=c(1e-01, 0.1666666, 1e-02), y=c(0.75, 1, 1.25), diam=c(15,31,63), collision=c("Cumulant","CM_HIGHER"))
+    tab = expand.grid(nu=c(1e-01), y=c(0.75, 1, 1.25), diam=c(15), collision=c("Cumulants","CM_HIGHER"))
 
     dir_name <- "batch_IBB_Poiseuille"
     dir.create(dir_name)
@@ -19,15 +19,15 @@
 ?>
 
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="<?%s output ?>">
+<CLBConfig version="2.0" output="output/">
     <Geometry nx="32" ny="<?%f diam ?>"  nz="3">
         <<?%s collision ?>>
             <Box/>
         </<?%s collision ?>>    
 		<FluxMeasurment> <Box nx="1"/> </FluxMeasurment>
 		<IBB name="border" >
-			<STL file="WIP/Plate_128x2x128.stl" scale="1m" Xrot="0d" x="-2" y="<?%f -y ?>" z="-2" side="surface"/>
-      		<STL file="WIP/Plate_128x2x128.stl" scale="1m" Xrot="0d" x="-2" y="<?%f diam -(2.-y) ?>" z="-2" side="surface"/>
+			<STL file="example/data/Plate_128x2x128.stl" scale="1m" Xrot="0d" x="-2" y="<?%f -y ?>" z="-2" side="surface"/>
+      		<STL file="example/data/Plate_128x2x128.stl" scale="1m" Xrot="0d" x="-2" y="<?%f diam -(2.-y) ?>" z="-2" side="surface"/>
 		</IBB>
 <!-- 
 	     <Wall mask="ALL" name="border" >
@@ -39,9 +39,9 @@
 
     <Model>
         <Params
-            InitTemperature="0"
-            InitTemperature-dirichlet_hot="1"
-            InitTemperature-dirichlet_cold="0"
+            InitTemperature="10"
+            InitTemperature-dirichlet_hot="11"
+            InitTemperature-dirichlet_cold="10"
             />
         <Params/>
 
@@ -49,6 +49,7 @@
             nu="<?%f nu ?>"
             nu_buffer="<?%f nu ?>"
             conductivity="0.1666666"
+            conductivity_buffer="0.1666666"
 
             h_stability_enhancement="1."
             cp="1"
@@ -60,13 +61,10 @@
         <!-- gx = 2 * uc * (mu_l + mu_h) / ((rho_l + rho_h) * h * h) -->
         <!-- we set uc=0.01 - max velocity -->
     </Model>
-<Failcheck Iterations="10000" nx="32" ny="<?%f diam ?>" nz="3" />
-<!-- <TXT Iterations="50000" what="T,U"/> -->
-<Solve Iterations="1"> <VTK Iterations="1"/> </Solve>
-<Log Iterations="5000"/>
-<Solve Iterations="100000"/>
-<Stop XHydroFLuxChange="1e-10" Times="6" Iterations="10000"/>
-<Solve Iterations="10000000"> <VTK Iterations="20000" what="T,U,Rho"/> </Solve>
+<Failcheck Iterations="1000" nx="32" ny="<?%f diam ?>" nz="3" />
+<Log Iterations="1000"/>
+<Stop XHydroFLuxChange="1e-6" Times="6" Iterations="1000"/>
+<Solve Iterations="10000"> <VTK Iterations="1000" what="T,U,Rho"/> </Solve>
 </CLBConfig>
 
 <?R

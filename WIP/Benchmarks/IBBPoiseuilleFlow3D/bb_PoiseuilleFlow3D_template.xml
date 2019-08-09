@@ -1,10 +1,10 @@
 
 <?R
-    tab = expand.grid(nu=c(1e-01, 0.1666666, 1e-02), y=c(0.75, 1, 1.25), diam=c(7,15,31,63))
+    tab = expand.grid(nu=c(1e-01, 0.1666666, 1e-02), y=c(0.75, 1, 1.25), diam=c(15,31,63), collision=c("Cumulant","CM_HIGHER"))
 
     dir_name <- "batch_BB_Poiseuille"
     dir.create(dir_name)
-    tab$name = paste0("bb_Poiseuille","_nu_",tab$nu, "_effdiam_", tab$diam-2*(2.-tab$y))
+    tab$name = paste0("bb_Poiseuille_", tab$collision,"_nu_",tab$nu, "_effdiam_", tab$diam-2*(2.-tab$y))
     # tab$xml = paste0(tab$name,".xml")
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
     tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
@@ -21,7 +21,9 @@
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="<?%s output ?>">
     <Geometry nx="32" ny="<?%f diam ?>"  nz="3">
-        <CM_HIGHER><Box/></CM_HIGHER>
+        <<?%s collision ?>>
+            <Box/>
+        </<?%s collision ?>> 
 		<FluxMeasurment> <Box nx="1"/> </FluxMeasurment>
 <!-- 		<IBB name="border" >
 			<STL file="WIP/Plate_128x2x128.stl" scale="1m" Xrot="0d" x="-2" y="<?%f -y ?>" z="-2" side="surface"/>

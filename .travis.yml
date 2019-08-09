@@ -30,7 +30,7 @@ env:
   matrix: 
     - MODEL=d3q27q27_cm_cht
     - MODEL=d3q27q27_cm_cht_IBB
-    - MODEL=d3q27q27_cm_cht_OutFlowNew
+    - MODEL=d3q27q27_cm_cht_OutFlowNeumann
     - MODEL=d2q9_npe_guo
     - MODEL=d2q9_BC
     - MODEL=d2q9

@@ -28,10 +28,8 @@ AddDensity(
 	group="h"
 )
 
-if (Options$OutFlow || Options$OutFlowNew)
-{
-	for (h in hname) AddField(h,dx=0,dy=0,dz=0) # Make h accessible also in present node (not only streamed)
-}
+for (h in hname) AddField(h,dx=0,dy=0,dz=0) # Make h accessible also in present node (not only streamed)
+
 # # initialisation
 # AddStage("BaseInit"  , "Init_distributions" , save=Fields$group %in% c("f","h","Vel"))
 
@@ -105,8 +103,8 @@ if(Options$DEBUG){
 }
 
 # Boundary things
-AddNodeType("FluxMeasurment", "OBJECTIVEHYDRO")
-AddNodeType("MeasurmentArea", "OBJECTIVE")
+AddNodeType("FluxMeasurment", "OBJECTIVEFLUX")
+AddNodeType("ForceMeasurment", "OBJECTIVEFORCE")
 AddNodeType(name="DarcySolid", group="ADDITIONALS")
 AddNodeType(name="Smoothing", group="ADDITIONALS")
 AddNodeType(name="HeaterDirichletTemperatureEQ", group="ADDITIONALS_HEAT")
@@ -118,6 +116,7 @@ AddNodeType("CM","COLLISION")
 AddNodeType("CM_HIGHER","COLLISION")
 AddNodeType("CM_HIGHER_NONLINEAR","COLLISION")
 AddNodeType("Cumulants","COLLISION")
+AddNodeType("Cumulants_Higher","COLLISION")
 
 # Benchmark things
 AddSetting(name="CylinderCenterX", default="0", comment='X coord of cylinder with imposed heat flux')
@@ -131,7 +130,7 @@ AddSetting(name="Sigma_GH", default="1", comment='Initial width of the Gaussian 
 
 #Interpolated BounceBack Node
 if(Options$IBB){
-	AddNodeType("IBB", group="BOUNDARY") 
+	AddNodeType("IBB", group="HO_BOUNDARY") 
 	AddQuantity( name="MaxQ" )  
 	AddQuantity( name="MinQ" )  
 }
@@ -145,7 +144,7 @@ if(Options$SMAG)
 AddDensity(name="U", dx=0, dy=0, dz=0, group="Vel")  
 # AddDensity(name="V", dx=0, dy=0, dz=0, group="Vel")
 # AddDensity(name="W", dx=0, dy=0, dz=0, group="Vel")
-if (Options$OutFlow)
+if (Options$OutFlowConvective)
 {
 	AddDensity(name=paste("fold",0:26,sep=""), dx=0,dy=0,dz=0,group="fold")
 	AddDensity(name=paste("hold",0:26,sep=""), dx=0,dy=0,dz=0,group="hold")
@@ -155,19 +154,13 @@ if (Options$OutFlow)
 	}
 
 	AddField(name="U",dx=c(-1,0,0)) # TODO: do I need this?
-
-	AddNodeType(name="ENeumann", group="BOUNDARY")
 	AddNodeType(name="EConvect", group="BOUNDARY")
 }
 
-if (Options$OutFlowNew)
+if (Options$OutFlowNeumann)
 {
 	for (d in rows(DensityAll)) {
 		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy, dz=-d$dz )
 	}
-
-	AddField(name="U",dx=c(-1,0,0)) 
-
 	AddNodeType(name="ENeumann", group="BOUNDARY")
-	AddNodeType(name="EConvect", group="BOUNDARY")
 }
