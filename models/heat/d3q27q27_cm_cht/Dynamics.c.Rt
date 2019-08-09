@@ -146,9 +146,17 @@ CudaDeviceFunction float2 Color() {
 
 CudaDeviceFunction void Init() {
 	real_t pressure = Pressure;
-	real_t rho = 1.0*material_density;
-	real_t H = rho*cp*InitTemperature;
 	vector_t u; u.x = VelocityX; u.y = VelocityY; u.z = VelocityZ;
+
+	if((NodeType & NODE_BOUNDARY) == NODE_Wall){
+		u.x = 0; u.y = 0; u.z = 0;
+		pressure = 0;
+	}
+	
+	real_t rho = 1.0*material_density + pressure * 3.0;
+	real_t H = rho*cp*InitTemperature;
+
+	set_eq_hydro(rho, u.x, u.y, u.z);
 
 	if(CylinderCenterX_GH > 0 && CylinderCenterY_GH > 0 && Sigma_GH > 0){ 
 		// Gaussian Hill Benchmark
@@ -158,12 +166,6 @@ CudaDeviceFunction void Init() {
 		H *= exp(-L/(2*Sigma_GH));
 	}
 
-	if((NodeType & NODE_BOUNDARY) == NODE_Wall){
-		u.x = 0; u.y = 0; u.z = 0;
-		pressure = 0;
-	}
-	
-	set_eq_hydro(rho + pressure * 3.0, u.x, u.y, u.z);
 	SetEquilibriumHeat(h,H,rho,u);
 
 	#ifdef OPTIONS_OutFlow
@@ -731,7 +733,7 @@ CudaDeviceFunction void RunBoundariesHeat()
 }
 
 CudaDeviceFunction void Run() {
-	vector_t p1;
+	vector_t p1 {0,0,0};
 	if((NodeType & NODE_OBJECTIVE) == NODE_MeasurmentArea) {
 		<?R C(PV(c("p1.x","p1.y", "p1.z")), f %*% U) ?>
 	}

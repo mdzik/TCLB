@@ -519,7 +519,7 @@ then
         then
                 CPPFLAGS="${CPPFLAGS} -g"
         else
-                CPPFLAGS="${CPPFLAGS} -O3"
+                CPPFLAGS="${CPPFLAGS} -O3 -std=c++11"
         fi
         CPPFLAGS="${CPPFLAGS} -Wno-write-strings"
 else
