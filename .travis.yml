@@ -28,6 +28,9 @@ git:
 
 env:
   matrix: 
+    - MODEL=d3q27q27_cm_cht
+    - MODEL=d3q27q27_cm_cht_IBB
+    - MODEL=d3q27q27_cm_cht_OutFlowNew
     - MODEL=d2q9_npe_guo
     - MODEL=d2q9_BC
     - MODEL=d2q9
@@ -41,9 +44,6 @@ env:
     - MODEL=d3q27 
     - MODEL=d3q27_cumulant 
     - MODEL=d3q27_cumulant_AVG_IB_SMAG
-    - MODEL=d3q27q27_cm_cht
-    - MODEL=d3q27q27_cm_cht_IBB
-    - MODEL=d3q27q27_cm_cht_OutFlowNew
 
 before_install:
     - sudo tools/install.sh r
@@ -63,8 +63,8 @@ script:
     - make $MODEL/source
     - make $MODEL
     - make $MODEL/clean
-    - ./configure --enable-double --disable-cuda --enable-marklines --enable-marklines --enable-coverage --with-python --enable-paranoid
-    - make $MODEL
+    - ./configure --enable-double --disable-cuda --enable-marklines --enable-coverage --with-python --enable-paranoid
+    - make $MOD EL
     - tools/tests.sh $MODEL
 
 jobs:
