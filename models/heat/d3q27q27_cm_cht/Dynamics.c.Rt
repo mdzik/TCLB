@@ -1122,14 +1122,9 @@ CudaDeviceFunction void relax_and_collide_ADE_Cumulants(real_t x_in[<?R C( h_pop
 	// c002 = (cc - 2*b + a)/3.; //002
 
 	//Optional change in relaxation rate of 3rd and 5th order cumulants
-	<?R	sel = rowSums(P) == 3666
+	<?R	sel = rowSums(P) >= 3
 		for (i in cumulants[sel]) { ?>
-		<?%s i ?> = (1-omega_ade)*<?%s i ?>;
-	<?R } ?>
-
-	<?R	sel = rowSums(P) == 5666
-		for (i in cumulants[sel]) { ?>
-			<?%s i ?> = (1-omega_ade)*<?%s i ?>;
+		<?%s i ?> = 0.0;
 	<?R } ?>
 
 	/////////
@@ -1316,10 +1311,20 @@ CudaDeviceFunction void relax_and_collide_ADE_Cumulants_Higher(real_t x_in[<?R C
 		for (i in cumulants[sel]) { ?>
 		<?%s i ?> = (1-omega_ade)*<?%s i ?>;
 	<?R } ?>
+	
+	<?R	sel = rowSums(P) == 4
+	for (i in cumulants[sel]) { ?>
+	<?%s i ?> = 0.0;
+	<?R } ?>
 
 	<?R	sel = rowSums(P) == 5
 		for (i in cumulants[sel]) { ?>
 			<?%s i ?> = (1-omega_ade)*<?%s i ?>;
+	<?R } ?>
+
+	<?R	sel = rowSums(P) == 6
+	for (i in cumulants[sel]) { ?>
+	<?%s i ?> = 0.0;
 	<?R } ?>
 
 	/////////
