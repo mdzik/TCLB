@@ -1112,6 +1112,9 @@ CudaDeviceFunction void relax_and_collide_ADE_Cumulants(real_t x_in[<?R C( h_pop
 	c020 =  Sigma2;
 	c002 =  Sigma2;
 
+	c110 = 0;
+	c101 = 0;
+	c011 = 0;
 	//Cumulants relation - hydrodynamics
 	// c100 = c100 + Force.x;    //100 - change only due to force term
 	// c010 = c010 + Force.y;    //010 - change only due to force term
@@ -1296,7 +1299,9 @@ CudaDeviceFunction void relax_and_collide_ADE_Cumulants_Higher(real_t x_in[<?R C
 	c200 =  Sigma2;
 	c020 =  Sigma2;
 	c002 =  Sigma2;
-
+	c110 = 0;
+	c101 = 0;
+	c011 = 0;
 	//Cumulants relation - hydrodynamics
 	// c100 = c100 + Force.x;    //100 - change only due to force term
 	// c010 = c010 + Force.y;    //010 - change only due to force term
@@ -1385,11 +1390,11 @@ CudaDeviceFunction void relax_and_collide_ADE_Cumulants_Higher(real_t x_in[<?R C
 	x_in[18] = -x_in[14] + x_in[18]; x_in[10] = ( x_in[14] + x_in[10] )/2.; x_in[14] = x_in[14] - x_in[10];
 }
 
-CudaDeviceFunction void relax_and_collide_ADE_CM_HIGHER_NONLINEAR(real_t x_in[<?R C( h_pop_size) ?>], real_t rho, real_t omega_ade, vector_t u_new) 
+CudaDeviceFunction void relax_and_collide_ADE_CM_HIGHER_NONLINEAR(real_t x_in[<?R C( h_pop_size) ?>], real_t rho, real_t omega_ade, vector_t u_hydro) 
 {
 	real_t H = x_in[0] + x_in[10] + x_in[11] + x_in[12] + x_in[13] + x_in[14] + x_in[15] + x_in[16] + x_in[17] + x_in[18] + x_in[19] + x_in[1] + x_in[20] + x_in[21] + x_in[22] + x_in[23] + x_in[24] + x_in[25] + x_in[26] + x_in[2] + x_in[3] + x_in[4] + x_in[5] + x_in[6] + x_in[7] + x_in[8] + x_in[9];
 	real_t Sigma2 = (h_stability_enhancement*1./3.)/(cp*rho);
-
+	vector_t u_new;
 	real_t temp[27];
 	for (int i = 0; i < 27; i++) {
 		temp[i] = x_in[i];}
@@ -1493,6 +1498,10 @@ CudaDeviceFunction void relax_and_collide_ADE_CM_HIGHER_NONLINEAR(real_t x_in[<?
 	x_in[24] = -temp[24]*(omega_ade - 1.);
 	x_in[25] = -temp[25]*(omega_ade - 1.);
 	x_in[26] = Sigma2*Sigma2*Sigma2*H;
+
+	u_new.x = u_hydro.x*omega_ade+u.x*(1.0-omega_ade);
+	u_new.y = u_hydro.y*omega_ade+u.y*(1.0-omega_ade);
+	u_new.z = u_hydro.z*omega_ade+u.z*(1.0-omega_ade);
 
 	uxuy = u_new.x*u_new.y;
 	ux2 = u_new.x*u_new.x;

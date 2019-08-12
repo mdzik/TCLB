@@ -1,5 +1,5 @@
 <?R
-    tab = expand.grid(sizer=c(4), ux=c(0.0, 0.1), uy=c(0.0, 0.1), k_material=c(1e-02,1e-03,1e-04,1e-05), collision=c("CM_HIGHER", "Cumulants", "CM_HIGHER_NONLINEAR", "BGK","CM"))
+    tab = expand.grid(sizer=c(4), ux=c(0.0, 0.1), uy=c(0.0, 0.1), k_material=c(1e-02,1e-03,1e-04,1e-05), collision=c("CM_HIGHER", "Cumulants"))
  
     dir_name <- "batch_square_advection"
     dir.create(dir_name)
@@ -49,13 +49,13 @@
 	        cp="1"
 			material_density="1"
 
-	        InitTemperature="0.1"
-	        InitTemperature-init_T_region="1.0"
+	        InitTemperature="10"
+	        InitTemperature-init_T_region="11"
 	        />
 	    <Params />
 	            <Params VelocityX="<?%f ux ?>" />
                 <Params VelocityY="<?%f uy ?>" />
-	        <!-- <Params GravitationX="-1.0E-5" /> -->
+	            <Params GravitationY="-1.0E-5" /> 
     </Model> 
 
 <!-- <Solve Iterations="10" > <VTK Iterations="1"/> </Solve> -->

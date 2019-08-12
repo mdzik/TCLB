@@ -3,10 +3,11 @@
     tab = expand.grid(
 	    nu=c(1e-03), 
 	    k=c(1e-03), 
-	    sizer=c(0.25), 
+	    sizer=c(0.25, 0.5), 
 	    Re=c(1000), 
-	    collision=c("CM_HIGHER", "Cumulants_Higher", "Cumulants"), 
-	    outlet=c("ENeumann","EConvect"),
+	    collision=c("CM_HIGHER", "Cumulants_Higher", "Cumulants", "CM_HIGHER_NONLINEAR"), 
+	    bc=c("HeaterDirichletTemperatureABB","HeaterDirichletTemperatureEQ"),
+	    outlet=c("ENeumann"),
 	    is_nu_limiter=c(T),
 	    is_k_limiter=c(T)
     )
@@ -16,7 +17,7 @@
     # tab$name = paste0(dir_name,"/HotKarmanLimiters3D_template", "_nu_",tab$nu,"_k_",tab$k)
     # tab$xml = paste0(tab$name,".xml")
 
-    tab$name = paste0("HotKarmanLimiters3D_template_",tab$collision, "_",tab$outlet, "_Re_",tab$Re, "_sizer_", tab$sizer, "_nu_",tab$nu, "_isnulim_", tab$is_nu_limiter, "_k_",tab$k, "_isklim_", tab$is_k_limiter )
+    tab$name = paste0("HotKarmanLimiters3D_template_",tab$collision, "_", tab$bc, "_",tab$outlet, "_Re_",tab$Re, "_sizer_", tab$sizer, "_nu_",tab$nu, "_isnulim_", tab$is_nu_limiter, "_k_",tab$k, "_isklim_", tab$is_k_limiter )
 
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
 
@@ -31,7 +32,7 @@
 ?>
 
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/">
+<CLBConfig version="2.0" output="<?%s output ?>">
     <Geometry nx="<?%f 1000*sizer ?>" ny="<?%f 150*sizer ?>" nz="3" >   
       <<?%s collision ?>> <Box/> </<?%s collision ?>>  
         <WVelocity><Inlet/></WVelocity>
@@ -41,9 +42,9 @@
           <Cylinder dx="<?%f 285*sizer ?>" dy="<?%f 60*sizer ?>" nx="<?%f 30*sizer ?>" ny="<?%f 30*sizer ?>" nz="<?%f 50*sizer ?>"/>
         </Wall>
 
-        <HeaterDirichletTemperatureEQ mask="COLLISION" name="dirichlet_hot"> 
+        <<?%s bc ?> mask="COLLISION" name="dirichlet_hot"> 
           <Cylinder dx="<?%f 285*sizer ?>" dy="<?%f 60*sizer ?>" nx="<?%f 30*sizer ?>" ny="<?%f 30*sizer ?>" nz="<?%f 50*sizer ?>"/>
-        </HeaterDirichletTemperatureEQ>  
+        </<?%s bc ?>>   
 
         <ForceMeasurment>
             <Cylinder dx="<?%f 285*sizer ?>" dy="<?%f 60*sizer ?>" nx="<?%f 30*sizer ?>" ny="<?%f 30*sizer ?>" nz="<?%f 50*sizer ?>"/>
@@ -90,7 +91,7 @@
 
 <Solve Iterations="10000"> 
 	<Failcheck Iterations="100" nx="<?%f 1000*sizer ?>" ny="<?%f 150*sizer ?>" nz="3" />
-	<Log Iterations="1"/>
+	<Log Iterations="1000"/>
 	<VTK Iterations="1000"/> 
 </Solve>
 </CLBConfig>
