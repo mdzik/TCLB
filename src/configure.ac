@@ -35,6 +35,10 @@ AC_ARG_ENABLE([double],
 	AC_HELP_STRING([--enable-double],
 		[make a double precision version]))
 
+AC_ARG_ENABLE([cpp11],
+	AC_HELP_STRING([--enable-cpp11],
+		[enable C++ 11 standard (default)]))
+
 AC_ARG_WITH([cuda-arch],
 	AC_HELP_STRING([--with-cuda-arch=arch],
 		[specify the desired CUDA architecture (sm_11/sm_13/sm_20/sm_30/sm_60)]))
@@ -513,13 +517,21 @@ then
 	NVFLAGS="${NVFLAGS} --ptxas-options=-v"
 fi
 
+
+if test "x${enable_cpp11}" != "xno"
+then
+	CPPFLAGS="${CPPFLAGS} -std=c++11"
+	NVFLAGS="${NVFLAGS} -std=c++11"
+fi
+
+
 if test "x${CONF_CPPFLAGS}" == "x"
 then
         if test "x${enable_debug}" == "xyes"
         then
                 CPPFLAGS="${CPPFLAGS} -g"
         else
-                CPPFLAGS="${CPPFLAGS} -O3 -std=c++11"
+                CPPFLAGS="${CPPFLAGS} -O3"
         fi
         CPPFLAGS="${CPPFLAGS} -Wno-write-strings"
 else
