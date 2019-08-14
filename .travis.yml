@@ -11,7 +11,7 @@
 #####################################################
 language: c
 
-before_install:
+before_script:
   - wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_10.0.130-1_amd64.deb
   - sudo dpkg -i cuda-repo-ubuntu1604_10.0.130-1_amd64.deb
   - sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
@@ -19,11 +19,14 @@ before_install:
 
 addons:
   apt:
+    update: true
     packages:
       - openmpi-bin
       - libopenmpi-dev
       - lcov
       - time
+      - cuda-10-1
+      - cuda-toolkit-10-1
 
 git:
     submodules: false
@@ -55,8 +58,8 @@ install:
     - tools/install.sh rpython
     - gem install coveralls-lcov
     - tools/install.sh submodules
-    - sudo apt-get install cuda -y
-    - sudo apt-get install cuda-toolkit -y
+    - sudo apt-get install cuda-10-1 -y
+    - sudo apt-get install cuda-toolkit-10-1 -y
     - nvcc --version
 
 script:
