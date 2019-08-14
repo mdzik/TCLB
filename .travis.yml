@@ -15,9 +15,9 @@ language: c
 addons:
   apt:
     packages:
-      - nvidia-cuda-dev
+      - nvidia-cuda-dev-10-1
       - nvidia-profiler
-      - nvidia-cuda-toolkit
+      - nvidia-cuda-toolkit-10-1
       - openmpi-bin
       - libopenmpi-dev
       - lcov
