@@ -64,7 +64,7 @@ script:
     - make $MODEL
     - make $MODEL/clean
     - ./configure --enable-double --disable-cuda --enable-marklines --enable-coverage --with-python --enable-paranoid
-    - make $MOD EL
+    - make $MODEL
     - tools/tests.sh $MODEL
 
 jobs:
