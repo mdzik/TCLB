@@ -26,24 +26,20 @@
 		h_pop_size = PV("27")
 
 
+
 	if (Options$OutFlowNeumann) 
 	{
 		f_neighbours = Density$nicename[Density$group =="f"]
 		h_neighbours = Density$nicename[Density$group =="h"]
 
-		#f_old = PV(paste(f_neighbours,"(0,0,0)",sep=""))
-		#h_old = PV(paste(h_neighbours,"(0,0,0)",sep=""))
-	
-		#f_n = PV(paste(f_neighbours,"(",-Density$dx[Density$group=="f"]-1,",",-Density$dy[Density$group=="f"],",",-Density$dz[Density$group=="f"],")",sep=""))
-		#h_n = PV(paste(h_neighbours,"(",-Density$dx[Density$group=="h"]-1,",",-Density$dy[Density$group=="h"],",",-Density$dz[Density$group=="h"],")",sep=""))
-		#U_loc = PV("U_local")
-		#U_inv = PV("invU")
 	}
 
 	if (Options$OutFlowConvective) 
 	{
 		f_neighbours = Density$nicename[Density$group =="f"]
 		h_neighbours = Density$nicename[Density$group =="h"]
+		#f_old = PV(paste(f_neighbours,"(0,0,0)",sep="")) # this is slightly different
+		#h_old = PV(paste(h_neighbours,"(0,0,0)",sep="")) 
 		f_old = PV(Density$name[Density$group == "fold"])
 		h_old = PV(Density$name[Density$group == "hold"])
 		f_n = PV(paste(f_neighbours,"(",-Density$dx[Density$group=="f"]-1,",",-Density$dy[Density$group=="f"],",",-Density$dz[Density$group=="f"],")",sep=""))
@@ -694,17 +690,16 @@ CudaDeviceFunction void ThermalAntiInterpolatedBounceBack()
 	real_t h_eq[h_size];
 	SetEquilibriumHeat(h_eq, H, rho, u);
 
-	//void* test = *(h + 1)(0,0,0); // OMG...
-	real_t test = h[1]*(0,0,0); // OMG...
 
 	<?R
 	bounce = Bounce(U);
 	sel = DensityAll$group=="h"
 	attach(DensityAll[sel,])
 	h = PV(name)
-	hold = PV(name,"*(0,0,0)")
-	hpre = PV(name,"(",-dx,",",-dy,",",-dz,")")
-	h_eq = PV(name,"_eq")
+
+	hold = PV(Density$nicename[Density$group =="h"],"(0,0,0)")
+	h_eq = PV("h_eq[",1:27-1,"]",sep="")
+
 	QU = cbind(dx,dy,dz)
 	detach()
 	Qw = PV( paste("Q",P$x,P$y,P$z,sep=""))
@@ -715,15 +710,14 @@ CudaDeviceFunction void ThermalAntiInterpolatedBounceBack()
 ?>
 		
 		if (q != NO_CUT) {
+				// #TODO: the notation is mismatched...
 				real_t p = ((real_t)q) * (2.0 /CUT_MAX); // q * 0.005 * 2 <?R p = PV("p"); op = p^(-1); ?>
 				real_t ha = <?R C(hold[i]) ?>;  <?R ha = PV("ha"); ?>
 
-				<?R #h_eq = PV("h_eq") ?>
-				if (p > 1.0) { <?R
-					#C(h[bounce[i]], -(ha*op + hold[bounce[i]]*(p-1)*op) + 2*h_eq[i]) ?>
-				} else { <?R
-					#C(h[bounce[i]],-(ha*p + h[i]*(1-p)) + 2*h_eq[i]) ?>
-			
+				if (p > 1.0) { 
+					<?R C(h[bounce[i]], -1*(ha*op + hold[bounce[i]]*(p-1)*op) + 2*h_eq[i]) ?>
+				} else { 
+					<?R  C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*h_eq[i])  ?>
 				}	
 				
 		}
@@ -734,8 +728,15 @@ CudaDeviceFunction void ThermalAntiInterpolatedBounceBack()
 
 	//real_t heq = <?R #C(h_eq[0]) ?>;
 	<?R 
-	#C(h[bounce[0]], 2*hr_eq[0])
+	C(h[bounce[1]], 2*hold[1])
 	?>
+
+
+
+	// # h_neighbours = Density$nicename[Density$group =="h"]
+	// # h_old = PV(Density$name[Density$group == "hold"])
+	// # h_n = PV(paste(h_neighbours,"(",-Density$dx[Density$group=="h"]-1,",",-Density$dy[Density$group=="h"],",",-Density$dz[Density$group=="h"],")",sep=""))
+	// # C(h, PV(paste0(h_neighbours,"(",-Density$dx[Density$group=="h"]-1,",",-Density$dy[Density$group=="h"],",",-Density$dz[Density$group=="h"],")")))
 }
 
 
