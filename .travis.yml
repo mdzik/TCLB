@@ -11,6 +11,11 @@
 #####################################################
 language: c
 
+before_install:
+  - wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_10.0.130-1_amd64.deb
+  - sudo dpkg -i cuda-repo-ubuntu1604_10.0.130-1_amd64.deb
+  - sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
+  - sudo apt-get update -qq
 
 addons:
   apt:
@@ -42,7 +47,7 @@ env:
     - MODEL=d3q27_cumulant 
     - MODEL=d3q27_cumulant_AVG_IB_SMAG
 
-before_install:
+install:
     - sudo tools/install.sh r
     - tools/install.sh rdep
     - tools/install.sh rinside
@@ -50,14 +55,7 @@ before_install:
     - tools/install.sh rpython
     - gem install coveralls-lcov
     - tools/install.sh submodules
-    - wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_10.0.130-1_amd64.deb
-    - sudo dpkg -i cuda-repo-ubuntu1604_10.0.130-1_amd64.deb
-    - sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
-    - sudo apt-get update -qq
-
-install:
     - sudo apt-get install cuda -y
-    - sudo apt-get install cuda-dev -y
     - sudo apt-get install cuda-toolkit -y
     - nvcc --version
 
