@@ -863,14 +863,14 @@ CudaDeviceFunction void Run() {
 	if((NodeType & NODE_OBJECTIVEFLUX) == NODE_FluxMeasurment) {
 		vector_t p2;
 		<?R C(PV(c("p2.x","p2.y", "p2.z")), f %*% U) ?>
-		//Summing the momentum flux through boundary.
+		//Summing the momentum flux through the boundary.
 		AddToXHydroFLux(-(p2.x));
 		AddToYHydroFLux(-(p2.y));
 		AddToZHydroFLux(-(p2.z));
 
 		vector_t h2;
 		<?R C(PV(c("h2.x","h2.y", "h2.z")), h %*% UforHeat) ?>
-		// Summing the heat flux (both convective and diffusive) before/after collision
+		// Summing the heat flux (both convective and diffusive) through the boundary.
 		// convective flux - eq part of h distributions
 		// diffusive flux - neq part of h distributions
 

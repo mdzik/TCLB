@@ -520,7 +520,7 @@ fi
 
 if test "x${enable_cpp11}" != "xno"
 then
-	CPP_OPT="${CPP_OPT} -std=c++11 -D_MWAITXINTRIN_H_INCLUDED -D__STRICT_ANSI__"
+	CPP_OPT="${CPP_OPT} -std=c++11"  # -D_MWAITXINTRIN_H_INCLUDED -D__STRICT_ANSI__
 	NVFLAGS="${NVFLAGS} -std=c++11"
 fi
 

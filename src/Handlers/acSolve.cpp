@@ -16,7 +16,7 @@ int acSolve::Init () {
 			MPI_Bcast(&solver->steps, 1, MPI_INT, 0, MPI_COMM_WORLD);
 			solver->iter += solver->steps;
 			solver->lattice->Iterate(solver->steps, solver->iter_type);
-			CudaThreadSynchronize();
+			CudaDeviceSynchronize();
 			MPI_Barrier(MPI_COMM_WORLD);
 			for (size_t i=0; i<solver->hands.size(); i++) {
 				if (solver->hands[i].Now(solver->iter)) {
@@ -33,7 +33,7 @@ int acSolve::Init () {
 			}
 			if (stop) break;
 		} while (!Now(solver->iter));
-		CudaThreadSynchronize();
+		CudaDeviceSynchronize();
 		MPI_Barrier(MPI_COMM_WORLD);
 		GenericAction::Unstack();
 		return 0;
