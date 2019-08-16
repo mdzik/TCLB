@@ -9,9 +9,8 @@
 #          > make travis                            #
 #                                                   #
 #####################################################
+
 language: c
-
-
 
 addons:
   apt:
@@ -45,12 +44,6 @@ env:
     - MODEL=d3q27_cumulant_AVG_IB_SMAG
 
 before_install:
-  - wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_10.0.130-1_amd64.deb
-  - sudo dpkg -i cuda-repo-ubuntu1604_10.0.130-1_amd64.deb
-  - sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
-  - sudo apt-get update -qq
-
-install:
     - sudo tools/install.sh r
     - tools/install.sh rdep
     - tools/install.sh rinside
@@ -58,9 +51,10 @@ install:
     - tools/install.sh rpython
     - gem install coveralls-lcov
     - tools/install.sh submodules
-    - sudo apt-get install cuda-10-1 -y
-    - sudo apt-get install cuda-toolkit-10-1 -y
+    - tools/install.sh cuda 10.0.130-1
     - export PATH=/usr/local/cuda-10.1/bin:/usr/local/cuda-10.1/NsightCompute-2019.1${PATH:+:${PATH}}
+
+install:
     - nvcc --version
 
 script:
