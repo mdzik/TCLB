@@ -1,4 +1,0 @@
-ADJOINT=0
-TEST=FALSE
-# OPT="OutFlow*IB*SMAG*DEBUG*autosym"
-OPT="OutFlow*IBB*SMAG*DEBUG+OutFlowNew"

@@ -1,13 +1,15 @@
 
 <?R
     tab = expand.grid(
-	    nu=c(3e-05), 
-	    k=c(3e-06), 
-	    sizer=c(0.25), 
-	    Re=c(25000), 
-	    collision=c("CM_HIGHER","Cumulants"), 
-	    is_nu_limiter=c(F),
-	    is_k_limiter=c(F,T)
+	    nu=c(1e-03), 
+	    k=c(1e-03), 
+	    sizer=c(0.25, 0.5), 
+	    Re=c(1000), 
+	    collision=c("CM_HIGHER", "Cumulants_Higher", "Cumulants", "CM_HIGHER_NONLINEAR"), 
+	    bc=c("HeaterDirichletTemperatureABB","HeaterDirichletTemperatureEQ"),
+	    outlet=c("ENeumann"),
+	    is_nu_limiter=c(T),
+	    is_k_limiter=c(T)
     )
 
     dir_name <- "batch_HotKarmanLimiters3D"
@@ -15,7 +17,7 @@
     # tab$name = paste0(dir_name,"/HotKarmanLimiters3D_template", "_nu_",tab$nu,"_k_",tab$k)
     # tab$xml = paste0(tab$name,".xml")
 
-    tab$name = paste0("HotKarmanLimiters3D_template_",tab$collision, "_Re_",tab$Re, "_sizer_", tab$sizer, "_nu_",tab$nu, "_isnulim_", tab$is_nu_limiter, "_k_",tab$k, "_isklim_", tab$is_k_limiter )
+    tab$name = paste0("HotKarmanLimiters3D_template_",tab$collision, "_", tab$bc, "_",tab$outlet, "_Re_",tab$Re, "_sizer_", tab$sizer, "_nu_",tab$nu, "_isnulim_", tab$is_nu_limiter, "_k_",tab$k, "_isklim_", tab$is_k_limiter )
 
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
 
@@ -31,36 +33,31 @@
 
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="<?%s output ?>">
-<!--     <Units>
-        <Params size="1m" gauge="<?%f sizer ?>"/>
-    </Units> -->
     <Geometry nx="<?%f 1000*sizer ?>" ny="<?%f 150*sizer ?>" nz="3" >   
       <<?%s collision ?>> <Box/> </<?%s collision ?>>  
         <WVelocity><Inlet/></WVelocity>
-        <!-- <EPressure><Outlet/></EPressure> -->
-        <!-- <EConvect><Outlet/></EConvect> -->
-        <ENeumann><Outlet/></ENeumann>
-
+      <<?%s outlet ?>> <Outlet/> </<?%s outlet ?>>  
         <Wall mask="ALL">
             <!-- <Channel/> -->
           <Cylinder dx="<?%f 285*sizer ?>" dy="<?%f 60*sizer ?>" nx="<?%f 30*sizer ?>" ny="<?%f 30*sizer ?>" nz="<?%f 50*sizer ?>"/>
         </Wall>
 
-        <HeaterDirichletTemperature  name="dirichlet_hot"> 
+        <<?%s bc ?> mask="COLLISION" name="dirichlet_hot"> 
           <Cylinder dx="<?%f 285*sizer ?>" dy="<?%f 60*sizer ?>" nx="<?%f 30*sizer ?>" ny="<?%f 30*sizer ?>" nz="<?%f 50*sizer ?>"/>
-        </HeaterDirichletTemperature>  
+        </<?%s bc ?>>   
 
-        <MeasurmentArea>
+        <ForceMeasurment>
             <Cylinder dx="<?%f 285*sizer ?>" dy="<?%f 60*sizer ?>" nx="<?%f 30*sizer ?>" ny="<?%f 30*sizer ?>" nz="<?%f 50*sizer ?>"/>
-            <!-- <Outlet/> -->
-        </MeasurmentArea>
+        </ForceMeasurment>
+
+        <FluxMeasurment> <Box dx="-10" nx="1"/> </FluxMeasurment>
     </Geometry>
 
     <Model>
         <Params
-            InitTemperature="0"
-            InitTemperature-dirichlet_hot="1"
-            InitTemperature-dirichlet_cold="-10"
+            InitTemperature="10"
+            InitTemperature-dirichlet_hot="11"
+            InitTemperature-dirichlet_cold="10"
             />
         <Params/>
 
@@ -92,15 +89,10 @@
     </Model>
 
 
-<Solve Iterations="5000"> 
-	<Failcheck Iterations="500" nx="<?%f 1000*sizer ?>" ny="<?%f 150*sizer ?>" nz="3" />
-	<Log Iterations="100"/>
-	<VTK Iterations="100"/> 
-</Solve>
-<!-- <TXT Iterations="50000" what="T,U"/> -->
-<!-- <Solve Iterations="120000"> </Solve> -->
 <Solve Iterations="10000"> 
-	<VTK Iterations="110"/> 
+	<Failcheck Iterations="100" nx="<?%f 1000*sizer ?>" ny="<?%f 150*sizer ?>" nz="3" />
+	<Log Iterations="1000"/>
+	<VTK Iterations="1000"/> 
 </Solve>
 </CLBConfig>
 
