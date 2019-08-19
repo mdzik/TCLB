@@ -1010,11 +1010,6 @@ Geometry::~Geometry()
     if (Q != NULL) delete[] Q;
 }
 
-int nicefun (int i) {
-	if (i == 0) return 0;
-	if (i == 1) return 1;
-	if (i == -1) return 2;
-}
 
 /// Dumps the Geometry to a vti file
 void Geometry::writeVTI(const char *name)
