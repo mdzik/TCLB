@@ -31,9 +31,9 @@
 	<Params	material_density="1.0kg/m3" gauge="1E-0"/> -->
   </Units>
 	<Geometry nx="<?%f 32*sizer ?>" ny="<?%f 32*sizer ?>" nz="3" >  
-     	<HeaterDirichletTemperature mask="COLLISION" name="dirichlet_cold"> 
+     	<HeaterDirichletTemperatureEQ mask="COLLISION" name="dirichlet"> 
             <Box />
-        </HeaterDirichletTemperature>
+        </HeaterDirichletTemperatureEQ>
 
      	<<?%s collision ?>>
      		<Cylinder ny="<?%f 30*sizer ?>" nx="<?%f 30*sizer ?>" dx="<?%f 1*sizer ?>" dy="<?%f 1*sizer ?>"/>
@@ -59,9 +59,9 @@
 	        cp="1"
 			material_density="1"
 
-	        InitTemperature="0.0"
+	        InitTemperature="10.0"
 	        InitHeatFlux-neumann_hot="0.1"
-	        InitTemperature-dirichlet_cold="0.0"
+	        InitTemperature-dirichlet="11.0"
 	        />
 	    <Params />
 	    <Params CylinderCenterX="<?%f 16*sizer ?>"/>

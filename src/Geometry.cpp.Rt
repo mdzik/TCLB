@@ -998,7 +998,7 @@ int Geometry::load(pugi::xml_node & node)
 	E(Draw(n));
     }
     if (node.attribute("save")) {
-	writeVTI(node.attribute("save").value());
+		writeVTI(node.attribute("save").value());
     }
     return 0;
 }
@@ -1012,6 +1012,13 @@ Geometry::~Geometry()
 
 
 /// Dumps the Geometry to a vti file
+// use to check values of cuts in the interpolated bounce back scheme
+// <Geometry nx="32" ny="32"  nz="3" save="geometry_ibb_output">  // output path goues here
+//      <BGK><Box/></BGK>
+// 		<IBB name="border" >
+// 			<STL file="path_to_geometry_file.stl" scale="1" Xrot="0d" x="0" y="0" z="0" side="surface"/>
+// 		</IBB>
+// </Geometry>
 void Geometry::writeVTI(const char *name)
 {
 	char filename[STRING_LEN];
@@ -1024,12 +1031,35 @@ void Geometry::writeVTI(const char *name)
     vtkFile.Init(region, "");
     vtkFile.WriteField("geom", geom);
     if (Q != NULL) {
-        size_t regsize = region.size();
+        size_t regsize = region.sizeL();
+
+		real_t *  Qnorm = new real_t[regsize*26];
+
+		// src/types.h.Rt:19:  #define NO_CUT 65535				
+		// src/types.h.Rt:20:  #define CUT_MAX 65000				
+		// src/types.h.Rt:17:  typedef unsigned short int cut_t; - contains at least [0, 65535]	
+
+		for (int i = 0; i < regsize*26; ++i)  // normalize the cuts to 0-1 range
+		{
+			Qnorm[i]=real_t(Q[i])/CUT_MAX;
+			// if (Qnorm[i] > 1.)
+			// 	Qnorm[i] = 0; // means no cut
+		}
+			
         for (int d=0;d<26;d++) {
             char nm[20];
+			sprintf(nm,"Qnorm%d%d%d",d3q27_vec[(d+1)*3+0],d3q27_vec[(d+1)*3+1],d3q27_vec[(d+1)*3+2]);
+			// sprintf(nm,"Q_%d",d);
+            // vtkFile.WriteField(nm, Q + regsize*d);
+			vtkFile.WriteField(nm, Qnorm + regsize*d);
+        }
+	 	delete[] Qnorm;
 
-//	sprintf(nm,"Q%d%d%d",d3q27_vec[(d+1)*3+0],d3q27_vec[(d+1)*3+1],d3q27_vec[(d+1)*3+2]);
-//            sprintf(nm,"Q_%d",d);
+		for (int d=0;d<26;d++) {
+            char nm[20];
+
+			sprintf(nm,"Q%d%d%d",d3q27_vec[(d+1)*3+0],d3q27_vec[(d+1)*3+1],d3q27_vec[(d+1)*3+2]);
+			// sprintf(nm,"Q_%d",d);
             vtkFile.WriteField(nm, Q + regsize*d);
         }
     }

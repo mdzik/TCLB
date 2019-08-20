@@ -572,8 +572,6 @@ CudaDeviceFunction real_t getMinQ()
         for (i in 2:length(Qw)) {
                 C(Q,Qw[i]);
         ?>
-		// if (q == NO_CUT)
-		// 	Q_MIN = 0;
 
 		q = ((real_t)q) * (1.0 /CUT_MAX); 
 		if (q < Q_MIN){
