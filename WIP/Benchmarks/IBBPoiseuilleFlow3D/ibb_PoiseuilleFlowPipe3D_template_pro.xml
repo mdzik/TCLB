@@ -1,7 +1,7 @@
 
 <?R
     tab = expand.grid(
-        # nu=c(1e-01, 0.1666666, 1e-02, 1e-03), 
+        nu=c(1e-01, 0.1666666, 1e-02, 1e-03), 
         # nu=c(1e-01), 
         effdiam=c(15,23,31,45,61,93,121), 
         collision=c("CM_HIGHER"),
@@ -13,8 +13,8 @@
     tab$name = paste0(tab$bb_type, "_PoiseuillePipe_", tab$collision,"_nu_",tab$nu, "_effdiam_", tab$effdiam)
     # tab$xml = paste0(tab$name,".xml")
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
-    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
-    #tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/"))
+    # tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+    tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/"))
 
     tab$stl_path = paste0("WIP/Benchmarks/IBBPoiseuilleFlow3D/pipe_D", tab$effdiam,"_L127.stl")
     options(digits=10)
@@ -71,9 +71,9 @@
 <!-- <TXT Iterations="50000" what="T,U"/> -->
 <Solve Iterations="1"> <VTK Iterations="1"/> </Solve>
 <Log Iterations="5000"/>
-<Solve Iterations="1000000"></Solve>
+<Solve Iterations="<?%d round(1.5e6*log(1./nu)) ?>"></Solve>
 <Stop XHydroFLuxChange="1e-11" Times="6" Iterations="10000"/>
-<Solve Iterations="1000000"><VTK Iterations="10000" what="T,U,Rho"/> </Solve>
+<Solve Iterations="100000"><VTK Iterations="10000" what="T,U,Rho"/> </Solve>
 </CLBConfig>
 
 <?R
