@@ -18,12 +18,22 @@ for (f in fname) AddField(f,dx=0,dy=0,dz=0) # Make f accessible also in present 
 
 # Manually: AddDensity( name="h[0]", dx= 0, dy= 0, group="h")
 # name = paste("h",1:19-1,sep=""),  # without brackets
-hname = paste("h[",1:27-1,"]",sep="")
+# hname = paste("h[",1:27-1,"]",sep="")
+# AddDensity(
+# 	name = hname,
+# 	dx   = d3q27[,1],
+# 	dy   = d3q27[,2],
+# 	dz   = d3q27[,3],
+# 	comment=paste("heat LB density H",1:27-1),
+# 	group="h"
+# )
+
+hname =  paste("h",P$x,P$y,P$z,sep="")
 AddDensity(
 	name = hname,
-	dx   = d3q27[,1],
-	dy   = d3q27[,2],
-	dz   = d3q27[,3],
+	dx   = U[,1],
+	dy   = U[,2],
+	dz   = U[,3],
 	comment=paste("heat LB density H",1:27-1),
 	group="h"
 )
@@ -146,8 +156,28 @@ AddDensity(name="U", dx=0, dy=0, dz=0, group="Vel")
 # AddDensity(name="W", dx=0, dy=0, dz=0, group="Vel")
 if (Options$OutFlowConvective)
 {
-	AddDensity(name=paste("fold",0:26,sep=""), dx=0,dy=0,dz=0,group="fold")
-	AddDensity(name=paste("hold",0:26,sep=""), dx=0,dy=0,dz=0,group="hold")
+	# AddDensity(name=paste("fold",0:26,sep=""), dx=0,dy=0,dz=0,group="fold")
+	# AddDensity(name=paste("hold",0:26,sep=""), dx=0,dy=0,dz=0,group="hold")
+
+	hname =  paste("hold",P$x,P$y,P$z,sep="")
+	AddDensity(
+		name = hname,
+		dx   = U[,1],
+		dy   = U[,2],
+		dz   = U[,3],
+		comment=paste("heat LB density H",1:27-1),
+		group="hold"
+	)
+
+	fname =  paste("fold",P$x,P$y,P$z,sep="")
+	AddDensity(
+		name = hname,
+		dx   = U[,1],
+		dy   = U[,2],
+		dz   = U[,3],
+		comment=paste("heat LB density H",1:27-1),
+		group="fold"
+	)
 
 	for (d in rows(DensityAll)) {
 		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy, dz=-d$dz )
