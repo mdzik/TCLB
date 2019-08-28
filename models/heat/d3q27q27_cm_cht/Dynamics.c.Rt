@@ -418,32 +418,31 @@ CudaDeviceFunction void ImposeHeatFlux(vector_t n)
 	// go back straight from cm to density-probability functions
 	h000 += temp000 - temp002 - temp020 + temp022 - temp200 + temp202 + temp220 - temp222;
 	h100 += 1/2.*temp100 - 1/2.*temp102 - 1/2.*temp120 + 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
-	h010 += -1/2.*temp100 + 1/2.*temp102 + 1/2.*temp120 - 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
-	h001 += 1/2.*temp010 - 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 - 1/2.*temp210 + 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
-	h110 += -1/2.*temp010 + 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 + 1/2.*temp210 - 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
-	h101 += 1/2.*temp001 + 1/2.*temp002 - 1/2.*temp021 - 1/2.*temp022 - 1/2.*temp201 - 1/2.*temp202 + 1/2.*temp221 + 1/2.*temp222;
-	h011 += -1/2.*temp001 + 1/2.*temp002 + 1/2.*temp021 - 1/2.*temp022 + 1/2.*temp201 - 1/2.*temp202 - 1/2.*temp221 + 1/2.*temp222;
-	h200 += 1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	h020 += -1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	h002 += -1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	h120 += 1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	h102 += -1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	h210 += 1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	h201 += 1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	h012 += -1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	h021 += 1/4.*temp110 - 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	h111 += -1/4.*temp110 + 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	h220 += -1/4.*temp110 + 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	h202 += 1/4.*temp110 - 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	h022 += 1/4.*temp101 + 1/4.*temp102 - 1/4.*temp121 - 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
-	h211 += -1/4.*temp101 - 1/4.*temp102 + 1/4.*temp121 + 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
-	h121 += -1/4.*temp101 + 1/4.*temp102 + 1/4.*temp121 - 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
-	h112 += 1/4.*temp101 - 1/4.*temp102 - 1/4.*temp121 + 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
-	h122 += 1/4.*temp011 + 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 - 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
-	h212 += -1/4.*temp011 - 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 + 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
-	h221 += -1/4.*temp011 + 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 - 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
-	h222 += 1/4.*temp011 - 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 + 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
-
+	h200 += -1/2.*temp100 + 1/2.*temp102 + 1/2.*temp120 - 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
+	h010 += 1/2.*temp010 - 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 - 1/2.*temp210 + 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
+	h110 += 1/4.*temp110 - 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h210 += -1/4.*temp110 + 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h020 += -1/2.*temp010 + 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 + 1/2.*temp210 - 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
+	h120 += -1/4.*temp110 + 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h220 += 1/4.*temp110 - 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h001 += 1/2.*temp001 + 1/2.*temp002 - 1/2.*temp021 - 1/2.*temp022 - 1/2.*temp201 - 1/2.*temp202 + 1/2.*temp221 + 1/2.*temp222;
+	h101 += 1/4.*temp101 + 1/4.*temp102 - 1/4.*temp121 - 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
+	h201 += -1/4.*temp101 - 1/4.*temp102 + 1/4.*temp121 + 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
+	h011 += 1/4.*temp011 + 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 - 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
+	h111 += 1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h211 += -1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h021 += -1/4.*temp011 - 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 + 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
+	h121 += -1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h221 += 1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h002 += -1/2.*temp001 + 1/2.*temp002 + 1/2.*temp021 - 1/2.*temp022 + 1/2.*temp201 - 1/2.*temp202 - 1/2.*temp221 + 1/2.*temp222;
+	h102 += -1/4.*temp101 + 1/4.*temp102 + 1/4.*temp121 - 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
+	h202 += 1/4.*temp101 - 1/4.*temp102 - 1/4.*temp121 + 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
+	h012 += -1/4.*temp011 + 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 - 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
+	h112 += -1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
+	h212 += 1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
+	h022 += 1/4.*temp011 - 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 + 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
+	h122 += 1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
+	h222 += -1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
 
 }
 
@@ -503,33 +502,33 @@ CudaDeviceFunction void HeaterSource()
 	//back to density-probability functions
 	h000 += temp000 - temp002 - temp020 + temp022 - temp200 + temp202 + temp220 - temp222;
 	h100 += 1/2.*temp100 - 1/2.*temp102 - 1/2.*temp120 + 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
-	h010 += -1/2.*temp100 + 1/2.*temp102 + 1/2.*temp120 - 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
-	h001 += 1/2.*temp010 - 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 - 1/2.*temp210 + 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
-	h110 += -1/2.*temp010 + 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 + 1/2.*temp210 - 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
-	h101 += 1/2.*temp001 + 1/2.*temp002 - 1/2.*temp021 - 1/2.*temp022 - 1/2.*temp201 - 1/2.*temp202 + 1/2.*temp221 + 1/2.*temp222;
-	h011 += -1/2.*temp001 + 1/2.*temp002 + 1/2.*temp021 - 1/2.*temp022 + 1/2.*temp201 - 1/2.*temp202 - 1/2.*temp221 + 1/2.*temp222;
-	h200 += 1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	h020 += -1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	h002 += -1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	h120 += 1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	h102 += -1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	h210 += 1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	h201 += 1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	h012 += -1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	h021 += 1/4.*temp110 - 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	h111 += -1/4.*temp110 + 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	h220 += -1/4.*temp110 + 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	h202 += 1/4.*temp110 - 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	h022 += 1/4.*temp101 + 1/4.*temp102 - 1/4.*temp121 - 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
-	h211 += -1/4.*temp101 - 1/4.*temp102 + 1/4.*temp121 + 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
-	h121 += -1/4.*temp101 + 1/4.*temp102 + 1/4.*temp121 - 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
-	h112 += 1/4.*temp101 - 1/4.*temp102 - 1/4.*temp121 + 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
-	h122 += 1/4.*temp011 + 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 - 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
-	h212 += -1/4.*temp011 - 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 + 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
-	h221 += -1/4.*temp011 + 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 - 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
-	h222 += 1/4.*temp011 - 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 + 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
+	h200 += -1/2.*temp100 + 1/2.*temp102 + 1/2.*temp120 - 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
+	h010 += 1/2.*temp010 - 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 - 1/2.*temp210 + 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
+	h110 += 1/4.*temp110 - 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h210 += -1/4.*temp110 + 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h020 += -1/2.*temp010 + 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 + 1/2.*temp210 - 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
+	h120 += -1/4.*temp110 + 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h220 += 1/4.*temp110 - 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h001 += 1/2.*temp001 + 1/2.*temp002 - 1/2.*temp021 - 1/2.*temp022 - 1/2.*temp201 - 1/2.*temp202 + 1/2.*temp221 + 1/2.*temp222;
+	h101 += 1/4.*temp101 + 1/4.*temp102 - 1/4.*temp121 - 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
+	h201 += -1/4.*temp101 - 1/4.*temp102 + 1/4.*temp121 + 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
+	h011 += 1/4.*temp011 + 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 - 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
+	h111 += 1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h211 += -1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h021 += -1/4.*temp011 - 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 + 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
+	h121 += -1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h221 += 1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h002 += -1/2.*temp001 + 1/2.*temp002 + 1/2.*temp021 - 1/2.*temp022 + 1/2.*temp201 - 1/2.*temp202 - 1/2.*temp221 + 1/2.*temp222;
+	h102 += -1/4.*temp101 + 1/4.*temp102 + 1/4.*temp121 - 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
+	h202 += 1/4.*temp101 - 1/4.*temp102 - 1/4.*temp121 + 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
+	h012 += -1/4.*temp011 + 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 - 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
+	h112 += -1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
+	h212 += 1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
+	h022 += 1/4.*temp011 - 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 + 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
+	h122 += 1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
+	h222 += -1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
 
-
+	
 	real_t h2 = <?R C(sum(h)) ?>;
 	AddToHeatSource(h2-h1);
 }
@@ -581,65 +580,91 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	real_t uxuz = u.x*u.z;
 	real_t uyuz = u.y*u.z;
 	real_t uz2 = u.z*u.z;
-
+	//equilibrium in central moments space
+	real_t heq000 = H;
+	real_t heq100 = 0;
+	real_t heq010 = 0;
+	real_t heq001 = 0;
+	real_t heq110 = 0;
+	real_t heq101 = 0;
+	real_t heq011 = 0;
+	real_t heq200 = H*Sigma2;
+	real_t heq020 = H*Sigma2;
+	real_t heq002 = H*Sigma2;
+	real_t heq120 = 0;
+	real_t heq102 = 0;
+	real_t heq210 = 0;
+	real_t heq201 = 0;
+	real_t heq012 = 0;
+	real_t heq021 = 0;
+	real_t heq111 = 0;
+	real_t heq220 = H*Sigma2*Sigma2;
+	real_t heq202 = H*Sigma2*Sigma2;
+	real_t heq022 = H*Sigma2*Sigma2;
+	real_t heq211 = 0;
+	real_t heq121 = 0;
+	real_t heq112 = 0;
+	real_t heq122 = 0;
+	real_t heq212 = 0;
+	real_t heq221 = 0;
+	real_t heq222 = H*Sigma2*Sigma2*Sigma2;
 	//back to raw moments
-	real_t temp000 = H;
-	real_t temp100 = H*u.x;
-	real_t temp010 = H*u.y;
-	real_t temp001 = H*u.z;
-	real_t temp110 = H*uxuy;
-	real_t temp101 = H*uxuz;
-	real_t temp011 = H*uyuz;
-	real_t temp200 = H*(Sigma2 + ux2);
-	real_t temp020 = H*(Sigma2 + uy2);
-	real_t temp002 = H*(Sigma2 + uz2);
-	real_t temp120 = H*u.x*(Sigma2 + uy2);
-	real_t temp102 = H*u.x*(Sigma2 + uz2);
-	real_t temp210 = H*u.y*(Sigma2 + ux2);
-	real_t temp201 = H*u.z*(Sigma2 + ux2);
-	real_t temp012 = H*u.y*(Sigma2 + uz2);
-	real_t temp021 = H*u.z*(Sigma2 + uy2);
-	real_t temp111 = H*uxuy*u.z;
-	real_t temp220 = H*(Sigma2*Sigma2 + Sigma2*ux2 + Sigma2*uy2 + ux2*uy2);
-	real_t temp202 = H*(Sigma2*Sigma2 + Sigma2*ux2 + Sigma2*uz2 + ux2*uz2);
-	real_t temp022 = H*(Sigma2*Sigma2 + Sigma2*uy2 + Sigma2*uz2 + uy2*uz2);
-	real_t temp211 = H*uyuz*(Sigma2 + ux2);
-	real_t temp121 = H*uxuz*(Sigma2 + uy2);
-	real_t temp112 = H*uxuy*(Sigma2 + uz2);
-	real_t temp122 = H*u.x*(Sigma2*Sigma2 + Sigma2*uy2 + Sigma2*uz2 + uy2*uz2);
-	real_t temp212 = H*u.y*(Sigma2*Sigma2 + Sigma2*ux2 + Sigma2*uz2 + ux2*uz2);
-	real_t temp221 = H*u.z*(Sigma2*Sigma2 + Sigma2*ux2 + Sigma2*uy2 + ux2*uy2);
-	real_t temp222 = H*(Sigma2*Sigma2*Sigma2 + Sigma2*Sigma2*ux2 + Sigma2*Sigma2*uy2 + Sigma2*Sigma2*uz2 + Sigma2*ux2*uy2 + Sigma2*ux2*uz2 + Sigma2*uy2*uz2 + ux2*uy2*uz2);
-
+	real_t temp000 = heq000;
+	real_t temp100 = heq000*u.x + heq100;
+	real_t temp010 = heq000*u.y + heq010;
+	real_t temp001 = heq000*u.z + heq001;
+	real_t temp110 = heq000*uxuy + heq010*u.x + heq100*u.y + heq110;
+	real_t temp101 = heq000*uxuz + heq001*u.x + heq100*u.z + heq101;
+	real_t temp011 = heq000*uyuz + heq001*u.y + heq010*u.z + heq011;
+	real_t temp200 = heq000*ux2 + 2.*heq100*u.x + heq200;
+	real_t temp020 = heq000*uy2 + 2.*heq010*u.y + heq020;
+	real_t temp002 = heq000*uz2 + 2.*heq001*u.z + heq002;
+	real_t temp120 = heq000*u.x*uy2 + 2.*heq010*uxuy + heq020*u.x + heq100*uy2 + 2.*heq110*u.y + heq120;
+	real_t temp102 = heq000*u.x*uz2 + 2.*heq001*uxuz + heq002*u.x + heq100*uz2 + 2.*heq101*u.z + heq102;
+	real_t temp210 = heq000*ux2*u.y + heq010*ux2 + 2.*heq100*uxuy + 2.*heq110*u.x + heq200*u.y + heq210;
+	real_t temp201 = heq000*ux2*u.z + heq001*ux2 + 2.*heq100*uxuz + 2.*heq101*u.x + heq200*u.z + heq201;
+	real_t temp012 = heq000*u.y*uz2 + 2.*heq001*uyuz + heq002*u.y + heq010*uz2 + 2.*heq011*u.z + heq012;
+	real_t temp021 = heq000*uy2*u.z + heq001*uy2 + 2.*heq010*uyuz + 2.*heq011*u.y + heq020*u.z + heq021;
+	real_t temp111 = heq000*uxuy*u.z + heq001*uxuy + heq010*uxuz + heq011*u.x + heq100*uyuz + heq101*u.y + heq110*u.z + heq111;
+	real_t temp220 = heq000*ux2*uy2 + 2.*heq010*ux2*u.y + heq020*ux2 + 2.*heq100*u.x*uy2 + 4.*heq110*uxuy + 2.*heq120*u.x + heq200*uy2 + 2.*heq210*u.y + heq220;
+	real_t temp202 = heq000*ux2*uz2 + 2.*heq001*ux2*u.z + heq002*ux2 + 2.*heq100*u.x*uz2 + 4.*heq101*uxuz + 2.*heq102*u.x + heq200*uz2 + 2.*heq201*u.z + heq202;
+	real_t temp022 = heq000*uy2*uz2 + 2.*heq001*uy2*u.z + heq002*uy2 + 2.*heq010*u.y*uz2 + 4.*heq011*uyuz + 2.*heq012*u.y + heq020*uz2 + 2.*heq021*u.z + heq022;
+	real_t temp211 = heq000*ux2*uyuz + heq001*ux2*u.y + heq010*ux2*u.z + heq011*ux2 + 2.*heq100*uxuy*u.z + 2.*heq101*uxuy + 2.*heq110*uxuz + 2.*heq111*u.x + heq200*uyuz + heq201*u.y + heq210*u.z + heq211;
+	real_t temp121 = heq000*u.x*uy2*u.z + heq001*u.x*uy2 + 2.*heq010*uxuy*u.z + 2.*heq011*uxuy + heq020*uxuz + heq021*u.x + heq100*uy2*u.z + heq101*uy2 + 2.*heq110*uyuz + 2.*heq111*u.y + heq120*u.z + heq121;
+	real_t temp112 = heq000*uxuy*uz2 + 2.*heq001*uxuy*u.z + heq002*uxuy + heq010*u.x*uz2 + 2.*heq011*uxuz + heq012*u.x + heq100*u.y*uz2 + 2.*heq101*uyuz + heq102*u.y + heq110*uz2 + 2.*heq111*u.z + heq112;
+	real_t temp122 = heq000*u.x*uy2*uz2 + 2.*heq001*u.x*uy2*u.z + heq002*u.x*uy2 + 2.*heq010*uxuy*uz2 + 4.*heq011*uxuy*u.z + 2.*heq012*uxuy + heq020*u.x*uz2 + 2.*heq021*uxuz + heq022*u.x + heq100*uy2*uz2 + 2.*heq101*uy2*u.z + heq102*uy2 + 2.*heq110*u.y*uz2 + 4.*heq111*uyuz + 2.*heq112*u.y + heq120*uz2 + 2.*heq121*u.z + heq122;
+	real_t temp212 = heq000*ux2*u.y*uz2 + 2.*heq001*ux2*uyuz + heq002*ux2*u.y + heq010*ux2*uz2 + 2.*heq011*ux2*u.z + heq012*ux2 + 2.*heq100*uxuy*uz2 + 4.*heq101*uxuy*u.z + 2.*heq102*uxuy + 2.*heq110*u.x*uz2 + 4.*heq111*uxuz + 2.*heq112*u.x + heq200*u.y*uz2 + 2.*heq201*uyuz + heq202*u.y + heq210*uz2 + 2.*heq211*u.z + heq212;
+	real_t temp221 = heq000*ux2*uy2*u.z + heq001*ux2*uy2 + 2.*heq010*ux2*uyuz + 2.*heq011*ux2*u.y + heq020*ux2*u.z + heq021*ux2 + 2.*heq100*u.x*uy2*u.z + 2.*heq101*u.x*uy2 + 4.*heq110*uxuy*u.z + 4.*heq111*uxuy + 2.*heq120*uxuz + 2.*heq121*u.x + heq200*uy2*u.z + heq201*uy2 + 2.*heq210*uyuz + 2.*heq211*u.y + heq220*u.z + heq221;
+	real_t temp222 = heq000*ux2*uy2*uz2 + 2.*heq001*ux2*uy2*u.z + heq002*ux2*uy2 + 2.*heq010*ux2*u.y*uz2 + 4.*heq011*ux2*uyuz + 2.*heq012*ux2*u.y + heq020*ux2*uz2 + 2.*heq021*ux2*u.z + heq022*ux2 + 2.*heq100*u.x*uy2*uz2 + 4.*heq101*u.x*uy2*u.z + 2.*heq102*u.x*uy2 + 4.*heq110*uxuy*uz2 + 8.*heq111*uxuy*u.z + 4.*heq112*uxuy + 2.*heq120*u.x*uz2 + 4.*heq121*uxuz + 2.*heq122*u.x + heq200*uy2*uz2 + 2.*heq201*uy2*u.z + heq202*uy2 + 2.*heq210*u.y*uz2 + 4.*heq211*uyuz + 2.*heq212*u.y + heq220*uz2 + 2.*heq221*u.z + heq222;
 	//back to density-probability functions
-	real_t heq000 = temp000 - temp002 - temp020 + temp022 - temp200 + temp202 + temp220 - temp222;
-	real_t heq100 = 1/2.*temp100 - 1/2.*temp102 - 1/2.*temp120 + 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
-	real_t heq010 = -1/2.*temp100 + 1/2.*temp102 + 1/2.*temp120 - 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
-	real_t heq001 = 1/2.*temp010 - 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 - 1/2.*temp210 + 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
-	real_t heq110 = -1/2.*temp010 + 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 + 1/2.*temp210 - 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
-	real_t heq101 = 1/2.*temp001 + 1/2.*temp002 - 1/2.*temp021 - 1/2.*temp022 - 1/2.*temp201 - 1/2.*temp202 + 1/2.*temp221 + 1/2.*temp222;
-	real_t heq011 = -1/2.*temp001 + 1/2.*temp002 + 1/2.*temp021 - 1/2.*temp022 + 1/2.*temp201 - 1/2.*temp202 - 1/2.*temp221 + 1/2.*temp222;
-	real_t heq200 = 1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	real_t heq020 = -1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	real_t heq002 = -1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	real_t heq120 = 1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	real_t heq102 = -1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	real_t heq210 = 1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	real_t heq201 = 1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	real_t heq012 = -1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	real_t heq021 = 1/4.*temp110 - 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	real_t heq111 = -1/4.*temp110 + 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	real_t heq220 = -1/4.*temp110 + 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	real_t heq202 = 1/4.*temp110 - 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	real_t heq022 = 1/4.*temp101 + 1/4.*temp102 - 1/4.*temp121 - 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
-	real_t heq211 = -1/4.*temp101 - 1/4.*temp102 + 1/4.*temp121 + 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
-	real_t heq121 = -1/4.*temp101 + 1/4.*temp102 + 1/4.*temp121 - 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
-	real_t heq112 = 1/4.*temp101 - 1/4.*temp102 - 1/4.*temp121 + 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
-	real_t heq122 = 1/4.*temp011 + 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 - 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
-	real_t heq212 = -1/4.*temp011 - 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 + 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
-	real_t heq221 = -1/4.*temp011 + 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 - 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
-	real_t heq222 = 1/4.*temp011 - 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 + 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
-
+	h000 = temp000 - temp002 - temp020 + temp022 - temp200 + temp202 + temp220 - temp222;
+	h100 = 1/2.*temp100 - 1/2.*temp102 - 1/2.*temp120 + 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
+	h200 = -1/2.*temp100 + 1/2.*temp102 + 1/2.*temp120 - 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
+	h010 = 1/2.*temp010 - 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 - 1/2.*temp210 + 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
+	h110 = 1/4.*temp110 - 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h210 = -1/4.*temp110 + 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h020 = -1/2.*temp010 + 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 + 1/2.*temp210 - 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
+	h120 = -1/4.*temp110 + 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h220 = 1/4.*temp110 - 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h001 = 1/2.*temp001 + 1/2.*temp002 - 1/2.*temp021 - 1/2.*temp022 - 1/2.*temp201 - 1/2.*temp202 + 1/2.*temp221 + 1/2.*temp222;
+	h101 = 1/4.*temp101 + 1/4.*temp102 - 1/4.*temp121 - 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
+	h201 = -1/4.*temp101 - 1/4.*temp102 + 1/4.*temp121 + 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
+	h011 = 1/4.*temp011 + 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 - 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
+	h111 = 1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h211 = -1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h021 = -1/4.*temp011 - 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 + 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
+	h121 = -1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h221 = 1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h002 = -1/2.*temp001 + 1/2.*temp002 + 1/2.*temp021 - 1/2.*temp022 + 1/2.*temp201 - 1/2.*temp202 - 1/2.*temp221 + 1/2.*temp222;
+	h102 = -1/4.*temp101 + 1/4.*temp102 + 1/4.*temp121 - 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
+	h202 = 1/4.*temp101 - 1/4.*temp102 - 1/4.*temp121 + 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
+	h012 = -1/4.*temp011 + 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 - 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
+	h112 = -1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
+	h212 = 1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
+	h022 = 1/4.*temp011 - 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 + 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
+	h122 = 1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
+	h222 = -1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
+	//anti bounce back
 	h000 = -h000 + 2 * heq000;
 	h100 = -h100 + 2 * heq100;
 	h010 = -h010 + 2 * heq010;
@@ -667,7 +692,7 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	h212 = -h212 + 2 * heq212;
 	h221 = -h221 + 2 * heq221;
 	h222 = -h222 + 2 * heq222;
-   
+
 	real_t h2 = <?R C(sum(h)) ?>;
 	AddToHeatSource(h2-h1);
 }
@@ -1035,7 +1060,6 @@ CudaDeviceFunction void SetEquilibriumHeat(real_t H, real_t rho, vector_t u)
 {
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
 	real_t Sigma2 = 1/3.*h_stability_enhancement/(cp*rho);
-
 	real_t uxuy = u.x*u.y;
 	real_t ux2 = u.x*u.x;
 	real_t uy2 = u.y*u.y;
@@ -1043,91 +1067,90 @@ CudaDeviceFunction void SetEquilibriumHeat(real_t H, real_t rho, vector_t u)
 	real_t uyuz = u.y*u.z;
 	real_t uz2 = u.z*u.z;
 	//equilibrium in central moments space
-	// h000 = H;
-	// h100 = 0;
-	// h010 = 0;
-	// h001 = 0;
-	// h110 = 0;
-	// h101 = 0;
-	// h011 = 0;
-	// h200 = H*Sigma2;
-	// h020 = H*Sigma2;
-	// h002 = H*Sigma2;
-	// h120 = 0;
-	// h102 = 0;
-	// h210 = 0;
-	// h201 = 0;
-	// h012 = 0;
-	// h021 = 0;
-	// h111 = 0;
-	// h220 = H*Sigma2*Sigma2;
-	// h202 = H*Sigma2*Sigma2;
-	// h022 = H*Sigma2*Sigma2;
-	// h211 = 0;
-	// h121 = 0;
-	// h112 = 0;
-	// h122 = 0;
-	// h212 = 0;
-	// h221 = 0;
-	// h222 = H*Sigma2*Sigma2*Sigma2;
-
+	h000 = H;
+	h100 = 0;
+	h010 = 0;
+	h001 = 0;
+	h110 = 0;
+	h101 = 0;
+	h011 = 0;
+	h200 = H*Sigma2;
+	h020 = H*Sigma2;
+	h002 = H*Sigma2;
+	h120 = 0;
+	h102 = 0;
+	h210 = 0;
+	h201 = 0;
+	h012 = 0;
+	h021 = 0;
+	h111 = 0;
+	h220 = H*Sigma2*Sigma2;
+	h202 = H*Sigma2*Sigma2;
+	h022 = H*Sigma2*Sigma2;
+	h211 = 0;
+	h121 = 0;
+	h112 = 0;
+	h122 = 0;
+	h212 = 0;
+	h221 = 0;
+	h222 = H*Sigma2*Sigma2*Sigma2;
 	//back to raw moments
-	real_t temp000 = H;
-	real_t temp100 = H*u.x;
-	real_t temp010 = H*u.y;
-	real_t temp001 = H*u.z;
-	real_t temp110 = H*uxuy;
-	real_t temp101 = H*uxuz;
-	real_t temp011 = H*uyuz;
-	real_t temp200 = H*(Sigma2 + ux2);
-	real_t temp020 = H*(Sigma2 + uy2);
-	real_t temp002 = H*(Sigma2 + uz2);
-	real_t temp120 = H*u.x*(Sigma2 + uy2);
-	real_t temp102 = H*u.x*(Sigma2 + uz2);
-	real_t temp210 = H*u.y*(Sigma2 + ux2);
-	real_t temp201 = H*u.z*(Sigma2 + ux2);
-	real_t temp012 = H*u.y*(Sigma2 + uz2);
-	real_t temp021 = H*u.z*(Sigma2 + uy2);
-	real_t temp111 = H*uxuy*u.z;
-	real_t temp220 = H*(Sigma2*Sigma2 + Sigma2*ux2 + Sigma2*uy2 + ux2*uy2);
-	real_t temp202 = H*(Sigma2*Sigma2 + Sigma2*ux2 + Sigma2*uz2 + ux2*uz2);
-	real_t temp022 = H*(Sigma2*Sigma2 + Sigma2*uy2 + Sigma2*uz2 + uy2*uz2);
-	real_t temp211 = H*uyuz*(Sigma2 + ux2);
-	real_t temp121 = H*uxuz*(Sigma2 + uy2);
-	real_t temp112 = H*uxuy*(Sigma2 + uz2);
-	real_t temp122 = H*u.x*(Sigma2*Sigma2 + Sigma2*uy2 + Sigma2*uz2 + uy2*uz2);
-	real_t temp212 = H*u.y*(Sigma2*Sigma2 + Sigma2*ux2 + Sigma2*uz2 + ux2*uz2);
-	real_t temp221 = H*u.z*(Sigma2*Sigma2 + Sigma2*ux2 + Sigma2*uy2 + ux2*uy2);
-	real_t temp222 = H*(Sigma2*Sigma2*Sigma2 + Sigma2*Sigma2*ux2 + Sigma2*Sigma2*uy2 + Sigma2*Sigma2*uz2 + Sigma2*ux2*uy2 + Sigma2*ux2*uz2 + Sigma2*uy2*uz2 + ux2*uy2*uz2);
-
+	real_t temp000 = h000;
+	real_t temp100 = h000*u.x + h100;
+	real_t temp010 = h000*u.y + h010;
+	real_t temp001 = h000*u.z + h001;
+	real_t temp110 = h000*uxuy + h010*u.x + h100*u.y + h110;
+	real_t temp101 = h000*uxuz + h001*u.x + h100*u.z + h101;
+	real_t temp011 = h000*uyuz + h001*u.y + h010*u.z + h011;
+	real_t temp200 = h000*ux2 + 2.*h100*u.x + h200;
+	real_t temp020 = h000*uy2 + 2.*h010*u.y + h020;
+	real_t temp002 = h000*uz2 + 2.*h001*u.z + h002;
+	real_t temp120 = h000*u.x*uy2 + 2.*h010*uxuy + h020*u.x + h100*uy2 + 2.*h110*u.y + h120;
+	real_t temp102 = h000*u.x*uz2 + 2.*h001*uxuz + h002*u.x + h100*uz2 + 2.*h101*u.z + h102;
+	real_t temp210 = h000*ux2*u.y + h010*ux2 + 2.*h100*uxuy + 2.*h110*u.x + h200*u.y + h210;
+	real_t temp201 = h000*ux2*u.z + h001*ux2 + 2.*h100*uxuz + 2.*h101*u.x + h200*u.z + h201;
+	real_t temp012 = h000*u.y*uz2 + 2.*h001*uyuz + h002*u.y + h010*uz2 + 2.*h011*u.z + h012;
+	real_t temp021 = h000*uy2*u.z + h001*uy2 + 2.*h010*uyuz + 2.*h011*u.y + h020*u.z + h021;
+	real_t temp111 = h000*uxuy*u.z + h001*uxuy + h010*uxuz + h011*u.x + h100*uyuz + h101*u.y + h110*u.z + h111;
+	real_t temp220 = h000*ux2*uy2 + 2.*h010*ux2*u.y + h020*ux2 + 2.*h100*u.x*uy2 + 4.*h110*uxuy + 2.*h120*u.x + h200*uy2 + 2.*h210*u.y + h220;
+	real_t temp202 = h000*ux2*uz2 + 2.*h001*ux2*u.z + h002*ux2 + 2.*h100*u.x*uz2 + 4.*h101*uxuz + 2.*h102*u.x + h200*uz2 + 2.*h201*u.z + h202;
+	real_t temp022 = h000*uy2*uz2 + 2.*h001*uy2*u.z + h002*uy2 + 2.*h010*u.y*uz2 + 4.*h011*uyuz + 2.*h012*u.y + h020*uz2 + 2.*h021*u.z + h022;
+	real_t temp211 = h000*ux2*uyuz + h001*ux2*u.y + h010*ux2*u.z + h011*ux2 + 2.*h100*uxuy*u.z + 2.*h101*uxuy + 2.*h110*uxuz + 2.*h111*u.x + h200*uyuz + h201*u.y + h210*u.z + h211;
+	real_t temp121 = h000*u.x*uy2*u.z + h001*u.x*uy2 + 2.*h010*uxuy*u.z + 2.*h011*uxuy + h020*uxuz + h021*u.x + h100*uy2*u.z + h101*uy2 + 2.*h110*uyuz + 2.*h111*u.y + h120*u.z + h121;
+	real_t temp112 = h000*uxuy*uz2 + 2.*h001*uxuy*u.z + h002*uxuy + h010*u.x*uz2 + 2.*h011*uxuz + h012*u.x + h100*u.y*uz2 + 2.*h101*uyuz + h102*u.y + h110*uz2 + 2.*h111*u.z + h112;
+	real_t temp122 = h000*u.x*uy2*uz2 + 2.*h001*u.x*uy2*u.z + h002*u.x*uy2 + 2.*h010*uxuy*uz2 + 4.*h011*uxuy*u.z + 2.*h012*uxuy + h020*u.x*uz2 + 2.*h021*uxuz + h022*u.x + h100*uy2*uz2 + 2.*h101*uy2*u.z + h102*uy2 + 2.*h110*u.y*uz2 + 4.*h111*uyuz + 2.*h112*u.y + h120*uz2 + 2.*h121*u.z + h122;
+	real_t temp212 = h000*ux2*u.y*uz2 + 2.*h001*ux2*uyuz + h002*ux2*u.y + h010*ux2*uz2 + 2.*h011*ux2*u.z + h012*ux2 + 2.*h100*uxuy*uz2 + 4.*h101*uxuy*u.z + 2.*h102*uxuy + 2.*h110*u.x*uz2 + 4.*h111*uxuz + 2.*h112*u.x + h200*u.y*uz2 + 2.*h201*uyuz + h202*u.y + h210*uz2 + 2.*h211*u.z + h212;
+	real_t temp221 = h000*ux2*uy2*u.z + h001*ux2*uy2 + 2.*h010*ux2*uyuz + 2.*h011*ux2*u.y + h020*ux2*u.z + h021*ux2 + 2.*h100*u.x*uy2*u.z + 2.*h101*u.x*uy2 + 4.*h110*uxuy*u.z + 4.*h111*uxuy + 2.*h120*uxuz + 2.*h121*u.x + h200*uy2*u.z + h201*uy2 + 2.*h210*uyuz + 2.*h211*u.y + h220*u.z + h221;
+	real_t temp222 = h000*ux2*uy2*uz2 + 2.*h001*ux2*uy2*u.z + h002*ux2*uy2 + 2.*h010*ux2*u.y*uz2 + 4.*h011*ux2*uyuz + 2.*h012*ux2*u.y + h020*ux2*uz2 + 2.*h021*ux2*u.z + h022*ux2 + 2.*h100*u.x*uy2*uz2 + 4.*h101*u.x*uy2*u.z + 2.*h102*u.x*uy2 + 4.*h110*uxuy*uz2 + 8.*h111*uxuy*u.z + 4.*h112*uxuy + 2.*h120*u.x*uz2 + 4.*h121*uxuz + 2.*h122*u.x + h200*uy2*uz2 + 2.*h201*uy2*u.z + h202*uy2 + 2.*h210*u.y*uz2 + 4.*h211*uyuz + 2.*h212*u.y + h220*uz2 + 2.*h221*u.z + h222;
 	//back to density-probability functions
 	h000 = temp000 - temp002 - temp020 + temp022 - temp200 + temp202 + temp220 - temp222;
 	h100 = 1/2.*temp100 - 1/2.*temp102 - 1/2.*temp120 + 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
-	h010 = -1/2.*temp100 + 1/2.*temp102 + 1/2.*temp120 - 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
-	h001 = 1/2.*temp010 - 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 - 1/2.*temp210 + 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
-	h110 = -1/2.*temp010 + 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 + 1/2.*temp210 - 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
-	h101 = 1/2.*temp001 + 1/2.*temp002 - 1/2.*temp021 - 1/2.*temp022 - 1/2.*temp201 - 1/2.*temp202 + 1/2.*temp221 + 1/2.*temp222;
-	h011 = -1/2.*temp001 + 1/2.*temp002 + 1/2.*temp021 - 1/2.*temp022 + 1/2.*temp201 - 1/2.*temp202 - 1/2.*temp221 + 1/2.*temp222;
-	h200 = 1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	h020 = -1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	h002 = -1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	h120 = 1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	h102 = -1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	h210 = 1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	h201 = 1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	h012 = -1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	h021 = 1/4.*temp110 - 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	h111 = -1/4.*temp110 + 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	h220 = -1/4.*temp110 + 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	h202 = 1/4.*temp110 - 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	h022 = 1/4.*temp101 + 1/4.*temp102 - 1/4.*temp121 - 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
-	h211 = -1/4.*temp101 - 1/4.*temp102 + 1/4.*temp121 + 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
-	h121 = -1/4.*temp101 + 1/4.*temp102 + 1/4.*temp121 - 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
-	h112 = 1/4.*temp101 - 1/4.*temp102 - 1/4.*temp121 + 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
-	h122 = 1/4.*temp011 + 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 - 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
-	h212 = -1/4.*temp011 - 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 + 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
-	h221 = -1/4.*temp011 + 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 - 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
-	h222 = 1/4.*temp011 - 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 + 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
+	h200 = -1/2.*temp100 + 1/2.*temp102 + 1/2.*temp120 - 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
+	h010 = 1/2.*temp010 - 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 - 1/2.*temp210 + 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
+	h110 = 1/4.*temp110 - 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h210 = -1/4.*temp110 + 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h020 = -1/2.*temp010 + 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 + 1/2.*temp210 - 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
+	h120 = -1/4.*temp110 + 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h220 = 1/4.*temp110 - 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
+	h001 = 1/2.*temp001 + 1/2.*temp002 - 1/2.*temp021 - 1/2.*temp022 - 1/2.*temp201 - 1/2.*temp202 + 1/2.*temp221 + 1/2.*temp222;
+	h101 = 1/4.*temp101 + 1/4.*temp102 - 1/4.*temp121 - 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
+	h201 = -1/4.*temp101 - 1/4.*temp102 + 1/4.*temp121 + 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
+	h011 = 1/4.*temp011 + 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 - 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
+	h111 = 1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h211 = -1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h021 = -1/4.*temp011 - 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 + 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
+	h121 = -1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h221 = 1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
+	h002 = -1/2.*temp001 + 1/2.*temp002 + 1/2.*temp021 - 1/2.*temp022 + 1/2.*temp201 - 1/2.*temp202 - 1/2.*temp221 + 1/2.*temp222;
+	h102 = -1/4.*temp101 + 1/4.*temp102 + 1/4.*temp121 - 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
+	h202 = 1/4.*temp101 - 1/4.*temp102 - 1/4.*temp121 + 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
+	h012 = -1/4.*temp011 + 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 - 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
+	h112 = -1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
+	h212 = 1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
+	h022 = 1/4.*temp011 - 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 + 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
+	h122 = 1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
+	h222 = -1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
+
 }
 
 CudaDeviceFunction void relax_and_collide_ADE_Cumulants(real_t rho, real_t omega_ade, vector_t u)
@@ -1724,7 +1747,6 @@ CudaDeviceFunction void relax_and_collide_ADE_CM_HIGHER_NONLINEAR(real_t rho, re
 
 CudaDeviceFunction void relax_and_collide_ADE_CM_HIGHER(real_t rho, real_t omega_ade, vector_t u) 
 {
-
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
 	real_t Sigma2 = 1/3.*h_stability_enhancement/(cp*rho);
 	real_t uxuy = u.x*u.y;
@@ -1763,32 +1785,32 @@ CudaDeviceFunction void relax_and_collide_ADE_CM_HIGHER(real_t rho, real_t omega
 	real_t temp222 = h222;
 	//raw moments from density-probability functions
 	h000 = temp000 + temp001 + temp002 + temp010 + temp011 + temp012 + temp020 + temp021 + temp022 + temp100 + temp101 + temp102 + temp110 + temp111 + temp112 + temp120 + temp121 + temp122 + temp200 + temp201 + temp202 + temp210 + temp211 + temp212 + temp220 + temp221 + temp222;
-	h100 = -temp010 - temp012 - temp020 + temp022 + temp100 - temp101 - temp102 + temp110 + temp111 + temp112 + temp120 - temp122 + temp200 + temp201 - temp211 - temp220 + temp221 - temp222;
-	h010 = temp001 - temp011 + temp012 - temp020 - temp021 + temp101 + temp110 - temp111 + temp112 + temp121 + temp122 - temp200 + temp201 + temp210 - temp212 - temp220 - temp221 - temp222;
-	h001 = temp002 + temp012 + temp021 - temp022 + temp102 + temp111 - temp112 + temp120 - temp121 - temp122 + temp201 - temp202 + temp210 - temp211 - temp212 + temp220 - temp221 - temp222;
-	h110 = -temp012 + temp020 - temp101 + temp110 - temp111 + temp112 - temp122 - temp200 + temp201 + temp220 - temp221 + temp222;
-	h101 = -temp012 - temp022 - temp102 + temp111 - temp112 + temp120 + temp122 + temp201 + temp211 - temp220 - temp221 + temp222;
-	h011 = temp012 - temp021 - temp111 - temp112 - temp121 - temp122 + temp201 + temp210 + temp212 - temp220 + temp221 + temp222;
-	h200 = temp010 + temp012 + temp020 + temp022 + temp100 + temp101 + temp102 + temp110 + temp111 + temp112 + temp120 + temp122 + temp200 + temp201 + temp211 + temp220 + temp221 + temp222;
-	h020 = temp001 + temp011 + temp012 + temp020 + temp021 + temp101 + temp110 + temp111 + temp112 + temp121 + temp122 + temp200 + temp201 + temp210 + temp212 + temp220 + temp221 + temp222;
-	h002 = temp002 + temp012 + temp021 + temp022 + temp102 + temp111 + temp112 + temp120 + temp121 + temp122 + temp201 + temp202 + temp210 + temp211 + temp212 + temp220 + temp221 + temp222;
-	h120 = -temp012 - temp020 - temp101 + temp110 + temp111 + temp112 - temp122 + temp200 + temp201 - temp220 + temp221 - temp222;
-	h102 = -temp012 + temp022 - temp102 + temp111 + temp112 + temp120 - temp122 + temp201 - temp211 - temp220 + temp221 - temp222;
-	h210 = temp012 - temp020 + temp101 + temp110 - temp111 + temp112 + temp122 - temp200 + temp201 - temp220 - temp221 - temp222;
-	h201 = temp012 - temp022 + temp102 + temp111 - temp112 + temp120 - temp122 + temp201 - temp211 + temp220 - temp221 - temp222;
-	h012 = temp012 - temp021 - temp111 + temp112 + temp121 + temp122 + temp201 + temp210 - temp212 - temp220 - temp221 - temp222;
-	h021 = temp012 + temp021 + temp111 - temp112 - temp121 - temp122 + temp201 + temp210 - temp212 + temp220 - temp221 - temp222;
-	h111 = -temp012 - temp111 - temp112 + temp122 + temp201 + temp220 + temp221 - temp222;
-	h220 = temp012 + temp020 + temp101 + temp110 + temp111 + temp112 + temp122 + temp200 + temp201 + temp220 + temp221 + temp222;
-	h202 = temp012 + temp022 + temp102 + temp111 + temp112 + temp120 + temp122 + temp201 + temp211 + temp220 + temp221 + temp222;
-	h022 = temp012 + temp021 + temp111 + temp112 + temp121 + temp122 + temp201 + temp210 + temp212 + temp220 + temp221 + temp222;
-	h211 = temp012 - temp111 - temp112 - temp122 + temp201 - temp220 + temp221 + temp222;
-	h121 = -temp012 + temp111 - temp112 + temp122 + temp201 - temp220 - temp221 + temp222;
-	h112 = -temp012 - temp111 + temp112 - temp122 + temp201 + temp220 - temp221 + temp222;
-	h122 = -temp012 + temp111 + temp112 - temp122 + temp201 - temp220 + temp221 - temp222;
-	h212 = temp012 - temp111 + temp112 + temp122 + temp201 - temp220 - temp221 - temp222;
-	h221 = temp012 + temp111 - temp112 - temp122 + temp201 + temp220 - temp221 - temp222;
-	h222 = temp012 + temp111 + temp112 + temp122 + temp201 + temp220 + temp221 + temp222;
+	h100 = temp100 + temp101 + temp102 + temp110 + temp111 + temp112 + temp120 + temp121 + temp122 - temp200 - temp201 - temp202 - temp210 - temp211 - temp212 - temp220 - temp221 - temp222;
+	h010 = temp010 + temp011 + temp012 - temp020 - temp021 - temp022 + temp110 + temp111 + temp112 - temp120 - temp121 - temp122 + temp210 + temp211 + temp212 - temp220 - temp221 - temp222;
+	h001 = temp001 - temp002 + temp011 - temp012 + temp021 - temp022 + temp101 - temp102 + temp111 - temp112 + temp121 - temp122 + temp201 - temp202 + temp211 - temp212 + temp221 - temp222;
+	h110 = temp110 + temp111 + temp112 - temp120 - temp121 - temp122 - temp210 - temp211 - temp212 + temp220 + temp221 + temp222;
+	h101 = temp101 - temp102 + temp111 - temp112 + temp121 - temp122 - temp201 + temp202 - temp211 + temp212 - temp221 + temp222;
+	h011 = temp011 - temp012 - temp021 + temp022 + temp111 - temp112 - temp121 + temp122 + temp211 - temp212 - temp221 + temp222;
+	h200 = temp100 + temp101 + temp102 + temp110 + temp111 + temp112 + temp120 + temp121 + temp122 + temp200 + temp201 + temp202 + temp210 + temp211 + temp212 + temp220 + temp221 + temp222;
+	h020 = temp010 + temp011 + temp012 + temp020 + temp021 + temp022 + temp110 + temp111 + temp112 + temp120 + temp121 + temp122 + temp210 + temp211 + temp212 + temp220 + temp221 + temp222;
+	h002 = temp001 + temp002 + temp011 + temp012 + temp021 + temp022 + temp101 + temp102 + temp111 + temp112 + temp121 + temp122 + temp201 + temp202 + temp211 + temp212 + temp221 + temp222;
+	h120 = temp110 + temp111 + temp112 + temp120 + temp121 + temp122 - temp210 - temp211 - temp212 - temp220 - temp221 - temp222;
+	h102 = temp101 + temp102 + temp111 + temp112 + temp121 + temp122 - temp201 - temp202 - temp211 - temp212 - temp221 - temp222;
+	h210 = temp110 + temp111 + temp112 - temp120 - temp121 - temp122 + temp210 + temp211 + temp212 - temp220 - temp221 - temp222;
+	h201 = temp101 - temp102 + temp111 - temp112 + temp121 - temp122 + temp201 - temp202 + temp211 - temp212 + temp221 - temp222;
+	h012 = temp011 + temp012 - temp021 - temp022 + temp111 + temp112 - temp121 - temp122 + temp211 + temp212 - temp221 - temp222;
+	h021 = temp011 - temp012 + temp021 - temp022 + temp111 - temp112 + temp121 - temp122 + temp211 - temp212 + temp221 - temp222;
+	h111 = temp111 - temp112 - temp121 + temp122 - temp211 + temp212 + temp221 - temp222;
+	h220 = temp110 + temp111 + temp112 + temp120 + temp121 + temp122 + temp210 + temp211 + temp212 + temp220 + temp221 + temp222;
+	h202 = temp101 + temp102 + temp111 + temp112 + temp121 + temp122 + temp201 + temp202 + temp211 + temp212 + temp221 + temp222;
+	h022 = temp011 + temp012 + temp021 + temp022 + temp111 + temp112 + temp121 + temp122 + temp211 + temp212 + temp221 + temp222;
+	h211 = temp111 - temp112 - temp121 + temp122 + temp211 - temp212 - temp221 + temp222;
+	h121 = temp111 - temp112 + temp121 - temp122 - temp211 + temp212 - temp221 + temp222;
+	h112 = temp111 + temp112 - temp121 - temp122 - temp211 - temp212 + temp221 + temp222;
+	h122 = temp111 + temp112 + temp121 + temp122 - temp211 - temp212 - temp221 - temp222;
+	h212 = temp111 + temp112 - temp121 - temp122 + temp211 + temp212 - temp221 - temp222;
+	h221 = temp111 - temp112 + temp121 - temp122 + temp211 - temp212 + temp221 - temp222;
+	h222 = temp111 + temp112 + temp121 + temp122 + temp211 + temp212 + temp221 + temp222;
 	//central moments from raw moments
 	temp000 = h000;
 	temp100 = -h000*u.x + h100;
@@ -1916,7 +1938,6 @@ CudaDeviceFunction void relax_and_collide_ADE_CM(real_t rho, real_t omega_ade, v
 	real_t uyuz = u.y*u.z;
 	real_t uz2 = u.z*u.z;
 	real_t H = h000 + h001 + h002 + h010 + h011 + h012 + h020 + h021 + h022 + h100 + h101 + h102 + h110 + h111 + h112 + h120 + h121 + h122 + h200 + h201 + h202 + h210 + h211 + h212 + h220 + h221 + h222;
-	
 	real_t temp000 = h000;
 	real_t temp100 = h100;
 	real_t temp010 = h010;
@@ -1944,36 +1965,34 @@ CudaDeviceFunction void relax_and_collide_ADE_CM(real_t rho, real_t omega_ade, v
 	real_t temp212 = h212;
 	real_t temp221 = h221;
 	real_t temp222 = h222;
-
 	//raw moments from density-probability functions
 	h000 = temp000 + temp001 + temp002 + temp010 + temp011 + temp012 + temp020 + temp021 + temp022 + temp100 + temp101 + temp102 + temp110 + temp111 + temp112 + temp120 + temp121 + temp122 + temp200 + temp201 + temp202 + temp210 + temp211 + temp212 + temp220 + temp221 + temp222;
-	h100 = -temp010 - temp012 - temp020 + temp022 + temp100 - temp101 - temp102 + temp110 + temp111 + temp112 + temp120 - temp122 + temp200 + temp201 - temp211 - temp220 + temp221 - temp222;
-	h010 = temp001 - temp011 + temp012 - temp020 - temp021 + temp101 + temp110 - temp111 + temp112 + temp121 + temp122 - temp200 + temp201 + temp210 - temp212 - temp220 - temp221 - temp222;
-	h001 = temp002 + temp012 + temp021 - temp022 + temp102 + temp111 - temp112 + temp120 - temp121 - temp122 + temp201 - temp202 + temp210 - temp211 - temp212 + temp220 - temp221 - temp222;
-	h110 = -temp012 + temp020 - temp101 + temp110 - temp111 + temp112 - temp122 - temp200 + temp201 + temp220 - temp221 + temp222;
-	h101 = -temp012 - temp022 - temp102 + temp111 - temp112 + temp120 + temp122 + temp201 + temp211 - temp220 - temp221 + temp222;
-	h011 = temp012 - temp021 - temp111 - temp112 - temp121 - temp122 + temp201 + temp210 + temp212 - temp220 + temp221 + temp222;
-	h200 = temp010 + temp012 + temp020 + temp022 + temp100 + temp101 + temp102 + temp110 + temp111 + temp112 + temp120 + temp122 + temp200 + temp201 + temp211 + temp220 + temp221 + temp222;
-	h020 = temp001 + temp011 + temp012 + temp020 + temp021 + temp101 + temp110 + temp111 + temp112 + temp121 + temp122 + temp200 + temp201 + temp210 + temp212 + temp220 + temp221 + temp222;
-	h002 = temp002 + temp012 + temp021 + temp022 + temp102 + temp111 + temp112 + temp120 + temp121 + temp122 + temp201 + temp202 + temp210 + temp211 + temp212 + temp220 + temp221 + temp222;
-	h120 = -temp012 - temp020 - temp101 + temp110 + temp111 + temp112 - temp122 + temp200 + temp201 - temp220 + temp221 - temp222;
-	h102 = -temp012 + temp022 - temp102 + temp111 + temp112 + temp120 - temp122 + temp201 - temp211 - temp220 + temp221 - temp222;
-	h210 = temp012 - temp020 + temp101 + temp110 - temp111 + temp112 + temp122 - temp200 + temp201 - temp220 - temp221 - temp222;
-	h201 = temp012 - temp022 + temp102 + temp111 - temp112 + temp120 - temp122 + temp201 - temp211 + temp220 - temp221 - temp222;
-	h012 = temp012 - temp021 - temp111 + temp112 + temp121 + temp122 + temp201 + temp210 - temp212 - temp220 - temp221 - temp222;
-	h021 = temp012 + temp021 + temp111 - temp112 - temp121 - temp122 + temp201 + temp210 - temp212 + temp220 - temp221 - temp222;
-	h111 = -temp012 - temp111 - temp112 + temp122 + temp201 + temp220 + temp221 - temp222;
-	h220 = temp012 + temp020 + temp101 + temp110 + temp111 + temp112 + temp122 + temp200 + temp201 + temp220 + temp221 + temp222;
-	h202 = temp012 + temp022 + temp102 + temp111 + temp112 + temp120 + temp122 + temp201 + temp211 + temp220 + temp221 + temp222;
-	h022 = temp012 + temp021 + temp111 + temp112 + temp121 + temp122 + temp201 + temp210 + temp212 + temp220 + temp221 + temp222;
-	h211 = temp012 - temp111 - temp112 - temp122 + temp201 - temp220 + temp221 + temp222;
-	h121 = -temp012 + temp111 - temp112 + temp122 + temp201 - temp220 - temp221 + temp222;
-	h112 = -temp012 - temp111 + temp112 - temp122 + temp201 + temp220 - temp221 + temp222;
-	h122 = -temp012 + temp111 + temp112 - temp122 + temp201 - temp220 + temp221 - temp222;
-	h212 = temp012 - temp111 + temp112 + temp122 + temp201 - temp220 - temp221 - temp222;
-	h221 = temp012 + temp111 - temp112 - temp122 + temp201 + temp220 - temp221 - temp222;
-	h222 = temp012 + temp111 + temp112 + temp122 + temp201 + temp220 + temp221 + temp222;
-	
+	h100 = temp100 + temp101 + temp102 + temp110 + temp111 + temp112 + temp120 + temp121 + temp122 - temp200 - temp201 - temp202 - temp210 - temp211 - temp212 - temp220 - temp221 - temp222;
+	h010 = temp010 + temp011 + temp012 - temp020 - temp021 - temp022 + temp110 + temp111 + temp112 - temp120 - temp121 - temp122 + temp210 + temp211 + temp212 - temp220 - temp221 - temp222;
+	h001 = temp001 - temp002 + temp011 - temp012 + temp021 - temp022 + temp101 - temp102 + temp111 - temp112 + temp121 - temp122 + temp201 - temp202 + temp211 - temp212 + temp221 - temp222;
+	h110 = temp110 + temp111 + temp112 - temp120 - temp121 - temp122 - temp210 - temp211 - temp212 + temp220 + temp221 + temp222;
+	h101 = temp101 - temp102 + temp111 - temp112 + temp121 - temp122 - temp201 + temp202 - temp211 + temp212 - temp221 + temp222;
+	h011 = temp011 - temp012 - temp021 + temp022 + temp111 - temp112 - temp121 + temp122 + temp211 - temp212 - temp221 + temp222;
+	h200 = temp100 + temp101 + temp102 + temp110 + temp111 + temp112 + temp120 + temp121 + temp122 + temp200 + temp201 + temp202 + temp210 + temp211 + temp212 + temp220 + temp221 + temp222;
+	h020 = temp010 + temp011 + temp012 + temp020 + temp021 + temp022 + temp110 + temp111 + temp112 + temp120 + temp121 + temp122 + temp210 + temp211 + temp212 + temp220 + temp221 + temp222;
+	h002 = temp001 + temp002 + temp011 + temp012 + temp021 + temp022 + temp101 + temp102 + temp111 + temp112 + temp121 + temp122 + temp201 + temp202 + temp211 + temp212 + temp221 + temp222;
+	h120 = temp110 + temp111 + temp112 + temp120 + temp121 + temp122 - temp210 - temp211 - temp212 - temp220 - temp221 - temp222;
+	h102 = temp101 + temp102 + temp111 + temp112 + temp121 + temp122 - temp201 - temp202 - temp211 - temp212 - temp221 - temp222;
+	h210 = temp110 + temp111 + temp112 - temp120 - temp121 - temp122 + temp210 + temp211 + temp212 - temp220 - temp221 - temp222;
+	h201 = temp101 - temp102 + temp111 - temp112 + temp121 - temp122 + temp201 - temp202 + temp211 - temp212 + temp221 - temp222;
+	h012 = temp011 + temp012 - temp021 - temp022 + temp111 + temp112 - temp121 - temp122 + temp211 + temp212 - temp221 - temp222;
+	h021 = temp011 - temp012 + temp021 - temp022 + temp111 - temp112 + temp121 - temp122 + temp211 - temp212 + temp221 - temp222;
+	h111 = temp111 - temp112 - temp121 + temp122 - temp211 + temp212 + temp221 - temp222;
+	h220 = temp110 + temp111 + temp112 + temp120 + temp121 + temp122 + temp210 + temp211 + temp212 + temp220 + temp221 + temp222;
+	h202 = temp101 + temp102 + temp111 + temp112 + temp121 + temp122 + temp201 + temp202 + temp211 + temp212 + temp221 + temp222;
+	h022 = temp011 + temp012 + temp021 + temp022 + temp111 + temp112 + temp121 + temp122 + temp211 + temp212 + temp221 + temp222;
+	h211 = temp111 - temp112 - temp121 + temp122 + temp211 - temp212 - temp221 + temp222;
+	h121 = temp111 - temp112 + temp121 - temp122 - temp211 + temp212 - temp221 + temp222;
+	h112 = temp111 + temp112 - temp121 - temp122 - temp211 - temp212 + temp221 + temp222;
+	h122 = temp111 + temp112 + temp121 + temp122 - temp211 - temp212 - temp221 - temp222;
+	h212 = temp111 + temp112 - temp121 - temp122 + temp211 + temp212 - temp221 - temp222;
+	h221 = temp111 - temp112 + temp121 - temp122 + temp211 - temp212 + temp221 - temp222;
+	h222 = temp111 + temp112 + temp121 + temp122 + temp211 + temp212 + temp221 + temp222;
 	//central moments from raw moments
 	temp000 = h000;
 	temp100 = -h000*u.x + h100;
@@ -2003,7 +2022,6 @@ CudaDeviceFunction void relax_and_collide_ADE_CM(real_t rho, real_t omega_ade, v
 	temp221 = -h000*ux2*uy2*u.z + h001*ux2*uy2 + 2.*h010*ux2*uyuz - 2.*h011*ux2*u.y - h020*ux2*u.z + h021*ux2 + 2.*h100*u.x*uy2*u.z - 2.*h101*u.x*uy2 - 4.*h110*uxuy*u.z + 4.*h111*uxuy + 2.*h120*uxuz - 2.*h121*u.x - h200*uy2*u.z + h201*uy2 + 2.*h210*uyuz - 2.*h211*u.y - h220*u.z + h221;
 	temp222 = h000*ux2*uy2*uz2 - 2.*h001*ux2*uy2*u.z + h002*ux2*uy2 - 2.*h010*ux2*u.y*uz2 + 4.*h011*ux2*uyuz - 2.*h012*ux2*u.y + h020*ux2*uz2 - 2.*h021*ux2*u.z + h022*ux2 - 2.*h100*u.x*uy2*uz2 + 4.*h101*u.x*uy2*u.z - 2.*h102*u.x*uy2 + 4.*h110*uxuy*uz2 - 8.*h111*uxuy*u.z + 4.*h112*uxuy - 2.*h120*u.x*uz2 + 4.*h121*uxuz - 2.*h122*u.x + h200*uy2*uz2 - 2.*h201*uy2*u.z + h202*uy2 - 2.*h210*u.y*uz2 + 4.*h211*uyuz - 2.*h212*u.y + h220*uz2 - 2.*h221*u.z + h222;
 	//collision in central moments space
-	
 	//collide
 	h000 = H;
 	h100 = -temp100*(omega_ade - 1.);
@@ -2032,7 +2050,6 @@ CudaDeviceFunction void relax_and_collide_ADE_CM(real_t rho, real_t omega_ade, v
 	h212 = 0;
 	h221 = 0;
 	h222 = H*Sigma2*Sigma2*Sigma2;
-
 	//back to raw moments
 	temp000 = h000;
 	temp100 = h000*u.x + h100;
