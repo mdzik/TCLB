@@ -80,7 +80,10 @@ attr(d3q19,"MAT") = matrix(c(
 #                 D  3   Q 27                            #
 #                                                        #
 ##########################################################
-# D3Q27 - notation as in TCLB's d3q27_pf_velocity model and d3q2727_cm_cht
+# D3Q27 - notation as in TCLB's d3q27_pf_velocity model
+# beware that using R one will get a different order: 
+# > x = c(0,1,-1);
+# > U = expand.grid(x,x,x)
 
 d3q27 = matrix(c(
          0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 0, 0, 0, 0,
