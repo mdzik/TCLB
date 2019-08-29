@@ -92,7 +92,7 @@ AddGlobal(name="ZHydroFLux",    comment='ZHydroFLux', unit="kg/s")
 AddGlobal(name="HeatFluxX",    comment='Heat flux from body in X-direction', unit="W")
 AddGlobal(name="HeatFluxY",    comment='Heat flux from body in Y-direction', unit="W")
 AddGlobal(name="HeatFluxZ",    comment='Heat flux from body in Z-direction', unit="W")
-AddGlobal(name="HeatSource",    comment='Total Heat flux from body', unit="W")
+AddGlobal(name="HeatSource",   comment='Total Heat flux from body', 		 unit="W")
 # AddGlobal(name="PressureLoss", comment='pressure loss', unit="1mPa")
 # AddGlobal(name="OutletFlux", comment='pressure loss', unit="1m2/s")
 # AddGlobal(name="InletFlux", comment='pressure loss', unit="1m2/s")
@@ -113,20 +113,24 @@ if(Options$DEBUG){
 }
 
 # Boundary things
-AddNodeType("FluxMeasurment", "OBJECTIVEFLUX")
+AddNodeType("FluxMeasurment",  "OBJECTIVEFLUX")
 AddNodeType("ForceMeasurment", "OBJECTIVEFORCE")
+
 AddNodeType(name="DarcySolid", group="ADDITIONALS")
-AddNodeType(name="Smoothing", group="ADDITIONALS")
-AddNodeType(name="HeaterDirichletTemperatureEQ", group="ADDITIONALS_HEAT")
+AddNodeType(name="Smoothing",  group="ADDITIONALS")
+
+
+AddNodeType(name="HeaterDirichletTemperatureEQ",  group="ADDITIONALS_HEAT")
 AddNodeType(name="HeaterDirichletTemperatureABB", group="ADDITIONALS_HEAT")
-AddNodeType(name="HeaterSource", group="ADDITIONALS_HEAT")
+AddNodeType(name="HeaterSource", 				  group="ADDITIONALS_HEAT")
 AddNodeType(name="HeaterNeumannHeatFluxCylinder", group="ADDITIONALS_HEAT")
-AddNodeType(name="HeaterNeumannHeatFluxEast", group="ADDITIONALS_HEAT")
-AddNodeType("CM","COLLISION")
-AddNodeType("CM_HIGHER","COLLISION")
-AddNodeType("CM_HIGHER_NONLINEAR","COLLISION")
-AddNodeType("Cumulants","COLLISION")
-AddNodeType("Cumulants_Higher","COLLISION")
+AddNodeType(name="HeaterNeumannHeatFluxEast", 	  group="ADDITIONALS_HEAT")
+
+AddNodeType(name="CM",						group="COLLISION")
+AddNodeType(name="CM_HIGHER",				group="COLLISION")
+AddNodeType(name="CM_HIGHER_NONLINEAR",		group="COLLISION")
+AddNodeType(name="Cumulants",				group="COLLISION")
+AddNodeType(name="Cumulants_Higher",		group="COLLISION")
 
 # Benchmark things
 AddSetting(name="CylinderCenterX", default="0", comment='X coord of cylinder with imposed heat flux')
@@ -134,15 +138,16 @@ AddSetting(name="CylinderCenterY", default="0", comment='Y coord of cylinder wit
 
 AddSetting(name="CylinderCenterX_GH", default="0", comment='X coord of Gaussian Hill')
 AddSetting(name="CylinderCenterY_GH", default="0", comment='Y coord of Gaussian Hill')
-AddSetting(name="Sigma_GH", default="1", comment='Initial width of the Gaussian Hill', zonal=T)
+AddSetting(name="Sigma_GH", 		  default="1", comment='Initial width of the Gaussian Hill', zonal=T)
 
 ##########OPTIONAL VALUES##########
 
 #Interpolated BounceBack Node
 if(Options$IBB){
-	AddNodeType("IBB", group="HO_BOUNDARY") 
-	AddQuantity( name="MaxQ" )  
-	AddQuantity( name="MinQ" )  
+	AddNodeType("HeaterDirichletTemperatureIABB", group="HO_BOUNDARY") 
+	AddNodeType("IBB", 							  group="HO_BOUNDARY") 
+	AddQuantity(name="MaxQ")  
+	AddQuantity(name="MinQ")  
 }
 
 #Smagorinsky coefficient
@@ -156,9 +161,6 @@ AddDensity(name="U", dx=0, dy=0, dz=0, group="Vel")
 # AddDensity(name="W", dx=0, dy=0, dz=0, group="Vel")
 if (Options$OutFlowConvective)
 {
-	# AddDensity(name=paste("fold",0:26,sep=""), dx=0,dy=0,dz=0,group="fold")
-	# AddDensity(name=paste("hold",0:26,sep=""), dx=0,dy=0,dz=0,group="hold")
-
 	hname =  paste("hold",P$x,P$y,P$z,sep="")
 	AddDensity(
 		name = hname,
@@ -183,7 +185,7 @@ if (Options$OutFlowConvective)
 		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy, dz=-d$dz )
 	}
 
-	AddField(name="U",dx=c(-1,0,0)) # TODO: do I need this?
+	AddField(name="U",dx=c(-1,0,0))
 	AddNodeType(name="EConvect", group="BOUNDARY")
 }
 
