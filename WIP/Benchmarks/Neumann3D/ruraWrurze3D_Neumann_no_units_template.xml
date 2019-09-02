@@ -1,10 +1,11 @@
 <?R
-    tab = expand.grid(sizer=c(1,2,4), k_material=c(0.1666666, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5), collision=c("CM","CM_HIGHER"))
+    #tab = expand.grid(sizer=c(1,2,4), k_material=c(0.1666666, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5), collision=c("Cumulants","CM_HIGHER"))
+    tab = expand.grid(sizer=c(4), k_material=c(1e-3), collision=c("Cumulants","CM_HIGHER"))
 
     dir_name <- "batch_ruraWrurze_NeumannBC"
     dir.create(dir_name)
 
-    tab$name = paste0(tab$collision,"_k_", tab$k_material, "_size_",32*tab$sizer, "lu")
+    tab$name = paste0("idx",tab$collision,"_k_", tab$k_material, "_size_",32*tab$sizer, "lu")
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
     tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
 
@@ -60,7 +61,7 @@
 			material_density="1"
 
 	        InitTemperature="10.0"
-	        InitHeatFlux-neumann_hot="0.1"
+	        InitHeatFlux-neumann_hot="-0.1"
 	        InitTemperature-dirichlet="11.0"
 	        />
 	    <Params />
@@ -70,11 +71,11 @@
     </Model> 
 
 <!-- <Solve Iterations="10" > <VTK Iterations="1"/> </Solve> -->
-	<Failcheck Iterations="10000" nx="<?%f 32*sizer ?>" ny="<?%f 32*sizer ?>" nz="3" />
+	<Failcheck Iterations="1000" nx="<?%f 32*sizer ?>" ny="<?%f 32*sizer ?>" nz="3" />
 	<!-- <TXT Iterations="100000" what="T,U" /> -->
 	<!-- <Log Iterations="100000" /> -->
-	<Solve Iterations="500000">
-		<VTK Iterations="50000" />
+	<Solve Iterations="10000">
+		<VTK Iterations="1000" />
 	</Solve>
 </CLBConfig>
 

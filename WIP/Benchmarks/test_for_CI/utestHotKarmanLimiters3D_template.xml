@@ -5,9 +5,9 @@
 	    k=c(1e-03), 
 	    sizer=c(0.25, 0.5), 
 	    Re=c(1000), 
-	    collision=c("CM_HIGHER", "Cumulants_Higher", "Cumulants", "CM_HIGHER_NONLINEAR"), 
+	    collision=c("CM_HIGHER", "Cumulants"), 
 	    bc=c("HeaterDirichletTemperatureABB","HeaterDirichletTemperatureEQ"),
-	    outlet=c("ENeumann"),
+	    outlet=c("ENeumann", "EConvective"),
 	    is_nu_limiter=c(T),
 	    is_k_limiter=c(T)
     )

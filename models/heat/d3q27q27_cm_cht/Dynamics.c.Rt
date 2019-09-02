@@ -23,15 +23,11 @@
     # Calculating equlibrium density set
 		EQ = MRT_eq(U, rho, J, ortogonal=FALSE);
 		#EQ$feq = EQ$Req %*% solve(EQ$mat)
-		h_pop_size = PV("27")
-
-
 
 	if (Options$OutFlowNeumann) 
 	{
 		f_neighbours = Density$nicename[Density$group =="f"]
 		h_neighbours = Density$nicename[Density$group =="h"]
-
 	}
 
 	if (Options$OutFlowConvective) 
@@ -49,8 +45,6 @@
 	}
 ?>
 
-	// int a = <?R C( h_pop_size) ?>;
-	// <?R C(PV(c("const int h_size")), h_pop_size) ?>
 
 #ifdef OPTIONS_DEBUG
 	CudaDeviceFunction real_t getm00_F(){
@@ -166,7 +160,7 @@ CudaDeviceFunction void Init() {
 	SetEquilibriumHeat(H,rho,u);
 
 	#ifdef OPTIONS_OutFlowConvective
-	if ((NodeType & NODE_BOUNDARY) == NODE_EConvect){
+	if ((NodeType & NODE_BOUNDARY) == NODE_EConvective){
 			<?R if (Options$OutFlowConvective)
 				{
 					C(f_old, f)
@@ -304,7 +298,7 @@ CudaDeviceFunction void EPressure()
        __typeof__ (b) _b = (b); \
      _a > _b ? _a : _b; })
 
-CudaDeviceFunction void EConvect()
+CudaDeviceFunction void EConvective()
 {
 	// See 'Evaluation of outflow boundary conditions for two-phase lattice Boltzmann equation' 
 	// by Qin Lou, Zhaoli Guo and Baochang Shi from 2013 for details.
@@ -344,8 +338,6 @@ CudaDeviceFunction void ImposeHeatFlux(vector_t n)
 	{
 		ThermalBounceBack();
 	}
-
-	<?R C(PV(c("const int h_size")), h_pop_size) ?>
 
 	real_t rho = getRho();
 	real_t imposed_heat_flux = InitHeatFlux;
@@ -807,13 +799,15 @@ CudaDeviceFunction void ThermalInterpolatedBounceBack()
 	// See 'Momentum transfer of a Boltzmann-lattice fluid with boundaries'
 	// by M. Bouzidi, M. Firdaouss, P. Lallemand, 2001
 
+	// Be aware that the IBB is a wet node BC, thus a collision has to be done.
+	
 	cut_t q;
 	<?R
         bounce = Bounce(U);
         sel = DensityAll$group=="h"
         attach(DensityAll[sel,])
         h = PV(name)
-        hold = PV(name,"(0,0,0)")
+        rhold = PV(name,"(0,0,0)")
         QU = cbind(dx,dy,dz)
         detach()
         Qw = PV( paste("Q",P$x,P$y,P$z,sep=""))
@@ -829,9 +823,9 @@ CudaDeviceFunction void ThermalInterpolatedBounceBack()
 					ha = PV("ha");  
 				?>
 					real_t p = ((real_t)q) * (2.0 /CUT_MAX); // q * 0.005 * 2 
-					real_t ha = <?R C(hold[i]) ?>; 
+					real_t ha = <?R C(rhold[i]) ?>; 
 					if (p > 1.0) { 
-						<?R C(h[bounce[i]],ha*op + hold[bounce[i]]*(p-1)*op) ?>
+						<?R C(h[bounce[i]],ha*op + rhold[bounce[i]]*(p-1)*op) ?>
 					} else { 
 						<?R C(h[bounce[i]],ha*p + h[i]*(1-p)) ?>
 					}
@@ -960,7 +954,7 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 		sel = DensityAll$group=="h"
 		attach(DensityAll[sel,])
 		h = PV(name)
-		hold = PV(name,"(0,0,0)")
+		rhold = PV(name,"(0,0,0)")
 		rh_eq = PV(paste("heq",P$x,P$y,P$z,sep=""))
 
 		QU = cbind(dx,dy,dz)
@@ -979,10 +973,10 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 					ha = PV("ha"); 
 				?>
 				real_t p = ((real_t)q) * (2.0 /CUT_MAX); // q * 0.005 * 2 
-				real_t ha = <?R C(hold[i]) ?>;  
+				real_t ha = <?R C(rhold[i]) ?>;  
 
 				if (p > 1.0) { 
-					<?R C(h[bounce[i]], -1*(ha*op + hold[bounce[i]]*(p-1)*op) + 2*rh_eq[i]) ?>
+					<?R C(h[bounce[i]], -1*(ha*op + rhold[bounce[i]]*(p-1)*op) + 2*rh_eq[i]) ?>
 				} else { 
 					<?R C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[i])  ?>	
 				}	
@@ -994,6 +988,7 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 	real_t h2 = <?R C(sum(h)) ?>;
 	AddToHeatSource(h2-h1);
 }
+
 #endif
 
 CudaDeviceFunction void RunBoundariesHydrodynamics()
@@ -1016,8 +1011,8 @@ CudaDeviceFunction void RunBoundariesHydrodynamics()
 			ThermalBounceBack();
 			break;
 		#ifdef OPTIONS_OutFlowConvective
-			case NODE_EConvect:
-				EConvect();
+			case NODE_EConvective:
+				EConvective();
 				break;
 		#endif
 		#ifdef OPTIONS_OutFlowNeumann
