@@ -834,7 +834,7 @@ CudaDeviceFunction void ThermalInterpolatedBounceBack()
 	<?R } ?>
 }
 
-CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
+CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBackPart1()
 {
 	// Anti-Bounce-Back Scheme
 	// see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
@@ -947,7 +947,7 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 	heq222 = -1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
 
 
-	// Code belowe is generated with r
+	// Code below is generated with r
 	cut_t q;
 	<?R
 		bounce = Bounce(U);
@@ -976,17 +976,18 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 				real_t ha = <?R C(rhold[i]) ?>;  
 
 				if (p > 1.0) { 
-					<?R C(h[bounce[i]], -1*(ha*op + rhold[bounce[i]]*(p-1)*op) + 2*rh_eq[i]) ?>
+					<?R # C(h[bounce[i]], -1*(ha*op + rhold[bounce[i]]*(p-1)*op) + 2*rh_eq[i]) ?>
+					<?R C(h[bounce[i]], -1*(ha*op + rhold[bounce[i]]*(p-1)*op) + (1 + p)*rh_eq[i]) ?>
 				} else { 
-					<?R C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[i])  ?>	
+					<?R # C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[i])  ?>	
+					<?R C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + (1 + p)*rh_eq[i]) ?>	
 				}	
 			}
 		
 	<?R } ?>
 	
-
 	real_t h2 = <?R C(sum(h)) ?>;
-	AddToHeatSource(h2-h1);
+	AddToHeatSource(h2-h1);  // TODO: move it elsewhere
 }
 
 #endif
@@ -1045,7 +1046,7 @@ CudaDeviceFunction void RunBoundariesHeat()
 	}
 }
 
-CudaDeviceFunction void RunHOBoundaries()
+CudaDeviceFunction void RunHOBoundariesPart1()
 {	
 	#ifdef OPTIONS_IBB
 	// This is a wet node BC. It is stored in separate HO_BOUNDARY group,
@@ -1057,7 +1058,20 @@ CudaDeviceFunction void RunHOBoundaries()
 			break;
 		case NODE_HeaterDirichletTemperatureIABB:
 			HydroInterpolatedBounceBack();
-			HeaterDirichletTemperatureInterpolatedAntiBounceBack();
+			HeaterDirichletTemperatureInterpolatedAntiBounceBackPart1();
+			break;
+	}
+	#endif
+}
+
+CudaDeviceFunction void RunHOBoundariesPart2()
+{
+	#ifdef OPTIONS_IBB
+	// This is a wet node BC. It is stored in separate HO_BOUNDARY group,
+	// because the regular wet BOUNDARY nodes have a limiter.
+	switch (NodeType & NODE_HO_BOUNDARY) {
+		case NODE_HeaterDirichletTemperatureIABB:
+			HeaterDirichletTemperatureInterpolatedAntiBounceBackPart2();
 			break;
 	}
 	#endif
@@ -1071,7 +1085,7 @@ CudaDeviceFunction void Run() {
 
 	RunBoundariesHydrodynamics();
 	RunBoundariesHeat();	
-	RunHOBoundaries();
+	RunHOBoundariesPart1();
 
     switch (NodeType & NODE_COLLISION) {
 		case NODE_CM_HIGHER:
