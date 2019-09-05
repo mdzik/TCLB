@@ -96,7 +96,7 @@
         <!-- gx = 4 * uz_max * nu / (rho * R * R) -->
         <!-- we set uz_max=0.01 - max velocity -->
     </Model>
-<Failcheck Iterations="10000" nx="128" ny="128" nz="3" />
+<Failcheck Iterations="5000" nx="128" ny="128" nz="3" />
 
 <Solve Iterations="1"> <VTK Iterations="1"/> </Solve>
 <Log Iterations="5000"/>
