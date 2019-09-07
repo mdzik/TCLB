@@ -975,17 +975,22 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBackPart
 				real_t ha = <?R C(rhold[i]) ?>;  
 
 				if (p > 1.0) { 
-					<?R # C(h[bounce[i]], -1*(ha*op + rhold[bounce[i]]*(p-1)*op) + 2*rh_eq[i]) ?>  // dziala, niby IABB, ale 1 rzad
+					
 					<?R # C(h[bounce[i]], -1*ha +  2*rh_eq[bounce[i]]) ?> // dziala - HABB
 					<?R # C(h[bounce[i]], ha ) ?> // dziala (2heq dodawane po kolizji) - HABB  
-					<?R C(h[bounce[i]], 1*(ha*op + rhold[bounce[i]]*(p-1)*op)) ?>  // dziala, ale nie mozna robic anti przed kolizja
+					<?R # C(h[bounce[i]], 1*(ha*op + rhold[bounce[i]]*(p-1)*op)) ?>  // dziala, ale nie mozna robic anti przed kolizja
 					<?R # C(h[bounce[i]], ha*op + rhold[bounce[i]]*(p-1)*op + (1 + p)*rh_eq[bounce[i]]) ?>  // nie dziala
+
+					<?R   C(h[bounce[i]], -1*(ha*op + rhold[bounce[i]]*(p-1)*op) + 2*rh_eq[bounce[i]]) ?>  // dziala, niby IABB
+					<?R # C(h[bounce[i]], -1*(ha*op + rhold[bounce[i]]*(p-1)*op) + 2*op*rh_eq[bounce[i]]) ?>  // nie dziala, a powinno
+
 				} else { 
-					<?R # C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[i])  ?>	// dziala, niby IABB, ale 1 rzad
 					<?R # C(h[bounce[i]], -1*ha + 2*rh_eq[bounce[i]])   ?>	// dziala - HABB
 					<?R # C(h[bounce[i]], ha ) ?>	// dziala (2heq dodawane po kolizji) - HABB  
-					<?R C(h[bounce[i]], 1*(ha*p + h[i]*(1-p)) )  ?>  // dziala, ale nie mozna robic anti przed kolizja
-					<?R # C(h[bounce[i]], ha*p + h[i]*(1-p)+ (1 + p)*rh_eq[bounce[i]]) ?>	// nie dziala
+					<?R # C(h[bounce[i]], 1*(ha*p + h[i]*(1-p)) )  ?>  // dziala, ale nie mozna robic anti przed kolizja
+					<?R # C(h[bounce[i]], -1*(ha*p + h[i]*(1-p))+ (1 + p)*rh_eq[bounce[i]]) ?>	// nie dziala
+
+					<?R C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[bounce[i]])  ?>	// dziala, niby IABB
 				}	
 			}
 		
@@ -1133,8 +1138,8 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBackPart
 				?>
 				real_t p = ((real_t)q) * (2.0 /CUT_MAX); // q * 0.005 * 2 
 				<?R # C(h[bounce[i]], h[bounce[i]] + (1 + p)*rh_eq[bounce[i]]) ?>	// nie dziala :(
-				<?R C(h[bounce[i]], -1*h[bounce[i]] + 2*rh_eq[bounce[i]]) ?> // dziala np HABB: intepolacja przed kolizja, pnrocenie i  source po kolizji	
-				<?R # C(h[bounce[i]], h[bounce[i]] + 2*rh_eq[bounce[i]]) ?>	 // dziala np HABB: intepolacja przed kolizja, source po kolizji
+				<?R # C(h[bounce[i]], -1*h[bounce[i]] + 2*rh_eq[bounce[i]]) ?> // dziala np HABB: interpolacja przed kolizja, pnrocenie i source po kolizji	
+				<?R # C(h[bounce[i]], h[bounce[i]] + 2*rh_eq[bounce[i]]) ?>	 // dziala np HABB: interpolacja przed kolizja, source po kolizji
 			}
 		
 	<?R } ?>
@@ -1260,7 +1265,7 @@ CudaDeviceFunction void Run() {
 			break;
 	}
 
-	RunHOBoundariesPart2();
+	//RunHOBoundariesPart2();
 
 	if((NodeType & NODE_OBJECTIVEFORCE) == NODE_ForceMeasurment) {
 		vector_t p2;
