@@ -66,12 +66,46 @@
 #endif
 
 CudaDeviceFunction real_t getRho(){
-	// #TODO: run boundaries - this happens before Run and collision
 	real_t rho = <?R C(sum(f)) ?>;
 	return rho;
 }
 
 CudaDeviceFunction real_t getT(){
+	// Use this function is only for vtk output.
+	// Nodes are created using streamed, post-collision DF.
+	// RunBoundaries are called in orded to assign the desired value at the boundary.
+	// It can make a difference in convergence study and nicer preview.
+
+	RunBoundariesHydrodynamics();
+	RunBoundariesHeat();	
+	RunHOBoundaries();
+
+	real_t rho = getRho();
+	real_t m00_H = <?R C(sum(h)) ?>;
+	return m00_H/(rho*cp);
+}
+
+CudaDeviceFunction vector_t getU(){	
+	// Use this function is only for vtk output.
+	// Nodes are created using streamed, post-collision DF.
+	// RunBoundaries are called in orded to assign the desired value at the boundary.
+	// It can make a difference in convergence study and nicer preview.
+
+	RunBoundariesHydrodynamics();
+	RunBoundariesHeat();	
+	RunHOBoundaries();
+
+	real_t localTemperature = getT();
+	vector_t u = getRawU();
+	real_t rho = getRho();
+	vector_t Force = getForce(localTemperature, rho);
+	u.x += Force.x/(2*rho);
+	u.y += Force.y/(2*rho);
+	u.z += Force.z/(2*rho);
+	return u;
+}
+
+CudaDeviceFunction real_t _getT(){
 	real_t rho = getRho();
 	real_t m00_H = <?R C(sum(h)) ?>;
 	return m00_H/(rho*cp);
@@ -84,16 +118,16 @@ CudaDeviceFunction real_t getH(){
 CudaDeviceFunction vector_t getRawU(){
 	real_t d = getRho();
 	vector_t u;
-<?R C(PV(c("u.x","u.y", "u.z")), f %*% U) ?>
+	<?R C(PV(c("u.x","u.y", "u.z")), f %*% U) ?>
 	u.x /= d;
 	u.y /= d;
 	u.z /= d;
 	return u;
 }
 
-CudaDeviceFunction vector_t getU()
+CudaDeviceFunction vector_t _getU()
 {
-	real_t localTemperature = getT();
+	real_t localTemperature = _getT();
 	vector_t u = getRawU();
 	real_t rho = getRho();
 	vector_t Force = getForce(localTemperature, rho);
@@ -115,7 +149,7 @@ CudaDeviceFunction vector_t get_fDarcyStoper(real_t rho, vector_t u)
 CudaDeviceFunction float2 Color() {
 	float2 ret;
 	
-	ret.x = getT();
+	ret.x = _getT();
 	ret.x -= 10;  // hack for better preview.
 	ret.y = ret.x;
 
@@ -126,7 +160,7 @@ CudaDeviceFunction float2 Color() {
 		ret.y = 1;
 	}
 
-	// vector_t u = getU();
+	// vector_t u = _getU();
 	// // ret.x = sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
 	// ret.x = u.x;
 	// ret.y = u.y;
@@ -174,7 +208,7 @@ CudaDeviceFunction void Init() {
 CudaDeviceFunction void HydroBounceBack()
 {
 	<?R 
-		# TODO: BounceBack gets crazy and bounces h_old and f_old in _Outflow mode :/
+		# TODO: FullBounceBack() gets crazy and bounces h_old and f_old in _Outflow mode :/
 		# FullBounceBack()  
 
 		FullBounceBack(group='f')
@@ -377,34 +411,6 @@ CudaDeviceFunction void ImposeHeatFlux(vector_t n)
 	real_t temp221 = n.z*fifth_order_cm;
 	real_t temp222 = 0;
 
-	// temp[0] = 0;
-	// temp[1] = -2.*T*gamma*k.x;
-	// temp[2] = -2.*T*gamma*k.y;
-	// temp[3] = -2.*T*gamma*k.z;
-	// temp[4] = 0;
-	// temp[5] = 0;
-	// temp[6] = 0;
-	// temp[7] = 0;
-	// temp[8] = 0;
-	// temp[9] = 0;
-	// temp[10] = -2/3.*T*gamma*gamma*k.x/(cp*rho);
-	// temp[11] = -2/3.*T*gamma*gamma*k.x/(cp*rho);
-	// temp[12] = -2/3.*T*gamma*gamma*k.y/(cp*rho);
-	// temp[13] = -2/3.*T*gamma*gamma*k.z/(cp*rho);
-	// temp[14] = -2/3.*T*gamma*gamma*k.y/(cp*rho);
-	// temp[15] = -2/3.*T*gamma*gamma*k.z/(cp*rho);
-	// temp[16] = 0;
-	// temp[17] = 0;
-	// temp[18] = 0;
-	// temp[19] = 0;
-	// temp[20] = 0;
-	// temp[21] = 0;
-	// temp[22] = 0;
-	// temp[23] = -2/9*T*k.x*(cp*gamma**3*rho)/(cp**(3.0)*rho**(3.0));
-	// temp[24] = -2/9*T*k.y*(cp*gamma**3*rho)/(cp**(3.0)*rho**(3.0));
-	// temp[25] = -2/9*T*k.z*(cp*gamma**3*rho)/(cp**(3.0)*rho**(3.0));
-	// temp[26] = 0;
-
 	// we assume that the Neumann BC is not moving, 
 	// thus we treat the cm as raw moments and...
 	// go back straight from cm to density-probability functions
@@ -440,12 +446,9 @@ CudaDeviceFunction void ImposeHeatFlux(vector_t n)
 
 CudaDeviceFunction void HeaterSource()
 {
-
-	real_t h1 = <?R C(sum(h)) ?>;
-
 	real_t T = InitTemperature;
 	real_t rho = getRho();
-	vector_t u = getU();
+	vector_t u = _getU();
 
 	// TCLB is smart enough to distiguish values prescribed it batch.xml like
 	// InitTemperature-dirichlet_region="123"
@@ -520,9 +523,6 @@ CudaDeviceFunction void HeaterSource()
 	h122 += 1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
 	h222 += -1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
 
-	
-	real_t h2 = <?R C(sum(h)) ?>;
-	AddToHeatSource(h2-h1);
 }
 
 CudaDeviceFunction void HeatDirichletEquilibriumScheme()
@@ -530,18 +530,13 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 	// equilibrium scheme for BC - don't care and impose rho*Teq
 	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
-	real_t h1 = <?R C(sum(h)) ?>;
-
 	real_t T = InitTemperature;
 	real_t rho = getRho();
-	// vector_t u = getU();
+	// vector_t u = _getU();
 
-	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU(); 
+	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = _getU(); 
 	real_t H = rho*cp*T;
 	SetEquilibriumHeat(H, rho, u); 
-
-	real_t h2 = <?R C(sum(h)) ?>;
-	AddToHeatSource(h2-h1);
 }
 
 CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
@@ -550,9 +545,7 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	// see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 
-	// Be aware that the BB is a link-wise BC, thus the collision does not take place.
-
-	real_t h1 = <?R C(sum(h)) ?>;
+	// Be aware that the ABB is a link-wise BC, thus the collision does not take place.
 
 	if ((NodeType & NODE_BOUNDARY) != NODE_Wall) // in case of wall, bounce back procedure has been already done
 	{
@@ -561,7 +554,7 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 
 	real_t T = InitTemperature;
 	real_t rho = getRho();
-	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU(); 
+	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = _getU(); 
 	real_t H = rho*cp*T;
 
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
@@ -658,93 +651,16 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	h221 = -h221 + 2 * heq221;
 	h222 = -h222 + 2 * heq222;
 
-	real_t h2 = <?R C(sum(h)) ?>;
-	AddToHeatSource(h2-h1);
 }
 
 #ifdef OPTIONS_IBB
-CudaDeviceFunction real_t getMinQ()
-{
-	// real_t dummyfloat;
-	// real_t Q_MAX = (*((long long*)&dummyfloat))= ~(1LL<<52); // min float
-	// vector_t Q_MINMAX;
-	// Q_MINMAX.x = 0; // MIN
-	// Q_MINMAX.y = 65535;
-	// Q_MINMAX.z = 0; // dummy
-	real_t Q_MIN = 65535; 
-
-	real_t q = 0;
-	<?R
-        bounce = Bounce(U);
-        sel = DensityAll$group=="f"
-        attach(DensityAll[sel,])
-        f = PV(name)
-        fold = PV(name,"(0,0,0)")
-        fpre = PV(name,"(",-dx,",",-dy,",",-dz,")")
-        QU = cbind(dx,dy,dz)
-        detach()
-        Qw = PV( paste("Q",P$x,P$y,P$z,sep=""))
-        Q = PV( "q")
-        F = PV("F.",c("x","y","z"))
-
-        #qmax = PV("Q_MAX")
-
-        for (i in 2:length(Qw)) {
-                C(Q,Qw[i]);
-        ?>
-
-		q = ((real_t)q) * (1.0 /CUT_MAX); 
-		if (q < Q_MIN){
-			Q_MIN = q;  
-		}
-        
-    <?R } ?>
-	
-	return Q_MIN;
-}
-
-CudaDeviceFunction real_t getMaxQ()
-{
-	real_t dummyfloat;
-	// real_t Q_MAX = (*((long long*)&dummyfloat))= ~(1LL<<52); // min float
-
-	real_t Q_MAX = 0; 
-	real_t q = 0;
-	<?R
-        bounce = Bounce(U);
-        sel = DensityAll$group=="f"
-        attach(DensityAll[sel,])
-        f = PV(name)
-        fold = PV(name,"(0,0,0)")
-        fpre = PV(name,"(",-dx,",",-dy,",",-dz,")")
-        QU = cbind(dx,dy,dz)
-        detach()
-        Qw = PV( paste("Q",P$x,P$y,P$z,sep=""))
-        Q = PV( "q")
-        F = PV("F.",c("x","y","z"))
-
-        # qmax = PV("Q_MAX")
-
-        for (i in 2:length(Qw)) {
-                C(Q,Qw[i]);
-        ?>
-
-        if (q != NO_CUT){
-			q = ((real_t)q) * (1.0 /CUT_MAX); 
-			if (q > Q_MAX){
-				Q_MAX = q;  
-			}
-		}
-    <?R } ?>
-
-	return Q_MAX;
-}
-
 
 CudaDeviceFunction void HydroInterpolatedBounceBack()
 {
 	// See 'Momentum transfer of a Boltzmann-lattice fluid with boundaries'
 	// by M. Bouzidi, M. Firdaouss, P. Lallemand, 2001
+
+	// Be aware that the IBB is a wet node BC, thus a collision has to be done.
 
 	cut_t q;
 	//vector_t F;
@@ -834,22 +750,23 @@ CudaDeviceFunction void ThermalInterpolatedBounceBack()
 	<?R } ?>
 }
 
-CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBackPart1()
+CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 {
 	// Anti-Bounce-Back Scheme
-	// see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// See 'On anti bounce back boundary condition for lattice Boltzmann schemes' 
+	// by F. Dubois P. Lallemand and M.M Tekitek, 2019
+
+	// See chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 
 	// See 'Momentum transfer of a Boltzmann-lattice fluid with boundaries'
-	// by M. Bouzidi, M. Firdaouss, P. Lallemand, 2001
+	// by M. Bouzidi, M. Firdaouss, P. Lallemand, 2001 
 
 	// Be aware that the IBB is a wet node BC, thus a collision has to be done.
 	
-	real_t h1 = <?R C(sum(h)) ?>;
-
 	real_t T = InitTemperature;
 	real_t rho = getRho();
-	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU(); 
+	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = _getU(); 
 	real_t H = rho*cp*T;
 	
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
@@ -981,172 +898,25 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBackPart
 					<?R # C(h[bounce[i]], 1*(ha*op + rhold[bounce[i]]*(p-1)*op)) ?>  // dziala, ale nie mozna robic anti przed kolizja
 					<?R # C(h[bounce[i]], ha*op + rhold[bounce[i]]*(p-1)*op + (1 + p)*rh_eq[bounce[i]]) ?>  // nie dziala
 
-					<?R   C(h[bounce[i]], -1*(ha*op + rhold[bounce[i]]*(p-1)*op) + 2*rh_eq[bounce[i]]) ?>  // dziala, niby IABB
+					<?R # C(h[bounce[i]], -1*(ha*op + rhold[bounce[i]]*(p-1)*op) + 2*rh_eq[bounce[i]]) ?>  // dziala, niby IABB
+
 					<?R # C(h[bounce[i]], -1*(ha*op + rhold[bounce[i]]*(p-1)*op) + 2*op*rh_eq[bounce[i]]) ?>  // nie dziala, a powinno
+
+					<?R   C(h[bounce[i]], -1*ha*op + rhold[bounce[i]]*(p-1)*op + 2*op*rh_eq[bounce[i]]) ?>  // F. Dubois P. Lallemand and M.M Tekitek, 'On anti bounce back boundary condition for lattice Boltzmann schemes', 2019, CAMWA
 
 				} else { 
 					<?R # C(h[bounce[i]], -1*ha + 2*rh_eq[bounce[i]])   ?>	// dziala - HABB
 					<?R # C(h[bounce[i]], ha ) ?>	// dziala (2heq dodawane po kolizji) - HABB  
 					<?R # C(h[bounce[i]], 1*(ha*p + h[i]*(1-p)) )  ?>  // dziala, ale nie mozna robic anti przed kolizja
+
 					<?R # C(h[bounce[i]], -1*(ha*p + h[i]*(1-p))+ (1 + p)*rh_eq[bounce[i]]) ?>	// nie dziala
 
-					<?R C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[bounce[i]])  ?>	// dziala, niby IABB
+					<?R   C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[bounce[i]])  ?>	// F. Dubois P. Lallemand and M.M Tekitek, 'On anti bounce back boundary condition for lattice Boltzmann schemes', 2019, CAMWA
 				}	
 			}
-		
 	<?R } ?>
-	
-	real_t h2 = <?R C(sum(h)) ?>;
-	AddToHeatSource(h2-h1);  // TODO: move it elsewhere
 }
 
-CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBackPart2()
-{
-	// Anti-Bounce-Back Scheme
-	// see chapter 8.5.2.1, eq 8.53, p318 from 'The Lattice Boltzmann Method: Principles and Practice'
-	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
-
-	// See 'Momentum transfer of a Boltzmann-lattice fluid with boundaries'
-	// by M. Bouzidi, M. Firdaouss, P. Lallemand, 2001
-
-	// Be aware that the IBB is a wet node BC, thus a collision has to be done.
-	
-	real_t h1 = <?R C(sum(h)) ?>;
-
-	real_t T = InitTemperature;
-	real_t rho = getRho();
-	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU(); 
-	real_t H = rho*cp*T;
-	
-	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
-	real_t Sigma2 = 1/3.*h_stability_enhancement/(cp*rho);
-	real_t uxuy = u.x*u.y;
-	real_t ux2 = u.x*u.x;
-	real_t uy2 = u.y*u.y;
-	real_t uxuz = u.x*u.z;
-	real_t uyuz = u.y*u.z;
-	real_t uz2 = u.z*u.z;
-
-	//equilibrium in central moments space 2*rh_eq[bounce[i]]
-	real_t heq000 = H;
-	real_t heq100 = 0;
-	real_t heq010 = 0;
-	real_t heq001 = 0;
-	real_t heq110 = 0;
-	real_t heq101 = 0;
-	real_t heq011 = 0;
-	real_t heq200 = H*Sigma2;
-	real_t heq020 = H*Sigma2;
-	real_t heq002 = H*Sigma2;
-	real_t heq120 = 0;
-	real_t heq102 = 0;
-	real_t heq210 = 0;
-	real_t heq201 = 0;
-	real_t heq012 = 0;
-	real_t heq021 = 0;
-	real_t heq111 = 0;
-	real_t heq220 = H*Sigma2*Sigma2;
-	real_t heq202 = H*Sigma2*Sigma2;
-	real_t heq022 = H*Sigma2*Sigma2;
-	real_t heq211 = 0;
-	real_t heq121 = 0;
-	real_t heq112 = 0;
-	real_t heq122 = 0;
-	real_t heq212 = 0;
-	real_t heq221 = 0;
-	real_t heq222 = H*Sigma2*Sigma2*Sigma2;
-	//back to raw moments
-	real_t temp000 = heq000;
-	real_t temp100 = heq000*u.x + heq100;
-	real_t temp010 = heq000*u.y + heq010;
-	real_t temp001 = heq000*u.z + heq001;
-	real_t temp110 = heq000*uxuy + heq010*u.x + heq100*u.y + heq110;
-	real_t temp101 = heq000*uxuz + heq001*u.x + heq100*u.z + heq101;
-	real_t temp011 = heq000*uyuz + heq001*u.y + heq010*u.z + heq011;
-	real_t temp200 = heq000*ux2 + 2.*heq100*u.x + heq200;
-	real_t temp020 = heq000*uy2 + 2.*heq010*u.y + heq020;
-	real_t temp002 = heq000*uz2 + 2.*heq001*u.z + heq002;
-	real_t temp120 = heq000*u.x*uy2 + 2.*heq010*uxuy + heq020*u.x + heq100*uy2 + 2.*heq110*u.y + heq120;
-	real_t temp102 = heq000*u.x*uz2 + 2.*heq001*uxuz + heq002*u.x + heq100*uz2 + 2.*heq101*u.z + heq102;
-	real_t temp210 = heq000*ux2*u.y + heq010*ux2 + 2.*heq100*uxuy + 2.*heq110*u.x + heq200*u.y + heq210;
-	real_t temp201 = heq000*ux2*u.z + heq001*ux2 + 2.*heq100*uxuz + 2.*heq101*u.x + heq200*u.z + heq201;
-	real_t temp012 = heq000*u.y*uz2 + 2.*heq001*uyuz + heq002*u.y + heq010*uz2 + 2.*heq011*u.z + heq012;
-	real_t temp021 = heq000*uy2*u.z + heq001*uy2 + 2.*heq010*uyuz + 2.*heq011*u.y + heq020*u.z + heq021;
-	real_t temp111 = heq000*uxuy*u.z + heq001*uxuy + heq010*uxuz + heq011*u.x + heq100*uyuz + heq101*u.y + heq110*u.z + heq111;
-	real_t temp220 = heq000*ux2*uy2 + 2.*heq010*ux2*u.y + heq020*ux2 + 2.*heq100*u.x*uy2 + 4.*heq110*uxuy + 2.*heq120*u.x + heq200*uy2 + 2.*heq210*u.y + heq220;
-	real_t temp202 = heq000*ux2*uz2 + 2.*heq001*ux2*u.z + heq002*ux2 + 2.*heq100*u.x*uz2 + 4.*heq101*uxuz + 2.*heq102*u.x + heq200*uz2 + 2.*heq201*u.z + heq202;
-	real_t temp022 = heq000*uy2*uz2 + 2.*heq001*uy2*u.z + heq002*uy2 + 2.*heq010*u.y*uz2 + 4.*heq011*uyuz + 2.*heq012*u.y + heq020*uz2 + 2.*heq021*u.z + heq022;
-	real_t temp211 = heq000*ux2*uyuz + heq001*ux2*u.y + heq010*ux2*u.z + heq011*ux2 + 2.*heq100*uxuy*u.z + 2.*heq101*uxuy + 2.*heq110*uxuz + 2.*heq111*u.x + heq200*uyuz + heq201*u.y + heq210*u.z + heq211;
-	real_t temp121 = heq000*u.x*uy2*u.z + heq001*u.x*uy2 + 2.*heq010*uxuy*u.z + 2.*heq011*uxuy + heq020*uxuz + heq021*u.x + heq100*uy2*u.z + heq101*uy2 + 2.*heq110*uyuz + 2.*heq111*u.y + heq120*u.z + heq121;
-	real_t temp112 = heq000*uxuy*uz2 + 2.*heq001*uxuy*u.z + heq002*uxuy + heq010*u.x*uz2 + 2.*heq011*uxuz + heq012*u.x + heq100*u.y*uz2 + 2.*heq101*uyuz + heq102*u.y + heq110*uz2 + 2.*heq111*u.z + heq112;
-	real_t temp122 = heq000*u.x*uy2*uz2 + 2.*heq001*u.x*uy2*u.z + heq002*u.x*uy2 + 2.*heq010*uxuy*uz2 + 4.*heq011*uxuy*u.z + 2.*heq012*uxuy + heq020*u.x*uz2 + 2.*heq021*uxuz + heq022*u.x + heq100*uy2*uz2 + 2.*heq101*uy2*u.z + heq102*uy2 + 2.*heq110*u.y*uz2 + 4.*heq111*uyuz + 2.*heq112*u.y + heq120*uz2 + 2.*heq121*u.z + heq122;
-	real_t temp212 = heq000*ux2*u.y*uz2 + 2.*heq001*ux2*uyuz + heq002*ux2*u.y + heq010*ux2*uz2 + 2.*heq011*ux2*u.z + heq012*ux2 + 2.*heq100*uxuy*uz2 + 4.*heq101*uxuy*u.z + 2.*heq102*uxuy + 2.*heq110*u.x*uz2 + 4.*heq111*uxuz + 2.*heq112*u.x + heq200*u.y*uz2 + 2.*heq201*uyuz + heq202*u.y + heq210*uz2 + 2.*heq211*u.z + heq212;
-	real_t temp221 = heq000*ux2*uy2*u.z + heq001*ux2*uy2 + 2.*heq010*ux2*uyuz + 2.*heq011*ux2*u.y + heq020*ux2*u.z + heq021*ux2 + 2.*heq100*u.x*uy2*u.z + 2.*heq101*u.x*uy2 + 4.*heq110*uxuy*u.z + 4.*heq111*uxuy + 2.*heq120*uxuz + 2.*heq121*u.x + heq200*uy2*u.z + heq201*uy2 + 2.*heq210*uyuz + 2.*heq211*u.y + heq220*u.z + heq221;
-	real_t temp222 = heq000*ux2*uy2*uz2 + 2.*heq001*ux2*uy2*u.z + heq002*ux2*uy2 + 2.*heq010*ux2*u.y*uz2 + 4.*heq011*ux2*uyuz + 2.*heq012*ux2*u.y + heq020*ux2*uz2 + 2.*heq021*ux2*u.z + heq022*ux2 + 2.*heq100*u.x*uy2*uz2 + 4.*heq101*u.x*uy2*u.z + 2.*heq102*u.x*uy2 + 4.*heq110*uxuy*uz2 + 8.*heq111*uxuy*u.z + 4.*heq112*uxuy + 2.*heq120*u.x*uz2 + 4.*heq121*uxuz + 2.*heq122*u.x + heq200*uy2*uz2 + 2.*heq201*uy2*u.z + heq202*uy2 + 2.*heq210*u.y*uz2 + 4.*heq211*uyuz + 2.*heq212*u.y + heq220*uz2 + 2.*heq221*u.z + heq222;
-	//back to density-probability functions
-	heq000 = temp000 - temp002 - temp020 + temp022 - temp200 + temp202 + temp220 - temp222;
-	heq100 = 1/2.*temp100 - 1/2.*temp102 - 1/2.*temp120 + 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
-	heq200 = -1/2.*temp100 + 1/2.*temp102 + 1/2.*temp120 - 1/2.*temp122 + 1/2.*temp200 - 1/2.*temp202 - 1/2.*temp220 + 1/2.*temp222;
-	heq010 = 1/2.*temp010 - 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 - 1/2.*temp210 + 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
-	heq110 = 1/4.*temp110 - 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	heq210 = -1/4.*temp110 + 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 + 1/4.*temp210 - 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	heq020 = -1/2.*temp010 + 1/2.*temp012 + 1/2.*temp020 - 1/2.*temp022 + 1/2.*temp210 - 1/2.*temp212 - 1/2.*temp220 + 1/2.*temp222;
-	heq120 = -1/4.*temp110 + 1/4.*temp112 + 1/4.*temp120 - 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	heq220 = 1/4.*temp110 - 1/4.*temp112 - 1/4.*temp120 + 1/4.*temp122 - 1/4.*temp210 + 1/4.*temp212 + 1/4.*temp220 - 1/4.*temp222;
-	heq001 = 1/2.*temp001 + 1/2.*temp002 - 1/2.*temp021 - 1/2.*temp022 - 1/2.*temp201 - 1/2.*temp202 + 1/2.*temp221 + 1/2.*temp222;
-	heq101 = 1/4.*temp101 + 1/4.*temp102 - 1/4.*temp121 - 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
-	heq201 = -1/4.*temp101 - 1/4.*temp102 + 1/4.*temp121 + 1/4.*temp122 + 1/4.*temp201 + 1/4.*temp202 - 1/4.*temp221 - 1/4.*temp222;
-	heq011 = 1/4.*temp011 + 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 - 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
-	heq111 = 1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	heq211 = -1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 + 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	heq021 = -1/4.*temp011 - 1/4.*temp012 + 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 + 1/4.*temp212 - 1/4.*temp221 - 1/4.*temp222;
-	heq121 = -1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	heq221 = 1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 - 1/8.*temp212 + 1/8.*temp221 + 1/8.*temp222;
-	heq002 = -1/2.*temp001 + 1/2.*temp002 + 1/2.*temp021 - 1/2.*temp022 + 1/2.*temp201 - 1/2.*temp202 - 1/2.*temp221 + 1/2.*temp222;
-	heq102 = -1/4.*temp101 + 1/4.*temp102 + 1/4.*temp121 - 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
-	heq202 = 1/4.*temp101 - 1/4.*temp102 - 1/4.*temp121 + 1/4.*temp122 - 1/4.*temp201 + 1/4.*temp202 + 1/4.*temp221 - 1/4.*temp222;
-	heq012 = -1/4.*temp011 + 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 + 1/4.*temp211 - 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
-	heq112 = -1/8.*temp111 + 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	heq212 = 1/8.*temp111 - 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 - 1/8.*temp211 + 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	heq022 = 1/4.*temp011 - 1/4.*temp012 - 1/4.*temp021 + 1/4.*temp022 - 1/4.*temp211 + 1/4.*temp212 + 1/4.*temp221 - 1/4.*temp222;
-	heq122 = 1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-	heq222 = -1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
-
-
-	// Code below is generated with r
-	cut_t q;
-	<?R
-		bounce = Bounce(U);
-		sel = DensityAll$group=="h"
-		attach(DensityAll[sel,])
-		h = PV(name)
-		rhold = PV(name,"(0,0,0)")
-		rh_eq = PV(paste("heq",P$x,P$y,P$z,sep=""))
-
-		QU = cbind(dx,dy,dz)
-		detach()
-		Qw = PV( paste("Q",P$x,P$y,P$z,sep=""))
-		Q = PV("q")
-
-		for (i in 2:length(Qw)) {
-			C(Q,Qw[i]);
-	?>
-		
-			if (q != NO_CUT) {
-				<?R 
-					p = PV("p"); 
-				?>
-				real_t p = ((real_t)q) * (2.0 /CUT_MAX); // q * 0.005 * 2 
-				<?R # C(h[bounce[i]], h[bounce[i]] + (1 + p)*rh_eq[bounce[i]]) ?>	// nie dziala :(
-				<?R # C(h[bounce[i]], -1*h[bounce[i]] + 2*rh_eq[bounce[i]]) ?> // dziala np HABB: interpolacja przed kolizja, pnrocenie i source po kolizji	
-				<?R # C(h[bounce[i]], h[bounce[i]] + 2*rh_eq[bounce[i]]) ?>	 // dziala np HABB: interpolacja przed kolizja, source po kolizji
-			}
-		
-	<?R } ?>
-	
-	real_t h2 = <?R C(sum(h)) ?>;
-	AddToHeatSource(h2-h1);  // TODO: move AddToHeatSource elsewhere
-}
 #endif
 
 CudaDeviceFunction void RunBoundariesHydrodynamics()
@@ -1183,6 +953,7 @@ CudaDeviceFunction void RunBoundariesHydrodynamics()
 
 CudaDeviceFunction void RunBoundariesHeat()
 {	
+	real_t h1 = <?R C(sum(h)) ?>;
 	switch (NodeType & NODE_ADDITIONALS_HEAT) {
 		case NODE_HeaterDirichletTemperatureEQ:		
 			HeatDirichletEquilibriumScheme();
@@ -1201,38 +972,36 @@ CudaDeviceFunction void RunBoundariesHeat()
 			ImposeHeatFlux(n);
 			break;
 	}
+
+	real_t h2 = <?R C(sum(h)) ?>;
+	AddToHeatSource(h2-h1);  
 }
 
-CudaDeviceFunction void RunHOBoundariesPart1()
+CudaDeviceFunction void RunHOBoundaries()
 {	
+
 	#ifdef OPTIONS_IBB
-	// This is a wet node BC. It is stored in separate HO_BOUNDARY group,
-	// because the regular wet BOUNDARY nodes have a limiter.
-	switch (NodeType & NODE_HO_BOUNDARY) {
-		case NODE_IBB:
-			HydroInterpolatedBounceBack();
-			ThermalInterpolatedBounceBack();
-			break;
-		case NODE_HeaterDirichletTemperatureIABB:
-			HydroInterpolatedBounceBack();
-			HeaterDirichletTemperatureInterpolatedAntiBounceBackPart1();
-			break;
-	}
+		real_t h1 = <?R C(sum(h)) ?>;
+
+		// This is a wet node BC. It is stored in separate HO_BOUNDARY group,
+		// because the regular wet BOUNDARY nodes have a limiter.
+		switch (NodeType & NODE_HO_BOUNDARY) {
+			case NODE_IBB:
+				HydroInterpolatedBounceBack();
+				ThermalInterpolatedBounceBack();
+				break;
+			case NODE_HeaterDirichletTemperatureIABB:
+				HydroInterpolatedBounceBack();
+				HeaterDirichletTemperatureInterpolatedAntiBounceBack();
+				break;
+		}
+
+
+		real_t h2 = <?R C(sum(h)) ?>;
+		AddToHeatSource(h2-h1); 
 	#endif
 }
 
-CudaDeviceFunction void RunHOBoundariesPart2()
-{
-	#ifdef OPTIONS_IBB
-	// This is a wet node BC. It is stored in separate HO_BOUNDARY group,
-	// because the regular wet BOUNDARY nodes have a limiter.
-	switch (NodeType & NODE_HO_BOUNDARY) {
-		case NODE_HeaterDirichletTemperatureIABB:
-			HeaterDirichletTemperatureInterpolatedAntiBounceBackPart2();
-			break;
-	}
-	#endif
-}
 
 CudaDeviceFunction void Run() {
 	vector_t p1 {0,0,0};
@@ -1242,9 +1011,9 @@ CudaDeviceFunction void Run() {
 
 	RunBoundariesHydrodynamics();
 	RunBoundariesHeat();	
-	RunHOBoundariesPart1();
+	RunHOBoundaries();
 
-    switch (NodeType & NODE_COLLISION) {
+    switch (NodeType & NODE_COLLISION) {    
 		case NODE_CM_HIGHER:
 			CollisionCM_HIGHER();
 			break;
@@ -1264,8 +1033,6 @@ CudaDeviceFunction void Run() {
 			Collision_thermalBGK();
 			break;
 	}
-
-	//RunHOBoundariesPart2();
 
 	if((NodeType & NODE_OBJECTIVEFORCE) == NODE_ForceMeasurment) {
 		vector_t p2;
@@ -2704,7 +2471,7 @@ CudaDeviceFunction vector_t getForce(real_t localTemp, real_t rho)
 }
 
 CudaDeviceFunction void CollisionCM(){
-	real_t localTemperature = getT();
+	real_t localTemperature = _getT();
 	real_t rho = getRho();
 	vector_t Force = getForce(localTemperature, rho);
 
@@ -2734,7 +2501,7 @@ CudaDeviceFunction void CollisionCM(){
 }
 
 CudaDeviceFunction void CollisionCM_HIGHER(){
-	real_t localTemperature = getT();
+	real_t localTemperature = _getT();
 	real_t rho = getRho();
 	vector_t Force = getForce(localTemperature, rho);
 
@@ -2764,7 +2531,7 @@ CudaDeviceFunction void CollisionCM_HIGHER(){
 }
 
 CudaDeviceFunction void CollisionCM_HIGHER_NONLINEAR(){
-	real_t localTemperature = getT();
+	real_t localTemperature = _getT();
 	real_t rho = getRho();
 	vector_t Force = getForce(localTemperature, rho);
 
@@ -2794,7 +2561,7 @@ CudaDeviceFunction void CollisionCM_HIGHER_NONLINEAR(){
 }
 
 CudaDeviceFunction void CollisionCumulants(){
-	real_t localTemperature = getT();
+	real_t localTemperature = _getT();
 	real_t rho = getRho();
 	vector_t Force = getForce(localTemperature, rho);
 
@@ -2824,7 +2591,7 @@ CudaDeviceFunction void CollisionCumulants(){
 }
 
 CudaDeviceFunction void CollisionCumulants_Higher(){
-	real_t localTemperature = getT();
+	real_t localTemperature = _getT();
 	real_t rho = getRho();
 	vector_t Force = getForce(localTemperature, rho);
 
@@ -2854,7 +2621,7 @@ CudaDeviceFunction void CollisionCumulants_Higher(){
 }
 
 CudaDeviceFunction void Collision_thermalBGK(){
-	real_t localTemperature = getT();
+	real_t localTemperature = _getT();
 	real_t rho = getRho();
 	vector_t Force = getForce(localTemperature, rho);
 
@@ -2883,34 +2650,3 @@ CudaDeviceFunction void Collision_thermalBGK(){
 	
 	relax_and_collide_ADE_SRT_from_cm_eq(rho, omega_k, u);
 }
-
-	// cheat sheet
-	// 	D3Q27
-	// M(1,:)=ex.^0;
-	// M(2,:)=ex; 100
-	// M(3,:)=ey; 010
-	// M(4,:)=ez; 001
-	// 		M(5,:)=ex.*ey; 110 # skipped in D3Q15, D3Q7
-	// 		M(6,:)=ex.*ez; 101 # skipped in D3Q15, D3Q7
-	// 		M(7,:)=ey.*ez; 011 # skipped in D3Q15, D3Q7
-	// M(8,:)=ex.*ex; 200
-	// M(9,:)=ey.*ey; 020
-	// M(10,:)=ez.*ez; 002
-	// 		M(11,:)=ex.*ey.*ey; 120 # skipped in D3Q15, D3Q7
-	// 		M(12,:)=ex.*ez.*ez; 102 # skipped in D3Q15, D3Q7
-	// 		M(13,:)=ey.*ex.*ex; 210 # skipped in D3Q15, D3Q7
-	// 		M(14,:)=ez.*ex.*ex; 201 # skipped in D3Q15, D3Q7
-	// 		M(15,:)=ey.*ez.*ez; 012 # skipped in D3Q15, D3Q7
-	// 		M(16,:)=ez.*ey.*ey; 021 # skipped in D3Q15, D3Q7
-	// M(17,:)=ex.*ey.*ez; 111 # skipped in D3Q19, D3Q7
-	// 		M(18,:)=ex.*ex.*ey.*ey; 220 # skipped in D3Q15, D3Q7
-	// 		M(19,:)=ex.*ex.*ez.*ez; 202 # skipped in D3Q15, D3Q7
-	// 		M(20,:)=ey.*ey.*ez.*ez; 022 # skipped in D3Q15, D3Q7
-	// M(21,:)=ex.*ex.*ey.*ez; 211 # skipped in D3Q19, D3Q7
-	// M(22,:)=ex.*ey.*ey.*ez; 121 # skipped in D3Q19, D3Q7
-	// M(23,:)=ex.*ey.*ez.*ez; 112 # skipped in D3Q19, D3Q7
-	// M(24,:)=ex.*ey.*ey.*ez.*ez; 122 # skipped in D3Q19, D3Q7
-	// M(25,:)=ex.*ex.*ey.*ez.*ez; 212 # skipped in D3Q19, D3Q7
-	// M(26,:)=ex.*ex.*ey.*ey.*ez; 221 # skipped in D3Q19, D3Q7
-	// M(27,:)=ex.*ex.*ey.*ey.*ez.*ez; 222 # skipped in D3Q19, D3Q7
-

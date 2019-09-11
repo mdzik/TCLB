@@ -32,7 +32,7 @@ for (h in hname) AddField(h,dx=0,dy=0,dz=0) # Make h accessible also in present 
 # AddStage("BaseInit"  , "Init_distributions" , save=Fields$group %in% c("f","h","Vel"))
 
 # # iteration
-# AddStage("HydroIter" , "calcHydroIter"      , save=Fields$group %in% c("g","h","Vel","nw") , load=DensityAll$group %in% c("g","h","Vel","nw"))
+# AddStage("HydroIter" , "calcHydroIter"    , save=Fields$group %in% c("g","h","Vel","nw") , load=DensityAll$group %in% c("g","h","Vel","nw"))
 # AddStage("HeatIter"  , "calcHeatIter"		, save=Fields$group %in% c("PF")			   , load=DensityAll$group %in% c("g","h","Vel","nw"))
 
 
@@ -134,8 +134,6 @@ AddSetting(name="Sigma_GH", 		  default="1", comment='Initial width of the Gauss
 if(Options$IBB){
 	AddNodeType("HeaterDirichletTemperatureIABB", group="HO_BOUNDARY") 
 	AddNodeType("IBB", 							  group="HO_BOUNDARY") 
-	AddQuantity(name="MaxQ")  
-	AddQuantity(name="MinQ")  
 }
 
 #Smagorinsky coefficient

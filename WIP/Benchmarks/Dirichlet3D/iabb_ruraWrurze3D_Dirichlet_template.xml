@@ -6,8 +6,8 @@
         k_material=c(1e-01),
         effdiam=c(120,92,60,46,30), 
         # effdiam=c(120),
-        collision=c("Cumulants"),
-        bb_type=c("iabb")
+        collision=c("CM_HIGHER"),
+        bb_type=c("iabb", "abb")
     )
 
     dir_name <- "batch_IABB_ruraWrurze"
@@ -102,8 +102,7 @@
 <Log Iterations="5000"/>
 <!-- <Solve Iterations="500000"></Solve>
 <Stop XHydroFLuxChange="1e-11" Times="5" Iterations="10000"/> -->
-<Solve Iterations="20000"><VTK Iterations="1000" what="T,U,Rho"/> </Solve>
-
+<Solve Iterations="100000"><VTK Iterations="10000" what="T,U,Rho"/> </Solve>
 <!-- <Solve Iterations="500000"></Solve>
 <Stop XHydroFLuxChange="1e-11" Times="5" Iterations="10000"/>
 <Solve Iterations="500000"><VTK Iterations="10000" what="T,U,Rho"/> </Solve>
