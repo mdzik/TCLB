@@ -3,13 +3,14 @@
     tab = expand.grid(
         nu=c(1e-01), 
         #k_material=c(0.1666666, 1e-01, 1e-02, 1e-03, 1e-04, 1e-05),
-        k_material=c(1e-01, 1e-02),
+        k_material=c(1e-01),
 
-        y=c(0.75, 1, 1.25),
+        #y=c(0.75, 1, 1.25),
+        y=c(1),
         diam=c(15,31,63,127),
 
         collision=c("CM_HIGHER"),
-        bb_type=c("abb","iabb")
+        bb_type=c("abb")
     )
 
     dir_name <- "batch_IABB_plates"
@@ -57,6 +58,16 @@
                 cat(sprintf("\t\t<STL file=\"example/data/Plate_128x2x128.stl\" scale=\"1\" Xrot=\"0d\" x=\"-2\" y=\"%f\" z=\"-2\" side=\"surface\" />\n", diam -(2.-y) ))
                 cat(sprintf("\t</HeaterDirichletTemperatureIABB>\n"))	
             }
+        else if(bb_type=="eq")
+            {
+                cat(sprintf("<HeaterDirichletTemperatureEQ name=\"dirichlet_hot\">\n"))
+                cat(sprintf("\t\t<Box ny=\"1\" />\n"))
+                cat(sprintf("\t</HeaterDirichletTemperatureEQ>\n"))
+
+                cat(sprintf("<HeaterDirichletTemperatureEQ name=\"dirichlet_cold\">\n"))
+                cat(sprintf("\t\t<Box dy=\"-1\" />\n"))
+                cat(sprintf("\t</HeaterDirichletTemperatureEQ>\n"))   
+            }
         ?>
 
 		<!-- <Wall mask="ALL" name="border" >
@@ -83,8 +94,8 @@
             material_density="1"
             />
         <Params/>
-	    <Params GravitationX="<?%e 2*0.01*nu/(0.25*(diam - 2.*(2.-y))*(diam - 2.*(2.-y))) ?>" />
-	    <Params BoussinesqCoeff="1"/>
+	    <!-- <Params GravitationX="<?%e 2*0.01*nu/(0.25*(diam - 2.*(2.-y))*(diam - 2.*(2.-y))) ?>" /> -->
+	    <!-- <Params BoussinesqCoeff="1"/> -->
         <!-- gx = 2 * uc * (mu_l + mu_h) / ((rho_l + rho_h) * h * h) -->
         <!-- we set uc=0.01 - max velocity -->
     </Model>
@@ -95,7 +106,7 @@
 <Solve Iterations="1"> <VTK Iterations="1"/> </Solve>
 <!-- <Solve Iterations="500000"></Solve>
 <Stop XHydroFLuxChange="1e-11" Times="5" Iterations="10000"/> -->
-<Solve Iterations="100000"><VTK Iterations="10000" what="T,U,Rho"/> </Solve>
+<Solve Iterations="500000"><VTK Iterations="50000" what="T,U,Rho"/> </Solve>
 </CLBConfig>
 
 <?R

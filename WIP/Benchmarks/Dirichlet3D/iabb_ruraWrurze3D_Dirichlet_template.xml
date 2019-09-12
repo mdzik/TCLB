@@ -4,10 +4,11 @@
         nu=c(1e-01), 
         #k_material=c(0.1666666, 1e-01, 1e-02, 1e-03, 1e-04, 1e-05),
         k_material=c(1e-01),
-        effdiam=c(120,92,60,46,30), 
+        # effdiam=c(120,92,60,46,30), 
+        effdiam=c(118,94,66,46,30), 
         # effdiam=c(120),
         collision=c("CM_HIGHER"),
-        bb_type=c("iabb", "abb")
+        bb_type=c("iabb", "abb", "eq")
     )
 
     dir_name <- "batch_IABB_ruraWrurze"
