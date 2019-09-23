@@ -881,7 +881,6 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 		for (i in 2:length(Qw)) {
 			C(Q,Qw[i]);
 	?>
-		
 			if (q != NO_CUT) {
 				<?R 
 					p = PV("p"); 
@@ -892,26 +891,9 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 				real_t ha = <?R C(rhold[i]) ?>;  
 
 				if (p > 1.0) { 
-					
-					<?R # C(h[bounce[i]], -1*ha +  2*rh_eq[bounce[i]]) ?> // dziala - HABB
-					<?R # C(h[bounce[i]], ha ) ?> // dziala (2heq dodawane po kolizji) - HABB  
-					<?R # C(h[bounce[i]], 1*(ha*op + rhold[bounce[i]]*(p-1)*op)) ?>  // dziala, ale nie mozna robic anti przed kolizja
-					<?R # C(h[bounce[i]], ha*op + rhold[bounce[i]]*(p-1)*op + (1 + p)*rh_eq[bounce[i]]) ?>  // nie dziala
-
-					<?R # C(h[bounce[i]], -1*(ha*op + rhold[bounce[i]]*(p-1)*op) + 2*rh_eq[bounce[i]]) ?>  // dziala, niby IABB
-
-					<?R # C(h[bounce[i]], -1*(ha*op + rhold[bounce[i]]*(p-1)*op) + 2*op*rh_eq[bounce[i]]) ?>  // nie dziala, a powinno
-
-					<?R   C(h[bounce[i]], -1*ha*op + rhold[bounce[i]]*(p-1)*op + 2*op*rh_eq[bounce[i]]) ?>  // F. Dubois P. Lallemand and M.M Tekitek, 'On anti bounce back boundary condition for lattice Boltzmann schemes', 2019, CAMWA
-
+					<?R C(h[bounce[i]], -1*ha*op + rhold[bounce[i]]*(p-1)*op + 2*op*rh_eq[bounce[i]]) ?>
 				} else { 
-					<?R # C(h[bounce[i]], -1*ha + 2*rh_eq[bounce[i]])   ?>	// dziala - HABB
-					<?R # C(h[bounce[i]], ha ) ?>	// dziala (2heq dodawane po kolizji) - HABB  
-					<?R # C(h[bounce[i]], 1*(ha*p + h[i]*(1-p)) )  ?>  // dziala, ale nie mozna robic anti przed kolizja
-
-					<?R # C(h[bounce[i]], -1*(ha*p + h[i]*(1-p))+ (1 + p)*rh_eq[bounce[i]]) ?>	// nie dziala
-
-					<?R   C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[bounce[i]])  ?>	// F. Dubois P. Lallemand and M.M Tekitek, 'On anti bounce back boundary condition for lattice Boltzmann schemes', 2019, CAMWA
+					<?R C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[bounce[i]]) ?>
 				}	
 			}
 	<?R } ?>
@@ -953,7 +935,8 @@ CudaDeviceFunction void RunBoundariesHydrodynamics()
 
 CudaDeviceFunction void RunBoundariesHeat()
 {	
-	real_t h1 = <?R C(sum(h)) ?>;
+	real_t h1 = <?R C(sum(h)) ?>;   
+
 	switch (NodeType & NODE_ADDITIONALS_HEAT) {
 		case NODE_HeaterDirichletTemperatureEQ:		
 			HeatDirichletEquilibriumScheme();
@@ -974,7 +957,7 @@ CudaDeviceFunction void RunBoundariesHeat()
 	}
 
 	real_t h2 = <?R C(sum(h)) ?>;
-	AddToHeatSource(h2-h1);  
+	AddToHeatSource(h2-h1);   // TODO: this is called in each node...
 }
 
 CudaDeviceFunction void RunHOBoundaries()
