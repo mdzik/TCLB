@@ -9,7 +9,7 @@
         y=c(1),
         diam=c(15,31,63,127),
 
-        collision=c("CM_HIGHER"),
+        collision=c("CM_HIGHER", "Cumulants"),
         bb_type=c("abb")
     )
 
