@@ -19,3 +19,5 @@ p
 *.pyc
 .Rproj.user
 .idea/*
+batch*
+models/.vscode/
