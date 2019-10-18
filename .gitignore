@@ -20,12 +20,9 @@ wiki
 p
 *.pyc
 .Rproj.user
-<<<<<<< HEAD
 .idea/*
 batch*
 models/.vscode/
-=======
 /*.vtu
 /*.txt
 .idea/*
->>>>>>> develop

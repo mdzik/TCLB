@@ -9,19 +9,16 @@
 #          > make travis                            #
 #                                                   #
 #####################################################
-
 language: c
+
 
 addons:
   apt:
     update: true
     packages:
-<<<<<<< HEAD
-=======
       - nvidia-profiler
       - nvidia-cuda-dev
       - nvidia-cuda-toolkit
->>>>>>> develop
       - openmpi-bin
       - libopenmpi-dev
       - lcov

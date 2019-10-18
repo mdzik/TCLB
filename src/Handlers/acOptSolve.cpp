@@ -35,13 +35,13 @@ int acOptSolve::Init () {
 			}
 			if (stop) break;
 		} while (!Now(solver->iter));
-<<<<<<< HEAD
-		CudaDeviceSynchronize();
-		MPI_Barrier(MPI_COMM_WORLD);
-=======
 		CudaThreadSynchronize();
+		MPI_Barrier(MPMD.local);
+		solver->iter_type = old_iter_type;
+		GenericAction::Unstack();
 		return 0;
 	}
+
 
 // Register the handler (basing on xmlname) in the Handler Factory
 template class HandlerFactory::Register< GenericAsk< acOptSolve > >;
