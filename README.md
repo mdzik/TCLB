@@ -1,12 +1,31 @@
 CudneLB - the templated version
 ===
+<<<<<<< HEAD
 [![Build Status](https://travis-ci.org/CFD-GO/TCLB.svg?branch=thermal_clbm_3d)](https://travis-ci.org/CFD-GO/TCLB) [![Coverage Status](https://coveralls.io/repos/github/CFD-GO/TCLB/badge.svg?branch=develop)](https://coveralls.io/github/CFD-GO/TCLB?branch=develop)
+=======
+
+[![Build Status](https://travis-ci.org/ggruszczynski/TCLB.svg?branch=develop)](https://travis-ci.org/ggruszczynski/TCLB)
+[![Coverage Status](https://coveralls.io/repos/github/CFD-GO/TCLB/badge.svg?branch=develop)](https://coveralls.io/github/CFD-GO/TCLB?branch=develop)
+>>>>>>> develop
 
 CudneLB is a MPI+CUDA or MPI+CPU high-performance CFD simulation code, based on Lattice Boltzmann Method.
 
 It provides a clear interface for calculation of complex physics, and implementing new models.
 
 ## Installation
+
+Just clone the repo (or download the [zip file](https://github.com/CFD-GO/TCLB/archive/master.zip)):
+```bash
+git clone https://github.com/CFD-GO/TCLB.git
+cd TCLB
+```
+
+If you want a more recent (but less stable) version, go for:
+
+```bash
+git clone -b develop https://github.com/CFD-GO/TCLB.git
+cd TCLB
+```
 
 ### Dependencies
 
@@ -51,6 +70,15 @@ This should also work:
 ```bash
 CLB/d2q9/main example/flow/2d/karman.xml
 ```
+
+## Documentation
+
+The documentation (including tutorials) is published at
+[docs.tclb.io](https://docs.tclb.io/). You can contribute at
+[CFD-GO/TCLB_docs](https://github.com/CFD-GO/TCLB_docs).
+
+For the `develop` version, most recent documentation can be found at
+[develop.docs.tclb.io](https://develop.docs.tclb.io/).
 
 ## Authors
 

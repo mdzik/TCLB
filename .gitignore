@@ -1,6 +1,8 @@
 *~
 makefile.main
-output
+output*
+Running*.log
+Running*.time
 aux
 CLB
 *.cbp
@@ -18,6 +20,12 @@ wiki
 p
 *.pyc
 .Rproj.user
+<<<<<<< HEAD
 .idea/*
 batch*
 models/.vscode/
+=======
+/*.vtu
+/*.txt
+.idea/*
+>>>>>>> develop

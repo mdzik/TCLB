@@ -15,11 +15,11 @@ int acOptSolve::Init () {
 				if ((it > 0) && (it < next_it)) next_it = it;
 			}
 			solver->steps = next_it;
-			MPI_Bcast(&solver->steps, 1, MPI_INT, 0, MPI_COMM_WORLD);
+			MPI_Bcast(&solver->steps, 1, MPI_INT, 0, MPMD.local);
 			solver->iter += solver->steps;
 			solver->lattice->Iterate(solver->steps, solver->iter_type);
-			CudaDeviceSynchronize();
-			MPI_Barrier(MPI_COMM_WORLD);
+			CudaThreadSynchronize();
+			MPI_Barrier(MPMD.local);
 			for (size_t i=0; i<solver->hands.size(); i++) {
 				if (solver->hands[i].Now(solver->iter)) {
 					int ret = solver->hands[i].DoIt();
@@ -35,13 +35,13 @@ int acOptSolve::Init () {
 			}
 			if (stop) break;
 		} while (!Now(solver->iter));
+<<<<<<< HEAD
 		CudaDeviceSynchronize();
 		MPI_Barrier(MPI_COMM_WORLD);
-		solver->iter_type = old_iter_type;
-		GenericAction::Unstack();
+=======
+		CudaThreadSynchronize();
 		return 0;
 	}
-
 
 // Register the handler (basing on xmlname) in the Handler Factory
 template class HandlerFactory::Register< GenericAsk< acOptSolve > >;
