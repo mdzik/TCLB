@@ -91,14 +91,13 @@ AddQuantity( name="Rho", unit="kg/m3")
 AddQuantity( name="T", unit="K")
 AddQuantity( name="U", unit="m/s",vector=T )
 # 	Debug-Outputs:
-if(Options$DEBUG){
-	AddQuantity( name="m00_F" )
-	AddQuantity( name="H", unit="J" )
-	AddQuantity( name="material_density", unit="kg/m3" )
-	AddQuantity( name="cp", unit="J/kg/K")
-	AddQuantity( name="conductivity", unit="W/m/K" )
-	AddQuantity( name="RawU", unit="m/s", vector=T )
-}
+AddQuantity( name="m00_F" )
+AddQuantity( name="H", unit="J" )
+AddQuantity( name="material_density", unit="kg/m3" )
+AddQuantity( name="cp", unit="J/kg/K")
+AddQuantity( name="conductivity", unit="W/m/K" )
+AddQuantity( name="RawU", unit="m/s", vector=T )
+
 
 # Boundary things
 AddNodeType("FluxMeasurment",  "OBJECTIVEFLUX")

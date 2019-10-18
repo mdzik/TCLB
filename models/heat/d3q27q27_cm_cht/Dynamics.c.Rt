@@ -46,24 +46,23 @@
 ?>
 
 
-#ifdef OPTIONS_DEBUG
-	CudaDeviceFunction real_t getm00_F(){
-		real_t m00_F = <?R C(sum(f)) ?>;
-		return m00_F/material_density;
-	}
-	
-	CudaDeviceFunction real_t getcp(){
-		return cp;
-	}
-	
-	CudaDeviceFunction real_t getmaterial_density(){
-		return material_density;
-	}
-	
-	CudaDeviceFunction real_t getconductivity(){
-		return conductivity;
-	}
-#endif
+CudaDeviceFunction real_t getm00_F(){
+	real_t m00_F = <?R C(sum(f)) ?>;
+	return m00_F/material_density;
+}
+
+CudaDeviceFunction real_t getcp(){
+	return cp;
+}
+
+CudaDeviceFunction real_t getmaterial_density(){
+	return material_density;
+}
+
+CudaDeviceFunction real_t getconductivity(){
+	return conductivity;
+}
+
 
 CudaDeviceFunction real_t getRho(){
 	real_t rho = <?R C(sum(f)) ?>;
@@ -208,9 +207,6 @@ CudaDeviceFunction void Init() {
 CudaDeviceFunction void HydroBounceBack()
 {
 	<?R 
-		# TODO: FullBounceBack() gets crazy and bounces h_old and f_old in _Outflow mode :/
-		# FullBounceBack()  
-
 		FullBounceBack(group='f')
 	?> 
 }
@@ -319,7 +315,7 @@ CudaDeviceFunction void EPressure()
 
 	real_t T = InitTemperature;
 	vector_t u;
-	u.x=Jx/rho; u.y=Jy/rho; u.z=Jz/rho;  // TODO:
+	u.x=Jx/rho; u.y=Jy/rho; u.z=Jz/rho;
 
 	real_t H = rho*cp*T;
 	SetEquilibriumHeat(H, rho, u); 	
@@ -336,6 +332,8 @@ CudaDeviceFunction void EConvective()
 {
 	// See 'Evaluation of outflow boundary conditions for two-phase lattice Boltzmann equation' 
 	// by Qin Lou, Zhaoli Guo and Baochang Shi from 2013 for details.
+
+	// TODO: it may be crashing... however the version based on index notation (f[0], f[1]...) used to work.
 	real_t U_local = myMax(0, U(-1,0,0)); 
 	real_t invU = 1.0/(1+ U_local);
 
@@ -863,7 +861,7 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 	heq122 = 1/8.*temp111 - 1/8.*temp112 - 1/8.*temp121 + 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
 	heq222 = -1/8.*temp111 + 1/8.*temp112 + 1/8.*temp121 - 1/8.*temp122 + 1/8.*temp211 - 1/8.*temp212 - 1/8.*temp221 + 1/8.*temp222;
 
-	// Code below is generated with r
+	// Code below is generated with R
 	cut_t q;
 	<?R
 		bounce = Bounce(U);
@@ -1231,12 +1229,6 @@ CudaDeviceFunction void relax_and_collide_ADE_Cumulants(real_t rho, real_t omega
 	c122 = ( -c102*h020 - c120*h002 - c100*h022 + h122 + ( -c112*h010 - c121*h001 - c101*h021 - c110*h012 - c111*h011*2. )*2. )/h000;
 	c222 = ( -c122*h100 - c202*h020 - c102*h120 - c220*h002 - c120*h102 - c200*h022 - c100*h122 + h222 + ( -c212*h010 - c112*h110 - c221*h001 - c121*h101 - c201*h021 - c101*h121 - c210*h012 - c110*h112 + ( -c211*h011 - c111*h111 )*2. )*2. )/h000;
 
-	//Getting the velocity from the cummulants and force term
-	// vector_t u;  // # TODO: shall u be recovered from heat-cumulants ?!
-	// u.x = c100 + Force.x/(2.*f000);
-	// u.y = c010 + Force.y/(2.*f000);
-	// u.z = c001 + Force.z/(2.*f000);
-
 	#ifdef OPTIONS_SMAG
 		//Calculating turbulent viscosity for Smagorinsky  turbulence model
 		real_t tau_0 = 1./omega_ade;
@@ -1278,6 +1270,7 @@ CudaDeviceFunction void relax_and_collide_ADE_Cumulants(real_t rho, real_t omega
 	c110 = 0;
 	c101 = 0;
 	c011 = 0;
+
 	//Cumulants relation - hydrodynamics
 	// c100 = c100 + Force.x;    //100 - change only due to force term
 	// c010 = c010 + Force.y;    //010 - change only due to force term
@@ -1418,12 +1411,6 @@ CudaDeviceFunction void relax_and_collide_ADE_Cumulants_Higher(real_t rho, real_
 	c122 = ( -c102*h020 - c120*h002 - c100*h022 + h122 + ( -c112*h010 - c121*h001 - c101*h021 - c110*h012 - c111*h011*2. )*2. )/h000;
 	c222 = ( -c122*h100 - c202*h020 - c102*h120 - c220*h002 - c120*h102 - c200*h022 - c100*h122 + h222 + ( -c212*h010 - c112*h110 - c221*h001 - c121*h101 - c201*h021 - c101*h121 - c210*h012 - c110*h112 + ( -c211*h011 - c111*h111 )*2. )*2. )/h000;
 	
-	//Getting the velocity from the cummulants and force term
-	// vector_t u;  // # TODO: shall u be recovered from heat-cumulants ?!
-	// u.x = c100 + Force.x/(2.*f000);
-	// u.y = c010 + Force.y/(2.*f000);
-	// u.z = c001 + Force.z/(2.*f000);
-
 	#ifdef OPTIONS_SMAG
 		//Calculating turbulent viscosity for Smagorinsky  turbulence model
 		real_t tau_0 = 1./omega_ade;
