@@ -222,7 +222,7 @@ CudaDeviceFunction void ThermalBounceBack()
 CudaDeviceFunction void WPressure()
 {
 	real_t Jx, Jy, Jz, rho;
-	rho = (1 + Pressure*3.)*material_density;
+	rho = (material_density + Pressure*3.);
 	Jx  = ( -f022 - f012 - f002 - f021 - f011 - f001 - f020 - f010 + rho - f000 + ( -f221 - f212 - f211 - f222 - f201 - f202 - f210 - f220 - f200 )*2. ) / ( 1 );
 	Jy  = ( f022 - f012 + f021 - f011 + f020 - f010 ) / ( 1/3. );
 	Jz  = ( f022 + f012 + f002 - f021 - f011 - f001 )*3. ;
@@ -235,6 +235,17 @@ CudaDeviceFunction void WPressure()
 	f102 = f201 + ( -Jz + Jx )/9.;
 	f112 = f221 + ( -Jz + Jy + Jx )/36.;
 	f122 = f211 + ( -Jz - Jy + Jx )/36.;
+
+	// equilibrium scheme for Heat-BC - don't care and impose rho*Teq
+	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+
+	real_t T = InitTemperature;
+	vector_t u;
+	u.x=Jx/rho; u.y=Jy/rho; u.z=Jz/rho;
+
+	real_t H = rho*cp*T;
+	SetEquilibriumHeat(H, rho, u); 	
 }
 
 CudaDeviceFunction void WVelocity()
@@ -2426,16 +2437,16 @@ CudaDeviceFunction vector_t getForce(real_t localTemp, real_t rho)
 {
 	// Boussinesq approximation
 	// rho(T) ~ rho_0*(1-thermal_exp_coeff*(Temp-Temp_0))
-	// F_b = (rho(T) - rho_0)*Grav_Y = -Grav_Y*rho_0*thermal_exp_coeff*(Temp-Temp_0)
+	// F_b = (rho(T) - rho_0)*Grav = -Grav*rho_0*thermal_exp_coeff*(Temp-Temp_0)
 	// see chapter 8.4.1, eq 8.44, p313 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
-	real_t refTemperature = 0;
-	real_t BoussinesqForce = -GravitationY*BoussinesqCoeff*(localTemp - refTemperature); // BoussinesqCoeff=rho_0*thermal_exp_coeff
+	real_t refTemperature = 10;
+	real_t BoussinesqForce = -GravitationZ*BoussinesqCoeff*(localTemp - refTemperature); // BoussinesqCoeff=rho_0*thermal_exp_coeff
 
 	vector_t Force; 
 	Force.x = GravitationX*rho; 
-	Force.y = GravitationY*rho+BoussinesqForce; 
-	Force.z = GravitationZ*rho;
+	Force.y = GravitationY*rho; 
+	Force.z = GravitationZ*rho+BoussinesqForce;
 
 	return Force;
 }

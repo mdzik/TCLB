@@ -36,15 +36,15 @@
     <Model>
 	    <Params
 	    	nu="0.1"
-	    	h_stability_enhancement="1."
+	    	h_stability_enhancement="1"
 
 	        conductivity="0.1666" 
-	        cp="1"
+	        cp="10"
 			material_density="1"
 
 			conductivity-material_A_region="0.1666"
-			cp-material_A_region="0.5"
-			cp-dirichlet_cold="0.5"
+			cp-material_A_region="1000"
+			cp-dirichlet_cold="1000"
 			material_density-material_A_region="1"
 
 	        InitTemperature="10.5"
@@ -56,9 +56,9 @@
 	        <!-- <Params GravitationX="-1.0E-5" /> -->
     </Model> 
 
-<Solve Iterations="50" > <VTK Iterations="1"/> </Solve>
+<Solve Iterations="100" > <VTK Iterations="1"/> </Solve>
 <Failcheck Iterations="1000" nx="64" ny="64" nz="3" />
 <!-- <TXT Iterations="1000" what="T,U"/> -->
 <!-- <Log Iterations="1000"/> -->
-<Solve Iterations="10000"> <VTK Iterations="100"/> </Solve>
+<Solve Iterations="100000"> <VTK Iterations="100"/> </Solve>
 </CLBConfig>
