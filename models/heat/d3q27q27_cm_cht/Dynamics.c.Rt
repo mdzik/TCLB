@@ -69,6 +69,62 @@ CudaDeviceFunction real_t getRho(){
 	return rho;
 }
 
+CudaDeviceFunction real_t getP_fluctuations(){
+	return (getRho()-material_density)/3.0;
+}
+
+
+CudaDeviceFunction vector_t getU(){	
+	// Use this function is only for vtk output.
+	// Nodes are created using streamed, post-collision DF.
+	// RunBoundaries are called in orded to assign the desired value at the boundary.
+	// It can make a difference in convergence study and nicer preview.
+
+	RunBoundariesHydrodynamics();
+	RunBoundariesHeat();	
+	RunHOBoundaries();
+
+	vector_t u;
+	if((NodeType & NODE_BOUNDARY) == NODE_Wall){
+		u.x = 0;
+		u.y = 0;
+		u.z = 0;
+	}
+    else{
+		u = getRawU();
+		real_t localTemperature = getT();
+		real_t rho = getRho();
+		vector_t Force = getForce(localTemperature, rho);
+		u.x += Force.x/(2*rho);
+		u.y += Force.y/(2*rho);
+		u.z += Force.z/(2*rho);
+    }
+	return u;
+}
+
+CudaDeviceFunction vector_t getU_()
+{
+	real_t localTemperature = getT_();
+	vector_t u = getRawU();
+	real_t rho = getRho();
+	vector_t Force = getForce(localTemperature, rho);
+	u.x += Force.x/(2*rho);
+	u.y += Force.y/(2*rho);
+	u.z += Force.z/(2*rho);
+	return u;
+}
+ 
+CudaDeviceFunction vector_t getRawU(){
+	real_t d = getRho();
+	vector_t u;
+	<?R C(PV(c("u.x","u.y", "u.z")), f %*% U) ?>
+	u.x /= d;
+	u.y /= d;
+	u.z /= d;
+	return u;
+}
+
+
 CudaDeviceFunction real_t getT(){
 	// Use this function is only for vtk output.
 	// Nodes are created using streamed, post-collision DF.
@@ -84,27 +140,7 @@ CudaDeviceFunction real_t getT(){
 	return m00_H/(rho*cp);
 }
 
-CudaDeviceFunction vector_t getU(){	
-	// Use this function is only for vtk output.
-	// Nodes are created using streamed, post-collision DF.
-	// RunBoundaries are called in orded to assign the desired value at the boundary.
-	// It can make a difference in convergence study and nicer preview.
-
-	RunBoundariesHydrodynamics();
-	RunBoundariesHeat();	
-	RunHOBoundaries();
-
-	real_t localTemperature = getT();
-	vector_t u = getRawU();
-	real_t rho = getRho();
-	vector_t Force = getForce(localTemperature, rho);
-	u.x += Force.x/(2*rho);
-	u.y += Force.y/(2*rho);
-	u.z += Force.z/(2*rho);
-	return u;
-}
-
-CudaDeviceFunction real_t _getT(){
+CudaDeviceFunction real_t getT_(){
 	real_t rho = getRho();
 	real_t m00_H = <?R C(sum(h)) ?>;
 	return m00_H/(rho*cp);
@@ -112,28 +148,6 @@ CudaDeviceFunction real_t _getT(){
 
 CudaDeviceFunction real_t getH(){
 	return <?R C(sum(h)) ?>;
-}
-    
-CudaDeviceFunction vector_t getRawU(){
-	real_t d = getRho();
-	vector_t u;
-	<?R C(PV(c("u.x","u.y", "u.z")), f %*% U) ?>
-	u.x /= d;
-	u.y /= d;
-	u.z /= d;
-	return u;
-}
-
-CudaDeviceFunction vector_t _getU()
-{
-	real_t localTemperature = _getT();
-	vector_t u = getRawU();
-	real_t rho = getRho();
-	vector_t Force = getForce(localTemperature, rho);
-	u.x += Force.x/(2*rho);
-	u.y += Force.y/(2*rho);
-	u.z += Force.z/(2*rho);
-	return u;
 }
 
 CudaDeviceFunction vector_t get_fDarcyStoper(real_t rho, vector_t u)
@@ -148,7 +162,7 @@ CudaDeviceFunction vector_t get_fDarcyStoper(real_t rho, vector_t u)
 CudaDeviceFunction float2 Color() {
 	float2 ret;
 	
-	ret.x = _getT();
+	ret.x = getT_();
 	ret.x -= 10;  // hack for better preview.
 	ret.y = ret.x;
 
@@ -159,7 +173,7 @@ CudaDeviceFunction float2 Color() {
 		ret.y = 1;
 	}
 
-	// vector_t u = _getU();
+	// vector_t u = getU_();
 	// // ret.x = sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
 	// ret.x = u.x;
 	// ret.y = u.y;
@@ -167,6 +181,48 @@ CudaDeviceFunction float2 Color() {
 	return ret;
 }
 
+#ifdef OPTIONS_AVG
+CudaDeviceFunction real_t getaverageT(){
+	avgT += getT();
+	return avgT/average_iter;
+}
+CudaDeviceFunction real_t getaverageP(){
+	return avgP/average_iter;
+}
+CudaDeviceFunction real_t getDissipation(){
+        real_t diss;
+       	diss = nu*((avgdxu2/average_iter)-(avgUX(1,0,0) - avgUX(-1,0,0))*(avgUX(1,0,0) - avgUX(-1,0,0))/(4*average_iter*average_iter));
+       	diss = diss + nu*((avgdyv2/average_iter) -(avgUY(0,1,0) - avgUY(0,-1,0))*(avgUY(0,1,0) - avgUY(0,-1,0))/(4*average_iter*average_iter));
+       	diss = diss + nu*((avgdzw2/average_iter) - (avgUZ(0,0,1) - avgUZ(0,0,-1))*(avgUZ(0,0,1) - avgUZ(0,0,-1))/(4*average_iter*average_iter));
+        return diss;
+}
+CudaDeviceFunction vector_t getavgU(){
+        vector_t u;
+        u.x = avgUX(0,0,0)/average_iter;  //avgUX(0,0,0) in fact
+        u.y = avgUY(0,0,0)/average_iter;
+        u.z = avgUZ(0,0,0)/average_iter;
+        return u;
+}
+CudaDeviceFunction vector_t getvarU(){
+        vector_t u;
+        u.x = varUX/average_iter - getavgU().x*getavgU().x;
+        u.y = varUY/average_iter - getavgU().y*getavgU().y;
+        u.z = varUZ/average_iter - getavgU().z*getavgU().z;
+        return u;
+}
+CudaDeviceFunction vector_t getReStr(){
+        vector_t st;
+        st.x = varUYUZ/average_iter - getavgU().y*getavgU().z;
+        st.y = varUXUZ/average_iter - getavgU().x*getavgU().z;
+        st.z = varUXUY/average_iter - getavgU().x*getavgU().y;
+        return st;
+}
+CudaDeviceFunction real_t getKinE(){
+	real_t ke;
+	ke = 0.5*(getvarU().x + getvarU().y + getvarU().z);
+	return ke;
+}
+#endif
 
 CudaDeviceFunction void Init() {
 	real_t pressure = Pressure;
@@ -457,7 +513,7 @@ CudaDeviceFunction void HeaterSource()
 {
 	real_t T = InitTemperature;
 	real_t rho = getRho();
-	vector_t u = _getU();
+	vector_t u = getU_();
 
 	// TCLB is smart enough to distiguish values prescribed it batch.xml like
 	// InitTemperature-dirichlet_region="123"
@@ -541,9 +597,9 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 	real_t T = InitTemperature;
 	real_t rho = getRho();
-	// vector_t u = _getU();
+	// vector_t u = getU_();
 
-	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = _getU(); 
+	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU_(); 
 	real_t H = rho*cp*T;
 	SetEquilibriumHeat(H, rho, u); 
 }
@@ -563,7 +619,7 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 
 	real_t T = InitTemperature;
 	real_t rho = getRho();
-	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = _getU(); 
+	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU_(); 
 	real_t H = rho*cp*T;
 
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
@@ -775,7 +831,7 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 	
 	real_t T = InitTemperature;
 	real_t rho = getRho();
-	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = _getU(); 
+	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU_(); 
 	real_t H = rho*cp*T;
 	
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
@@ -1176,7 +1232,7 @@ CudaDeviceFunction void SetEquilibriumHeat(real_t H, real_t rho, vector_t u)
 CudaDeviceFunction void relax_and_collide_ADE_Cumulants(real_t rho, real_t omega_ade, vector_t u)
 {
 	real_t Sigma2 = (h_stability_enhancement*1./3.)/(cp*rho);
- 	real_t w[10] = {omega_ade,1.,1.,1.,1.,1.,1.,1.,1.,1.};
+ 	real_t w[10] = {omega_ade,1.,};
 
 	// calculate cumulants 
 	h000 = h200 + h100 + h000; h100 = -h200 + h100; h200 = h100 + h200*2.; 
@@ -1358,7 +1414,7 @@ CudaDeviceFunction void relax_and_collide_ADE_Cumulants(real_t rho, real_t omega
 CudaDeviceFunction void relax_and_collide_ADE_Cumulants_Higher(real_t rho, real_t omega_ade, vector_t u)
 {
 	real_t Sigma2 = (h_stability_enhancement*1./3.)/(cp*rho);
- 	real_t w[10] = {omega_ade,1.,1.,1.,1.,1.,1.,1.,1.,1.};
+ 	real_t w[10] = {omega_ade,1.};
 
 	// calculate cumulants 
 	h000 = h200 + h100 + h000; h100 = -h200 + h100; h200 = h100 + h200*2.; 
@@ -2247,7 +2303,7 @@ CudaDeviceFunction void relax_and_collide_ADE_SRT_from_cm_eq(real_t rho, real_t 
 
 CudaDeviceFunction vector_t relax_and_collide_hydro(vector_t Force, real_t omega)
 {	
- 	real_t w[10] = {omega,1.,1.,1.,1.,1.,1.,1.,1.,1.};
+ 	real_t w[2] = {omega,1.};
 //	if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nu_buffer+0.5);
 	  
 	f000 = f200 + f100 + f000; f100 = -f200 + f100; f200 = f100 + f200*2.; 
@@ -2329,7 +2385,7 @@ CudaDeviceFunction vector_t relax_and_collide_hydro(vector_t Force, real_t omega
 		tau_t = 0.5 * (sqrt( tau_0 * tau_0 + 18 * Smag * Smag * q) - tau_0);
 		w[0] = 1.0 / (tau_0 + tau_t);
 
-//		if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nu_buffer+0.5);
+		if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nu_buffer+0.5);
 	#endif
 	
 	// Galilean Correction 
@@ -2337,6 +2393,11 @@ CudaDeviceFunction vector_t relax_and_collide_hydro(vector_t Force, real_t omega
 	dxu = - w[0]/(2.)*(2*c200 - c020 - c002) - w[1]/(2.)*(c200 + c020 + c002 - 1.);
 	dyv = dxu + 3.*w[0]/2.*(c200 - c020);
 	dzw = dxu + 3.*w[0]/2.*(c200 - c002);
+	#ifdef OPTIONS_AVG
+		avgdxu2 = avgdxu2 + dxu*dxu;
+		avgdyv2 = avgdyv2 + dyv*dyv;
+		avgdzw2 = avgdzw2 + dzw*dzw;
+	#endif
 	real_t gcor1 = 3.*(1 - w[0]/2.)*(u.x*u.x*dxu - u.y*u.y*dyv);
 	real_t gcor2 = 3.*(1 - w[0]/2.)*(u.x*u.x*dxu - u.z*u.z*dzw);
 	real_t gcor3 = 3.*(1 - w[1]/2.)*(u.x*u.x*dxu + u.y*u.y*dyv + u.z*u.z*dzw);
@@ -2429,6 +2490,19 @@ CudaDeviceFunction vector_t relax_and_collide_hydro(vector_t Force, real_t omega
 	f120 = -f122 + f120; f121 = ( f122 + f121 )/2.; f122 = f122 - f121; 
 	f220 = -f222 + f220; f221 = ( f222 + f221 )/2.; f222 = f222 - f221;
 	
+	#ifdef OPTIONS_AVG
+		avgP =  avgP + getP_fluctuations();
+		avgUX = avgUX(0,0,0) + getU_().x;
+		avgUY = avgUY(0,0,0) + getU_().y;
+		avgUZ = avgUZ(0,0,0) + getU_().z;
+		varUX = varUX + getU_().x*getU_().x;
+		varUY = varUY + getU_().y*getU_().y;
+		varUZ = varUZ + getU_().z*getU_().z;
+		varUXUY = varUXUY + getU_().x*getU_().y;
+		varUXUZ = varUXUZ + getU_().x*getU_().z;
+		varUYUZ = varUYUZ + getU_().y*getU_().z;
+	#endif
+
 	return u;
 }
 
@@ -2437,22 +2511,25 @@ CudaDeviceFunction vector_t getForce(real_t localTemp, real_t rho)
 {
 	// Boussinesq approximation
 	// rho(T) ~ rho_0*(1-thermal_exp_coeff*(Temp-Temp_0))
-	// F_b = (rho(T) - rho_0)*Grav = -Grav*rho_0*thermal_exp_coeff*(Temp-Temp_0)
+	// F_b = (rho(T) - rho_0)*Grav_Y = -Grav_Y*rho_0*thermal_exp_coeff*(Temp-Temp_0)
 	// see chapter 8.4.1, eq 8.44, p313 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
-	real_t refTemperature = 10;
-	real_t BoussinesqForce = -GravitationZ*BoussinesqCoeff*(localTemp - refTemperature); // BoussinesqCoeff=rho_0*thermal_exp_coeff
+	real_t refTemperature = 0;
+	real_t BoussinesqForceX = -GravitationX*BoussinesqCoeff*(localTemp - refTemperature); // BoussinesqCoeff=rho_0*thermal_exp_coeff
+	real_t BoussinesqForceY = -GravitationY*BoussinesqCoeff*(localTemp - refTemperature); // BoussinesqCoeff=rho_0*thermal_exp_coeff
+	real_t BoussinesqForceZ = -GravitationZ*BoussinesqCoeff*(localTemp - refTemperature); // BoussinesqCoeff=rho_0*thermal_exp_coeff
+
 
 	vector_t Force; 
-	Force.x = GravitationX*rho; 
-	Force.y = GravitationY*rho; 
-	Force.z = GravitationZ*rho+BoussinesqForce;
+	Force.x = GravitationX*rho+BoussinesqForceX;  
+	Force.y = GravitationY*rho+BoussinesqForceY; 
+	Force.z = GravitationZ*rho+BoussinesqForceZ; 
 
 	return Force;
 }
 
 CudaDeviceFunction void CollisionCM(){
-	real_t localTemperature = _getT();
+	real_t localTemperature = getT_();
 	real_t rho = getRho();
 	vector_t Force = getForce(localTemperature, rho);
 
@@ -2482,7 +2559,7 @@ CudaDeviceFunction void CollisionCM(){
 }
 
 CudaDeviceFunction void CollisionCM_HIGHER(){
-	real_t localTemperature = _getT();
+	real_t localTemperature = getT_();
 	real_t rho = getRho();
 	vector_t Force = getForce(localTemperature, rho);
 
@@ -2512,7 +2589,7 @@ CudaDeviceFunction void CollisionCM_HIGHER(){
 }
 
 CudaDeviceFunction void CollisionCM_HIGHER_NONLINEAR(){
-	real_t localTemperature = _getT();
+	real_t localTemperature = getT_();
 	real_t rho = getRho();
 	vector_t Force = getForce(localTemperature, rho);
 
@@ -2542,7 +2619,7 @@ CudaDeviceFunction void CollisionCM_HIGHER_NONLINEAR(){
 }
 
 CudaDeviceFunction void CollisionCumulants(){
-	real_t localTemperature = _getT();
+	real_t localTemperature = getT_();
 	real_t rho = getRho();
 	vector_t Force = getForce(localTemperature, rho);
 
@@ -2572,7 +2649,7 @@ CudaDeviceFunction void CollisionCumulants(){
 }
 
 CudaDeviceFunction void CollisionCumulants_Higher(){
-	real_t localTemperature = _getT();
+	real_t localTemperature = getT_();
 	real_t rho = getRho();
 	vector_t Force = getForce(localTemperature, rho);
 
@@ -2602,7 +2679,7 @@ CudaDeviceFunction void CollisionCumulants_Higher(){
 }
 
 CudaDeviceFunction void Collision_thermalBGK(){
-	real_t localTemperature = _getT();
+	real_t localTemperature = getT_();
 	real_t rho = getRho();
 	vector_t Force = getForce(localTemperature, rho);
 

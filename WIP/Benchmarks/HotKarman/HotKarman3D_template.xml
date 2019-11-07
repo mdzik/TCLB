@@ -22,8 +22,7 @@
 <CLBConfig version="2.0" output="<?%s output ?>">
 <!-- <CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/HotKarman3D_template/"> -->
 <!-- <CLBConfig version="2.0" output="output/HotKarman3D_template/"> -->
-    <Geometry nx="1000" ny="150" nz="50" >
-      <CM><Box /></CM>    
+    <Geometry nx="1000" ny="150" nz="50" > 
         <CM><Box/></CM>
         <WVelocity><Inlet/></WVelocity>
         <!-- <EPressure><Outlet/></EPressure> -->

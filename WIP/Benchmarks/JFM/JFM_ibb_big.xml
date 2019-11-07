@@ -1,0 +1,29 @@
+<!-- 
+See
+`Direct numerical simulation of heat transfer from a cylinder immersed in the production and decay regions of grid-element turbulence`
+by I. Paul, G. Papadakis, J.C. Vassilicos
+J. Fluid. Mech. vol. 847, pp452-488, 2018
+ -->
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/jfm_ibb_big/">
+    <Geometry nx="672" ny="192" nz="192">
+        <MRT><Box/></MRT>
+        <IB name="border" >
+	   <STL file="JFM/jfm_grid.stl" scale="420.819445" Xrot="0d" x="29.119064" y="0.595264" z="0.595264" side="surface"/>
+   	</IB>
+        <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
+        <EPressure name="Outlet"><Box dx="-1"/></EPressure>
+    </Geometry>
+    <Model>
+      <Params Velocity="0.05"
+              Velocity-Inlet="0.05"
+              nu="0.00181132075"/>
+    </Model>
+    <Solve Iterations="500000"/>
+    <VTK Iterations="50000"/>
+    <SaveMemoryDump Iterations="250000" file="test.tclbdump"/>
+    <Average/>
+    <Solve Iterations="400000"/>
+    <Average/>
+    <Solve Iterations="100000"/>
+  </CLBConfig>

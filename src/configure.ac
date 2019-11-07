@@ -27,6 +27,10 @@ AC_ARG_WITH([mpi-lib],
 		[specify the full path to your mpi shared libraries, e.g. /usr/lib/openmpi/]),
 	[MPI_LIB="$withval"])
 
+AC_ARG_WITH([hdf5],
+	AC_HELP_STRING([--with-hdf5=hdf5],
+		[specify the full path to your hdf5 installation]))
+
 AC_ARG_ENABLE([graphics],
 	AC_HELP_STRING([--enable-graphics],
 		[make a GUI version]))
@@ -37,7 +41,7 @@ AC_ARG_ENABLE([double],
 
 AC_ARG_ENABLE([cpp11],
 	AC_HELP_STRING([--enable-cpp11],
-		[enable C++ 11 standard (default)]))
+		[enable C++ 11 standard]))
 
 AC_ARG_WITH([cuda-arch],
 	AC_HELP_STRING([--with-cuda-arch=arch],
@@ -287,10 +291,6 @@ else
 fi
 CPPFLAGS="${CPPFLAGS} -I${MPI_INCLUDE}"
 
-
-
-
-
 AC_MSG_CHECKING([MPI library path])
 if test -z "${MPI_LIB}"; then
 	if test -z "${MPI}"; then
@@ -309,6 +309,37 @@ AC_CHECK_LIB([mpi], [MPI_Recv],[],[
 		AC_MSG_ERROR([Didn't find MPI Library])
 	])
 ])
+
+
+AC_MSG_CHECKING([HDF5 path])
+need_hdf5="no"
+has_hdf5="no"
+if test "x${with_hdf5}" != "xno"; then
+	if test "x${with_hdf5}" != "x"; then
+		if test "x${with_hdf5}" == "xyes"; then
+			need_hdf5=yes
+		else
+			if test -d "${with_hdf5}"; then
+				LDFLAGS="${LDFLAGS} -L${with_hdf5}/lib"
+				CPPFLAGS="${CPPFLAGS} -I${with_hdf5}/include"
+				need_hdf5=yes
+				AC_MSG_RESULT([${with_hdf5}])
+			else
+				AC_MSG_ERROR([${with_hdf5}: path not found])
+			fi
+		fi
+	fi
+	has_hdf5="yes"
+	AC_CHECK_HEADERS([hdf5.h],[],[has_hdf5="no"])
+	AC_CHECK_LIB([hdf5], [H5Pset_fapl_mpio],[],[has_hdf5="no"])
+	if test "x${has_hdf5}" == "xyes"; then
+		AC_DEFINE([WITH_HDF5], [1], [Using HDF5])
+	else
+		if test "x${need_hdf5}" == "xyes"; then
+			AC_MSG_ERROR([HDF5 not found])
+		fi
+	fi
+fi
 
 
 if  test "x${with_python}" == "xyes"; then
@@ -532,9 +563,9 @@ then
 fi
 
 
-if test "x${enable_cpp11}" != "xno"
+if test "x${enable_cpp11}" == "xyes"
 then
-	CPP_OPT="${CPP_OPT} -std=c++11"  # -D_MWAITXINTRIN_H_INCLUDED -D__STRICT_ANSI__
+	CPP_OPT="${CPP_OPT} -std=c++11"
 	NVFLAGS="${NVFLAGS} -std=c++11"
 fi
 
