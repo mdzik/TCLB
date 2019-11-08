@@ -7,9 +7,8 @@
     <Units>
         <!-- <Params size="1m"/> -->
     </Units>
-    <Geometry nx="600" ny="128" nz="3" >
-      <CM><Box /></CM>    
-        <CM><Box/></CM>
+    <Geometry nx="600" ny="128" nz="3" > 
+        <CM_HIGHER><Box/></CM_HIGHER>
         <WVelocity><Inlet/></WVelocity>
         <!-- <EPressure><Outlet/></EPressure> -->
         <!-- <EConvect><Outlet/></EConvect> -->

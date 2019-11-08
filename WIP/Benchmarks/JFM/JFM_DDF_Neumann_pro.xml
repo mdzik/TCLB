@@ -6,7 +6,7 @@ J. Fluid. Mech. vol. 847, pp452-488, 2018
  -->
 
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/JFM_DDF/">
+<CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/JFM_DDF/neumann/">
     <Geometry nx="672" ny="192" nz="192">
         <CM_HIGHER><Box/></CM_HIGHER>
         <IBB name="border" >
