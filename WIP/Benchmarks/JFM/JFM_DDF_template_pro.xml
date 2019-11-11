@@ -123,7 +123,7 @@ J. Fluid. Mech. vol. 847, pp452-488, 2018
     <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="<?%f 192*sizer ?>" />
     <!-- <Solve Iterations="500000" > <VTK Iterations="50000" what="T,U,Rho"/> </Solve> -->
 
-    <Solve Iterations="10">  <VTK Iterations="1"/> <Solve /> 
+    <Solve Iterations="10">  <VTK Iterations="1"/> </Solve > 
 
     <Log Iterations="2000"/>
     <Solve Iterations="20000"> 

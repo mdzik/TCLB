@@ -15,9 +15,9 @@
             <Cylinder dx="142" dy="30" nx="15" ny="15" nz="3"/>
         </Wall>
 
-        <HeaterDirichletTemperatureEQ mask="COLLISION" name="dirichlet_hot"> 
+<!--         <HeaterDirichletTemperatureEQ mask="COLLISION" name="dirichlet_hot"> 
         	<Cylinder dx="142" dy="30" nx="15" ny="15" nz="3"/>
-        </HeaterDirichletTemperatureEQ>  
+        </HeaterDirichletTemperatureEQ>   -->
 
         <FluxMeasurment>
             <Cylinder dx="142" dy="30" nx="15" ny="15" nz="3"/>
@@ -38,15 +38,17 @@
 
         <Params
             nu="0.03"
-            conductivity="0.003"
-            conductivity_buffer="0.003"
+            conductivity="0.03"
+            
+            nu_buffer="0.1"
+            conductivity_buffer="0.1"
 
             h_stability_enhancement="1."
             cp="1"
             material_density="1"
             />
         <Params/>
-        <Params VelocityX="0.2" />
+        <Params VelocityX="0.05" />
         <!-- <Params VelocityX="1.0E-02" /> -->
     </Model>
 
