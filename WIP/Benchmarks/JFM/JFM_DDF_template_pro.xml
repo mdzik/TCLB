@@ -43,7 +43,7 @@ J. Fluid. Mech. vol. 847, pp452-488, 2018
     <!-- <Geometry nx="672" ny="192" nz="192"> -->
     <Geometry nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="<?%f 192*sizer ?>" >   
         <Cumulants><Box/></Cumulants>
-<!--         <IBB name="border" >
+        <IBB name="border" >
               <STL 
               file="WIP/Benchmarks/JFM/grid.stl" 
               scale="<?%f sizer*grid_scale ?>" 
@@ -53,8 +53,8 @@ J. Fluid. Mech. vol. 847, pp452-488, 2018
               z="<?%f sizer*grid_scale*2.15*t0 ?>" 
               side="surface"
             />
-        </IBB> -->
-           <Wall mask="ALL">
+        </IBB>
+<!--            <Wall mask="ALL">
                 <STL 
                 file="WIP/Benchmarks/JFM/grid.stl" 
                 scale="<?%f sizer*grid_scale ?>" 
@@ -64,7 +64,7 @@ J. Fluid. Mech. vol. 847, pp452-488, 2018
                 z="<?%f sizer*grid_scale*2.15*t0 ?>" 
                 side="surface"
               />
-            </Wall>
+            </Wall> -->
 
         <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
         <EPressure name="Outlet"><Box dx="-1"/></EPressure>
