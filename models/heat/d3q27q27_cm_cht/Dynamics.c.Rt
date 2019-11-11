@@ -183,7 +183,6 @@ CudaDeviceFunction float2 Color() {
 
 #ifdef OPTIONS_AVG
 CudaDeviceFunction real_t getaverageT(){
-	avgT += getT();
 	return avgT/average_iter;
 }
 CudaDeviceFunction real_t getaverageP(){
@@ -2556,6 +2555,9 @@ CudaDeviceFunction void CollisionCM(){
 	if ((NodeType & NODE_BOUNDARY) != 0) omega_k = 1.0/(3*conductivity_buffer+0.5);
 
 	relax_and_collide_ADE_CM(rho, omega_k, u);
+	#ifdef OPTIONS_AVG
+		avgT += getT();
+	#endif
 }
 
 CudaDeviceFunction void CollisionCM_HIGHER(){
@@ -2586,6 +2588,10 @@ CudaDeviceFunction void CollisionCM_HIGHER(){
 	if ((NodeType & NODE_BOUNDARY) != 0) omega_k = 1.0/(3*conductivity_buffer+0.5);
 
 	relax_and_collide_ADE_CM_HIGHER(rho, omega_k, u);
+
+	#ifdef OPTIONS_AVG
+		avgT += getT();
+	#endif
 }
 
 CudaDeviceFunction void CollisionCM_HIGHER_NONLINEAR(){
@@ -2616,6 +2622,10 @@ CudaDeviceFunction void CollisionCM_HIGHER_NONLINEAR(){
 	if ((NodeType & NODE_BOUNDARY) != 0) omega_k = 1.0/(3*conductivity_buffer+0.5);
 
 	relax_and_collide_ADE_CM_HIGHER_NONLINEAR(rho, omega_k, u);
+
+	#ifdef OPTIONS_AVG
+		avgT += getT();
+	#endif
 }
 
 CudaDeviceFunction void CollisionCumulants(){
@@ -2646,6 +2656,10 @@ CudaDeviceFunction void CollisionCumulants(){
 	if ((NodeType & NODE_BOUNDARY) != 0) omega_k = 1.0/(3*conductivity_buffer+0.5);
 
 	relax_and_collide_ADE_Cumulants(rho, omega_k, u);
+
+	#ifdef OPTIONS_AVG
+		avgT += getT();
+	#endif
 }
 
 CudaDeviceFunction void CollisionCumulants_Higher(){
@@ -2676,6 +2690,9 @@ CudaDeviceFunction void CollisionCumulants_Higher(){
 	if ((NodeType & NODE_BOUNDARY) != 0) omega_k = 1.0/(3*conductivity_buffer+0.5);
 
 	relax_and_collide_ADE_Cumulants_Higher(rho, omega_k, u);
+	#ifdef OPTIONS_AVG
+		avgT += getT();
+	#endif
 }
 
 CudaDeviceFunction void Collision_thermalBGK(){
@@ -2707,4 +2724,8 @@ CudaDeviceFunction void Collision_thermalBGK(){
 	if ((NodeType & NODE_BOUNDARY) != 0) omega_k = 1.0/(3*conductivity_buffer+0.5);
 	
 	relax_and_collide_ADE_SRT_from_cm_eq(rho, omega_k, u);
+
+	#ifdef OPTIONS_AVG
+		avgT += getT();
+	#endif
 }

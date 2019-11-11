@@ -25,8 +25,7 @@
     <Units>
         <Params size="1m" gauge="<?%f sizer ?>"/>
     </Units>
-    <Geometry nx="1000m" ny="150m" nz="3m" >
-      <CM><Box /></CM>    
+    <Geometry nx="1000m" ny="150m" nz="3m" > 
         <CM><Box/></CM>
         <WVelocity><Inlet/></WVelocity>
         <!-- <EPressure><Outlet/></EPressure> -->

@@ -7,10 +7,13 @@ J. Fluid. Mech. vol. 847, pp452-488, 2018
 
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/JFM_DDF/diri/">
-    <Geometry nx="672" ny="192" nz="192">
+    <Geometry nx="300" ny="192" nz="192">
         <CM_HIGHER><Box/></CM_HIGHER>
         <IBB name="border" >
-	       <STL file="JFM/jfm_grid.stl" scale="420.819445" Xrot="0d" x="29.119064" y="0.595264" z="0.595264" side="surface"/>
+	       <STL file="WIP/Benchmarks/JFM/jfm_grid_old.stl" scale="420.819445" Xrot="0d" x="29.119064" y="0.595264" z="0.595264" side="surface"/>
+
+
+
    	    </IBB>
         <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
         <EPressure name="Outlet"><Box dx="-1"/></EPressure>
@@ -18,7 +21,7 @@ J. Fluid. Mech. vol. 847, pp452-488, 2018
           <Cylinder dx="207" dy="87" nx="18" ny="18" nz="192"/> <!-- turbulence production region -->
         </HeaterDirichletTemperatureEQ>  
        <FluxMeasurment>
-            <Cylinder dx="142" dy="30" nx="15" ny="15" nz="3"/>
+            <Cylinder dx="207" dy="87" nx="18" ny="18" nz="192"/>
             <!-- <Outlet/> -->
         </FluxMeasurment>
     </Geometry>
@@ -48,10 +51,16 @@ J. Fluid. Mech. vol. 847, pp452-488, 2018
 
 
     </Model>
-    <Solve Iterations="10"/>
+<!--     <Solve Iterations="10"/>
     <Failcheck Iterations="2000" nx="10" ny="192" nz="192" />
     <Solve Iterations="500000" > <VTK Iterations="50000" what="T,U,Rho"/> </Solve>
-    <!-- <SaveMemoryDump Iterations="250000" file="test.tclbdump"/> -->
-    <Average/><Solve Iterations="400000"/><Average/>
-    <Solve Iterations="100000" /> <VTK Iterations="50000" what="T,U,Rho"/> </Solve>
+    <SaveMemoryDump Iterations="250000" file="test.tclbdump"/>
+    <Average><Solve Iterations="400000"/></Average>
+    <Solve Iterations="100000" /> <VTK Iterations="50000" what="T,U,Rho"/> </Solve> -->
+
+    <Solve Iterations="5"> <VTK Iterations="1"/></Solve>
+    <Solve Iterations="5000" > <VTK Iterations="100" what="T,U,Rho"/> </Solve>
+    <Failcheck Iterations="2000" nx="10" ny="192" nz="192" />
+    <Average><Solve Iterations="1000"/></Average>
+    <Solve Iterations="5000" > <VTK Iterations="100" what="T,U,Rho"/> </Solve>
   </CLBConfig>

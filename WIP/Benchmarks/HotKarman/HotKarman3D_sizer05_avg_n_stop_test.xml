@@ -1,12 +1,14 @@
 
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/batch_HotKarman3D_stop_test/">
+<CLBConfig version="2.0" output="output/batch_HotKarman3D_avg_n_stop_test/">
     <Geometry nx="500" ny="75" nz="3" >  
         <CM_HIGHER><Box/></CM_HIGHER>
-        <WVelocity><Inlet/></WVelocity>
-        <!-- <EPressure><Outlet/></EPressure> -->
+        <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
+        <EPressure name="Outlet"><Box dx="-1"/></EPressure>
+<!--         <WVelocity><Inlet/></WVelocity>
+        <EPressure><Outlet/></EPressure> -->
         <!-- <EConvect><Outlet/></EConvect> -->
-        <ENeumann><Outlet/></ENeumann>
+        <!-- <ENeumann><Outlet/></ENeumann> -->
 
         <Wall mask="ALL">
             <!-- <Channel/> -->
@@ -17,17 +19,20 @@
         	<Cylinder dx="142" dy="30" nx="15" ny="15" nz="3"/>
         </HeaterDirichletTemperatureEQ>  
 
-        <MeasurmentArea>
+        <FluxMeasurment>
             <Cylinder dx="142" dy="30" nx="15" ny="15" nz="3"/>
             <!-- <Outlet/> -->
-        </MeasurmentArea>
+        </FluxMeasurment>
     </Geometry>
 
     <Model>
         <Params
-            InitTemperature="0"
-            InitTemperature-dirichlet_hot="1"
-            InitTemperature-dirichlet_cold="0"
+            InitTemperature="10"
+            InitTemperature-dirichlet_hot="11"
+            InitTemperature-dirichlet_cold="10"
+
+            InitTemperature-Inlet="10"
+            InitTemperature-Outlet="10"
             />
         <Params/>
 
@@ -41,15 +46,20 @@
             material_density="1"
             />
         <Params/>
-        <Params VelocityX="0.02" />
+        <Params VelocityX="0.2" />
         <!-- <Params VelocityX="1.0E-02" /> -->
     </Model>
 
-<Failcheck Iterations="10000" nx="500" ny="75" nz="3" />
+<Failcheck Iterations="1000" nx="500" ny="75" nz="3" />
 <!-- <TXT Iterations="50000" what="T,U"/> -->
 <Log Iterations="2000"/>
-<!-- <Solve Iterations="2000000"> </Solve> -->
-<Stop HeatSourceChange="1e-10" HeatFluxXChange="1e-10" Times="5" Iterations="5000"/>
-<Solve Iterations="2000000"> <VTK Iterations="25000"/> </Solve>
+<!-- <Solve Iterations="10000"> </Solve> -->
+<Solve Iterations="30000"> 
+    <VTK Iterations="1000"/> 
+    <Average Iterations="1000"/>
+</Solve>
+
+<!-- <Stop HeatSourceChange="1e-10" HeatFluxXChange="1e-10" Times="5" Iterations="5000"/> -->
+<!-- <Solve Iterations="2000000"> <VTK Iterations="25000" what="T,U,Rho"/> </Solve> -->
 </CLBConfig>
 
