@@ -1,7 +1,7 @@
 
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/d2q9q9_test_cm/">
-      <Geometry nx="1000" ny="100" >
+      <Geometry nx="1024" ny="100" >
       <!-- <BGK><Box /></BGK>     -->
       <CM><Box /></CM>
       <!-- <Smoothing><Box /></Smoothing>  -->
@@ -22,10 +22,9 @@
   </Geometry>
     <Model>
     <Params
-        nu="0.01666666" 
-        k ="0.01666666" 
+        nu="0.001666666" 
+        k ="0.001666666" 
         cp="1.0"
-
 
         InitTemperature="1.0"
         InitTemperature-init_T_region="1.5"

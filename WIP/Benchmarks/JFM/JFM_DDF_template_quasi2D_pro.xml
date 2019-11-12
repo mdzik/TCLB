@@ -6,7 +6,7 @@
         t0=c(43), 
         grid_scale=c(0.42123738481790257), 
         bc=c("HeaterDirichletTemperatureIABB"), # "HeaterDirichletTemperatureEQ","HeaterNeumannHeatFluxCylinder"
-        hpc=c("no"),
+        hpc=c("yes"),
         nu=c(0.002), 
         k=c(0.002/0.71),
         Re=c(500)
@@ -102,7 +102,7 @@ This is a 2D-hack
           InitTemperature="10"
           InitTemperature-Inlet="10"
           InitTemperature-Outlet="10"
-          InitTemperature-BC_heat_cylinder="10"
+          InitTemperature-BC_heat_cylinder="11"
 
           InitHeatFlux-BC_heat_cylinder="0.001"
         />
@@ -126,18 +126,19 @@ This is a 2D-hack
       <Params CylinderCenterY="<?%f sizer*grid_scale*(5.3)*t0 ?>"/> 
     
     </Model>
-    <Solve Iterations="10"/>
-    <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="<?%f 192*sizer ?>" />
+   
+  
     <!-- <Solve Iterations="500000" > <VTK Iterations="50000" what="T,U,Rho"/> </Solve> -->
 
     <Solve Iterations="3">  <VTK Iterations="1"/> </Solve > 
-
+    <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="<?%f 192*sizer ?>" />
     <Log Iterations="2000"/>
     <Solve Iterations="20000"> 
         <VTK Iterations="1000" what="T,U,Rho,averageT,averageU"/> 
         <Average Iterations="1000"/>
     </Solve>
 
+    <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="<?%f 192*sizer ?>" />
     <Solve Iterations="500000" />
     <Solve Iterations="10000"> 
         <VTK Iterations="1000" what="T,U,Rho,averageT,averageU"/> 

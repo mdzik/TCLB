@@ -151,7 +151,7 @@ CudaDeviceFunction float2 Color() {
 	float2 ret;
 	
 	ret.x = getT_();
-	ret.x -= 10;  // hack for better preview.
+	ret.x -= 1;  // hack for better preview.
 	ret.y = ret.x;
 
 
@@ -629,8 +629,8 @@ CudaDeviceFunction void relax_and_collide_ADE(real_t h_in[9], real_t rho, real_t
 
 	real_t H = h_in[0] + h_in[1] + h_in[2] + h_in[3] + h_in[4] + h_in[5] + h_in[6] + h_in[7] + h_in[8];
 
-	real_t Sigma2 = (h_stability_enhancement*1./3.)/(cp*rho);
-
+	// real_t Sigma2 = (h_stability_enhancement*1./3.)/(cp*rho); #TODO: towards CHT
+	real_t Sigma2 = 1./3.; #TODO: minimizes T artefacts
 	real_t temp[9];
 	for (int i = 0; i < 9; i++) {
 		temp[i] = h_in[i];}
@@ -662,8 +662,8 @@ CudaDeviceFunction void relax_and_collide_ADE(real_t h_in[9], real_t rho, real_t
 	h_in[3] = Sigma2*H;
 	h_in[4] = Sigma2*H;
 	h_in[5] = 0;
-	h_in[6] = 0;
-	h_in[7] = 0;
+	h_in[6] = -temp[6]*(omega_ade - 1.);
+	h_in[7] = -temp[7]*(omega_ade - 1.);
 	h_in[8] = Sigma2*Sigma2*H;
 	//back to raw moments
 	temp[0] = h_in[0];
@@ -710,12 +710,11 @@ CudaDeviceFunction void CollisionCM()
 {
 	real_t localTemperature = getT();
 	real_t rho = getRho();
-
 	vector_t Force = getForce(localTemperature, rho);
+
 	vector_t u = getRawU();
 	u.x += Force.x/(2*rho);
 	u.y += Force.y/(2*rho);
-
 
 	// add Darcy force to stop flow within solid regions
 	if ((NodeType & NODE_ADDITIONALS) == NODE_DarcySolid) 
@@ -726,20 +725,23 @@ CudaDeviceFunction void CollisionCM()
 	} 
 	relax_and_collide_hydro_with_F(f, rho, omega_nu, u, Force);	
 
-	#ifdef OPTIONS_OutFlow
+	#ifdef OPTIONS_OutFlowConvective
 		U = u.x; // for convective outlet BC
 	#endif	
 	real_t omega_k = 1.0/(3*conductivity+0.5);
 	relax_and_collide_ADE(h, rho, omega_k, u);  // TODO: a moze kolizja z nowym u po hydro kolizji ktora ma juz darcy stopper?
 }
 
-CudaDeviceFunction void CollisionSRT() {
-
+CudaDeviceFunction void CollisionSRT() 
+{
 		real_t localTemperature = getT();
 		real_t rho = getRho();
 		vector_t Force = getForce(localTemperature, rho);
 
 		vector_t u = getRawU();
+		u.x += Force.x/(2*rho);
+		u.y += Force.y/(2*rho);
+
 		// add Darcy force to stop flow within solid regions
 		if ((NodeType & NODE_ADDITIONALS) == NODE_DarcySolid) 
 		{
@@ -751,11 +753,13 @@ CudaDeviceFunction void CollisionSRT() {
 		// see chapter 6.4.2, eq table 6.1, p241 from 'The Lattice Boltzmann Method: Principles and Practice'
 		// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 
-		u.x += Force.x/(2*rho);
-		u.y += Force.y/(2*rho);
-
+	
 		relax_and_collide_SRT(f, rho, omega_nu, u);
+		//relax_and_collide_hydro_with_F(f, rho, omega_nu, u, Force);	
 
+		#ifdef OPTIONS_OutFlowConvective
+			U = u.x; // for convective outlet BC
+		#endif	
 		real_t omega_k = 1.0/(3*conductivity+0.5);
 		relax_and_collide_SRT(h, getH(), omega_k, u);
 }
