@@ -195,7 +195,7 @@ CudaDeviceFunction real_t getDissipation(){
        	diss = diss + nu*((avgdzw2/average_iter) - (avgUZ(0,0,1) - avgUZ(0,0,-1))*(avgUZ(0,0,1) - avgUZ(0,0,-1))/(4*average_iter*average_iter));
         return diss;
 }
-CudaDeviceFunction vector_t getavgU(){
+CudaDeviceFunction vector_t getaverageU(){
         vector_t u;
         u.x = avgUX(0,0,0)/average_iter;  //avgUX(0,0,0) in fact
         u.y = avgUY(0,0,0)/average_iter;
@@ -203,17 +203,20 @@ CudaDeviceFunction vector_t getavgU(){
         return u;
 }
 CudaDeviceFunction vector_t getvarU(){
-        vector_t u;
-        u.x = varUX/average_iter - getavgU().x*getavgU().x;
-        u.y = varUY/average_iter - getavgU().y*getavgU().y;
-        u.z = varUZ/average_iter - getavgU().z*getavgU().z;
+		vector_t u_avg = getaverageU();
+
+		vector_t u;
+        u.x = varUX/average_iter - u_avg.x*u_avg.x;
+        u.y = varUY/average_iter - u_avg.y*u_avg.y;
+        u.z = varUZ/average_iter - u_avg.z*u_avg.z;
         return u;
 }
 CudaDeviceFunction vector_t getReStr(){
+		vector_t u_avg = getaverageU();
         vector_t st;
-        st.x = varUYUZ/average_iter - getavgU().y*getavgU().z;
-        st.y = varUXUZ/average_iter - getavgU().x*getavgU().z;
-        st.z = varUXUY/average_iter - getavgU().x*getavgU().y;
+        st.x = varUYUZ/average_iter - u_avg.y*u_avg.z;
+        st.y = varUXUZ/average_iter - u_avg.x*u_avg.z;
+        st.z = varUXUY/average_iter - u_avg.x*u_avg.y;
         return st;
 }
 CudaDeviceFunction real_t getKinE(){

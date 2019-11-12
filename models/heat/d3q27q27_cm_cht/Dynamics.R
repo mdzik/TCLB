@@ -172,7 +172,7 @@ if (Options$AVG) {
 	AddQuantity(name="KinE",comment="Turbulent kinetic energy")
 	AddQuantity(name="ReStr",comment="Reynolds stress off-diagonal component",vector=T)
 	AddQuantity(name="Dissipation",comment="Dissipation e")
-	AddQuantity(name="avgU",unit="m/s",vector=T)
+	AddQuantity(name="averageU",unit="m/s",vector=T)
 	AddQuantity(name="varU",vector=T)
 	AddQuantity(name="averageP",unit="Pa")
 	AddQuantity(name="averageT",unit="K")

@@ -25,24 +25,14 @@ AddDensity(
 
 # 	Outputs:
 AddQuantity( name="m00_F" )
-AddQuantity( name="Rho" )
-AddQuantity( name="T" )
-AddQuantity( name="H")
-AddQuantity( name="material_density")
-AddQuantity( name="cp")
-AddQuantity( name="conductivity")
-AddQuantity( name="RawU", vector=T )
-AddQuantity( name="U", vector=T )
-
-# AddQuantity( name="m00_F" )
-# AddQuantity( name="Rho", unit="kg/m3" )
-# AddQuantity( name="T", unit="K" )
-# AddQuantity( name="H", unit="J"  )
-# AddQuantity( name="material_density", unit="kg/m3")
-# AddQuantity( name="cp", unit="J/kg/K" )
-# AddQuantity( name="conductivity", unit="W/m/K")
-# AddQuantity( name="RawU", unit="m/s",vector=T )
-# AddQuantity( name="U", unit="m/s",vector=T )
+AddQuantity( name="Rho", unit="kg/m3" )
+AddQuantity( name="T", unit="K" )
+AddQuantity( name="H", unit="J"  )
+AddQuantity( name="material_density", unit="kg/m3")
+AddQuantity( name="cp", unit="J/kg/K" )
+AddQuantity( name="conductivity", unit="W/m/K")
+AddQuantity( name="RawU", unit="m/s",vector=T )
+AddQuantity( name="U", unit="m/s",vector=T )
 
 #	Inputs: Flow Properties
 AddSetting(name="VelocityX", default=0.0, comment='inlet/outlet/init x-velocity component', zonal=TRUE)
@@ -73,26 +63,34 @@ AddSetting(name="PeriodX", default="0", comment='Number of cells in x direction'
 AddSetting(name="PeriodY", default="0", comment='Number of effective cells in y direction')
 
 # Boundary things
-AddNodeType("MeasurmentArea", "OBJECTIVE")
+AddNodeType("FluxMeasurment",  "OBJECTIVEFLUX")
+AddNodeType("ForceMeasurment", "OBJECTIVEFORCE")
+
 AddNodeType(name="DarcySolid", group="ADDITIONALS")
-AddNodeType(name="Smoothing", group="ADDITIONALS")
-AddNodeType(name="HeaterDirichletTemperature", group="ADDITIONALS_HEAT")
-AddNodeType(name="HeaterSource", group="ADDITIONALS_HEAT")
-AddNodeType(name="HeaterNeumannHeatFlux", group="ADDITIONALS_HEAT")
+AddNodeType(name="Smoothing",  group="ADDITIONALS")
+
+
+AddNodeType(name="HeaterDirichletTemperatureEQ",  group="ADDITIONALS_HEAT")
+AddNodeType(name="HeaterSource", 				  group="ADDITIONALS_HEAT")
 AddNodeType("CM","COLLISION")
 
-# Globals - table of global integrals that can be monitored and optimized
+#	Globals - table of global integrals that can be monitored and optimized
 AddGlobal(name="FDrag",    comment='Force exerted on body in X-direction', unit="N")
-AddGlobal(name="FLift",    comment='Force exerted on body in Y-direction', unit="N")
+AddGlobal(name="FLift", comment='Force exerted on body in Y-direction', unit="N")
+
+AddGlobal(name="XHydroFLux",    comment='XHydroFLux', unit="kg/s")
+AddGlobal(name="YHydroFLux",    comment='YHydroFLux', unit="kg/s")
 
 AddGlobal(name="HeatFluxX",    comment='Heat flux from body in X-direction', unit="W")
 AddGlobal(name="HeatFluxY",    comment='Heat flux from body in Y-direction', unit="W")
-AddGlobal(name="HeatSource",    comment='Total Heat generated', unit="W")
+AddGlobal(name="HeatSource",   comment='Total Heat flux from body', 		 unit="W")
+
 
 AddDensity(name="U", dx=0, dy=0, group="Vel")  
 # AddDensity(name="V", dx=0, dy=0, dz=0, group="Vel")
 # AddDensity(name="W", dx=0, dy=0, dz=0, group="Vel")
-if (Options$OutFlow)
+
+if (Options$OutFlowConvective)
 {
 	AddDensity(name=paste("fold",0:8,sep=""), dx=0,dy=0,group="fold")
 	AddDensity(name=paste("hold",0:8,sep=""), dx=0,dy=0,group="hold")
@@ -101,8 +99,14 @@ if (Options$OutFlow)
 		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy )
 	}
 
-	AddField(name="U",dx=c(-1,0)) # TODO: do I need this?
+	AddField(name="U",dx=c(-1,0))
+	AddNodeType(name="EConvective", group="BOUNDARY")
+}
 
+if (Options$OutFlowNeumann)
+{
+	for (d in rows(DensityAll)) {
+		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy )
+	}
 	AddNodeType(name="ENeumann", group="BOUNDARY")
-	AddNodeType(name="EConvect", group="BOUNDARY")
 }

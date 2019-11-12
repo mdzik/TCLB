@@ -2,7 +2,7 @@
 
 <?R
     tab = expand.grid(
-        sizer=c(1.25, 1, 0.5, 0.25), 
+        sizer=c(1.5, 1.25, 1, 0.5, 0.25), 
         t0=c(43), 
         grid_scale=c(0.42123738481790257), 
         bc=c("HeaterDirichletTemperatureIABB"), # "HeaterDirichletTemperatureEQ","HeaterNeumannHeatFluxCylinder"
@@ -12,10 +12,10 @@
         Re=c(500)
     )
 
-    dir_name <- "batch_JFM_DDF"
+    dir_name <- "batch_JFM_DDF_quasi2D"
     dir.create(dir_name)
     tab$name = paste0(
-                      "JFM_DDF","_scale_", tab$sizer, "_nu_", tab$nu, 
+                      "JFM_DDF_quasi2D","_scale_", tab$sizer, "_nu_", tab$nu, 
                       "_U_", formatC(tab$Re*tab$nu/(tab$sizer*tab$grid_scale*tab$t0),digits = 2, format = "e"), 
                       "_bc_", tab$bc)
 
@@ -41,12 +41,13 @@ See
 `Direct numerical simulation of heat transfer from a cylinder immersed in the production and decay regions of grid-element turbulence`
 by I. Paul, G. Papadakis, J.C. Vassilicos
 J. Fluid. Mech. vol. 847, pp452-488, 2018
+This is a 2D-hack
  -->
 
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="<?%s output ?>">
     <!-- <Geometry nx="672" ny="192" nz="192"> -->
-    <Geometry nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="<?%f 192*sizer ?>" >   
+    <Geometry nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="3" >   
         <Cumulants><Box/></Cumulants>
         <IBB name="border" >
               <STL 
@@ -55,7 +56,7 @@ J. Fluid. Mech. vol. 847, pp452-488, 2018
               Xrot="0d" 
               x="<?%f sizer*grid_scale*9.25*t0 ?>" 
               y="<?%f sizer*grid_scale*2.15*t0 ?>" 
-              z="<?%f sizer*grid_scale*2.15*t0 ?>" 
+              z="<?%f sizer*grid_scale*2.15*t0 -0.5*192*sizer -1.5 ?>" 
               side="surface"
             />
         </IBB>
@@ -101,7 +102,7 @@ J. Fluid. Mech. vol. 847, pp452-488, 2018
           InitTemperature="10"
           InitTemperature-Inlet="10"
           InitTemperature-Outlet="10"
-          InitTemperature-BC_heat_cylinder="11"
+          InitTemperature-BC_heat_cylinder="10"
 
           InitHeatFlux-BC_heat_cylinder="0.001"
         />
