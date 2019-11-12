@@ -121,31 +121,27 @@ This is a 2D-hack
 
       <Params VelocityX="<?%f Re*nu/(sizer*grid_scale*t0) ?>" />
 
-  <!-- CylinderCenter is used only for heat flux bc -->
+      <!-- CylinderCenter is used only for heat flux bc -->
       <Params CylinderCenterX="<?%f sizer*grid_scale*(9.25+9.9)*t0 ?>" />
       <Params CylinderCenterY="<?%f sizer*grid_scale*(5.3)*t0 ?>"/> 
     
     </Model>
    
-  
-    <!-- <Solve Iterations="500000" > <VTK Iterations="50000" what="T,U,Rho"/> </Solve> -->
-
     <Solve Iterations="3">  <VTK Iterations="1"/> </Solve > 
-    <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="<?%f 192*sizer ?>" />
+    <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="3" />
     <Log Iterations="2000"/>
     <Solve Iterations="20000"> 
         <VTK Iterations="1000" what="T,U,Rho,averageT,averageU"/> 
         <Average Iterations="1000"/>
     </Solve>
 
-    <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="<?%f 192*sizer ?>" />
+    <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="3" />
     <Solve Iterations="500000" />
     <Solve Iterations="10000"> 
         <VTK Iterations="1000" what="T,U,Rho,averageT,averageU"/> 
         <Average Iterations="1000"/>
     </Solve>
     <!-- <SaveMemoryDump Iterations="250000" file="test.tclbdump"/> -->
-    <!-- <Solve Iterations="100000" /> <VTK Iterations="50000" what="T,U,Rho,avgT,avgU"/> </Solve> -->
   </CLBConfig>
 
 
