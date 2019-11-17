@@ -85,8 +85,9 @@ AddQuantity( name="RawU", unit="m/s", vector=T )
 
 
 # Boundary things
-AddNodeType("FluxMeasurment",  "OBJECTIVEFLUX")
-AddNodeType("ForceMeasurment", "OBJECTIVEFORCE")
+AddNodeType("FluxMeasurment",  group="OBJECTIVEFLUX")
+AddNodeType("FluxMeasurment2",  group="OBJECTIVEFLUX")
+AddNodeType("ForceMeasurment", group="OBJECTIVEFORCE")
 
 AddNodeType(name="DarcySolid", group="ADDITIONALS")
 AddNodeType(name="Smoothing",  group="ADDITIONALS")
