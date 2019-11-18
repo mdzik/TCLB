@@ -783,7 +783,7 @@ CudaDeviceFunction void HydroInterpolatedBounceBack()
 
 
 	// force measurment takes place in Run()
-	// if((NodeType & NODE_BODY) == NODE_MeasurmentArea) { 
+	// if((NodeType & NODE_BODY) == NODE_ForceMeasurmentZone) { 
 	// 	AddToFDrag(F.x); 
 	// 	AddToFLateral(F.y); 
 	// 	AddToFLift(F.z); 
@@ -1083,7 +1083,7 @@ CudaDeviceFunction void RunHOBoundaries()
 
 CudaDeviceFunction void Run() {
 	vector_t p1 {0,0,0};
-	if((NodeType & NODE_OBJECTIVEFORCE) == NODE_ForceMeasurment) {
+	if((NodeType & NODE_OBJECTIVEFORCE) == NODE_ForceMeasurmentZone) {
 		<?R C(PV(c("p1.x","p1.y", "p1.z")), f %*% U) ?>
 	}
 
@@ -1112,7 +1112,7 @@ CudaDeviceFunction void Run() {
 			break;
 	}
 
-	if((NodeType & NODE_OBJECTIVEFORCE) == NODE_ForceMeasurment) {
+	if((NodeType & NODE_OBJECTIVEFORCE) == NODE_ForceMeasurmentZone) {
 		vector_t p2;
 		<?R C(PV(c("p2.x","p2.y", "p2.z")), f %*% U) ?>
 		//Summing the difference in momentum before/after collision
@@ -1121,7 +1121,7 @@ CudaDeviceFunction void Run() {
 		AddToFLift(-(p2.z-p1.z));
 	}
 
-	if((NodeType & NODE_OBJECTIVEFLUX) == NODE_FluxMeasurment) {
+	if((NodeType & NODE_OBJECTIVEFLUX) == NODE_FluxMeasurmentZone1) {
 		vector_t p2;
 		<?R C(PV(c("p2.x","p2.y", "p2.z")), f %*% U) ?>
 		//Summing the momentum flux through the boundary.
@@ -1138,6 +1138,25 @@ CudaDeviceFunction void Run() {
 		AddToHeatFluxX(-h2.x);
 		AddToHeatFluxY(-h2.y);
 		AddToHeatFluxZ(-h2.z);
+	}
+
+	if((NodeType & NODE_OBJECTIVEFLUX) == NODE_FluxMeasurmentZone2) {
+		vector_t p2;
+		<?R C(PV(c("p2.x","p2.y", "p2.z")), f %*% U) ?>
+		//Summing the momentum flux through the boundary.
+		AddToXHydroFLux2(-p2.x);
+		AddToYHydroFLux2(-p2.y);
+		AddToZHydroFLux2(-p2.z);
+
+		vector_t h2;
+		<?R C(PV(c("h2.x","h2.y", "h2.z")), h %*% UforHeat) ?>
+		// Summing the heat flux (both convective and diffusive) through the boundary.
+		// convective flux - eq part of h distributions
+		// diffusive flux - neq part of h distributions
+
+		AddToHeatFluxX2(-h2.x);
+		AddToHeatFluxY2(-h2.y);
+		AddToHeatFluxZ2(-h2.z);
 	}
 }
 
