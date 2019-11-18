@@ -2606,6 +2606,7 @@ CudaDeviceFunction void CollisionCM(){
 		Force.z += fDarcyStoper.z;
 	} 
 
+	real_t omega_nu = 1.0/(3*nu+0.5);
 	if ((NodeType & NODE_BOUNDARY) != 0) omega_nu = 1.0/(3*nu_buffer+0.5);
 	vector_t u = relax_and_collide_hydro(Force, omega_nu);
 	#ifdef OPTIONS_OutFlowConvective
@@ -2640,6 +2641,7 @@ CudaDeviceFunction void CollisionCM_HIGHER(){
 		Force.z += fDarcyStoper.z;
 	} 
 
+	real_t omega_nu = 1.0/(3*nu+0.5);
 	if ((NodeType & NODE_BOUNDARY) != 0) omega_nu = 1.0/(3*nu_buffer+0.5);
 	vector_t u = relax_and_collide_hydro(Force, omega_nu);
 	#ifdef OPTIONS_OutFlowConvective
@@ -2675,6 +2677,7 @@ CudaDeviceFunction void CollisionCM_HIGHER_NONLINEAR(){
 		Force.z += fDarcyStoper.z;
 	} 
 
+	real_t omega_nu = 1.0/(3*nu+0.5);
 	if ((NodeType & NODE_BOUNDARY) != 0) omega_nu = 1.0/(3*nu_buffer+0.5);
 	vector_t u = relax_and_collide_hydro(Force, omega_nu);
 	#ifdef OPTIONS_OutFlowConvective
@@ -2710,6 +2713,7 @@ CudaDeviceFunction void CollisionCumulants(){
 		Force.z += fDarcyStoper.z;
 	} 
 
+	real_t omega_nu = 1.0/(3*nu+0.5);
 	if ((NodeType & NODE_BOUNDARY) != 0) omega_nu = 1.0/(3*nu_buffer+0.5);
 	vector_t u = relax_and_collide_hydro(Force, omega_nu);
 
@@ -2746,6 +2750,7 @@ CudaDeviceFunction void CollisionCumulants_Higher(){
 		Force.z += fDarcyStoper.z;
 	} 
 
+	real_t omega_nu = 1.0/(3*nu+0.5);
 	if ((NodeType & NODE_BOUNDARY) != 0) omega_nu = 1.0/(3*nu_buffer+0.5);
 	vector_t u = relax_and_collide_hydro(Force, omega_nu);
 	#ifdef OPTIONS_OutFlowConvective
@@ -2780,6 +2785,7 @@ CudaDeviceFunction void Collision_thermalBGK(){
 		Force.z += fDarcyStoper.z;
 	} 
 
+	real_t omega_nu = 1.0/(3*nu+0.5);
 	if ((NodeType & NODE_BOUNDARY) != 0) omega_nu = 1.0/(3*nu_buffer+0.5);
 	vector_t u = relax_and_collide_hydro(Force, omega_nu);
 	#ifdef OPTIONS_OutFlowConvective
