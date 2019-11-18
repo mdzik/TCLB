@@ -6,7 +6,7 @@
         t0=c(43), 
         grid_scale=c(0.42123738481790257), 
         bc=c("HeaterDirichletTemperatureIABB"), # "HeaterDirichletTemperatureEQ","HeaterNeumannHeatFluxCylinder"
-        hpc=c("yes"),
+        hpc=c("no"),
         nu=c(0.002), 
         k=c(0.002/0.71),
         Re=c(500)

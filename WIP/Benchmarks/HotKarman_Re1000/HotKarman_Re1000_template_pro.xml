@@ -6,7 +6,8 @@
         D0_stl=c(100), # cylinder's diameter in the stl file
         grid_scale=c(0.32), # no of lattice units describing the cylinder 
         bc=c("HeaterDirichletTemperatureIABB"), # "HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureEQ","HeaterNeumannHeatFluxCylinder"
-        hpc=c("no"),
+        collision=c("Cumulant","CM_HIGHER"),
+        hpc=c("dwarf"), # "prometheus", "dwarf"
         nu=c(0.005), 
         k=c(0.005/0.7),
         Re=c(100)
@@ -17,13 +18,17 @@
     tab$name = paste0(
                       "batch_HotKarman_Re", tab$Re,"_D0_", formatC(tab$D0_stl*tab$sizer*tab$grid_scale,digits = 2, format = "e"), "_nu_", tab$nu, 
                       "_U_", formatC(tab$Re*tab$nu/(tab$sizer*tab$grid_scale*tab$D0_stl),digits = 2, format = "e"), 
-                      "_bc_", tab$bc)
+                      "_bc_", tab$bc, "_", tab$collision)
 
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
 
-    if(tab$hpc=="yes")
+    if(tab$hpc=="prometheus")
     {
         tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/"))
+        
+    } else if(tab$hpc=="dwarf")
+    {
+        tab$output = paste0("/home2/scratch/GG/",dir_name,"/",tab$name, "/")
     } else {
         tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
     }
@@ -47,7 +52,8 @@ This is a 2D-hack
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="<?%s output ?>">
     <Geometry nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="3" >   
-        <CM_HIGHER><Box/></CM_HIGHER>
+        <!-- <CM_HIGHER><Box/></CM_HIGHER> -->
+      <<?%s collision ?>> <Box/> </<?%s collision ?>>  
             <!--            
             <Wall mask="ALL">
             <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
@@ -73,7 +79,12 @@ This is a 2D-hack
               side="surface"/>
         </<?%s bc ?>>  
 
-        <FluxMeasurment>
+        <FluxMeasurmentZone1>
+            <!-- <Inlet/> -->
+            <Box nx="1"/>
+        </FluxMeasurmentZone1>
+
+        <FluxMeasurmentZone2>
             <!-- <Outlet/> -->
             <Box dx="-1"/>
 <!--             <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
@@ -83,14 +94,14 @@ This is a 2D-hack
               y="<?%f sizer*0.5*192 ?>" 
               z="0" 
               side="surface"/> -->
-        </FluxMeasurment>
+        </FluxMeasurmentZone2>
     </Geometry>
     <Model>
         <Params
-          InitTemperature="0"
-          InitTemperature-Inlet="0"
-          InitTemperature-Outlet="0"
-          InitTemperature-BC_heat_cylinder="1"
+          InitTemperature="10"
+          InitTemperature-Inlet="10"
+          InitTemperature-Outlet="10"
+          InitTemperature-BC_heat_cylinder="11"
 
           InitHeatFlux-BC_heat_cylinder="0.001"
         />
