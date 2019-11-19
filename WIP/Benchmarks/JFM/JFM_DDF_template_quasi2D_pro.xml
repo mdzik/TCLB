@@ -2,11 +2,11 @@
 
 <?R
     tab = expand.grid(
-        sizer=c(1.5, 1.25, 1, 0.5, 0.25), 
+        sizer=c(4.0, 3.0, 2.0, 1), 
         t0=c(43), 
         grid_scale=c(0.42123738481790257), 
         bc=c("HeaterDirichletTemperatureIABB"), # "HeaterDirichletTemperatureEQ","HeaterNeumannHeatFluxCylinder"
-        hpc=c("yes"),
+        hpc=c("no"),
         nu=c(0.002), 
         k=c(0.002/0.71),
         Re=c(500)
@@ -87,15 +87,15 @@ This is a 2D-hack
         </<?%s bc ?>>  
 
         <FluxMeasurment>
-            <!-- <Outlet/> -->
-            <STL file="WIP/Benchmarks/JFM/cylinder_noXY_offset.stl" 
+            <Box dx="-1"/>
+<!--             <STL file="WIP/Benchmarks/JFM/cylinder_noXY_offset.stl" 
               scale="<?%f sizer*grid_scale ?>" 
               Xrot="0d" 
               x="<?%f sizer*grid_scale*(9.25+9.9)*t0 ?>" 
               y="<?%f sizer*grid_scale*(5.3)*t0 ?>" 
               z="0" 
               side="surface"/>
-        </FluxMeasurment>
+        </FluxMeasurment> -->
     </Geometry>
     <Model>
         <Params
@@ -136,10 +136,9 @@ This is a 2D-hack
     </Solve>
 
     <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="3" />
-    <Solve Iterations="500000" />
-    <Solve Iterations="10000"> 
-        <VTK Iterations="1000" what="T,U,Rho,averageT,averageU"/> 
-        <Average Iterations="1000"/>
+    <Solve Iterations="500000"> 
+        <VTK Iterations="5000" what="T,U,Rho,averageT,averageU"/> 
+        <Average Iterations="5000"/>
     </Solve>
     <!-- <SaveMemoryDump Iterations="250000" file="test.tclbdump"/> -->
   </CLBConfig>

@@ -64,10 +64,17 @@ AddGlobal(name="FLift",    comment='Force exerted on body in Z-direction', unit=
 AddGlobal(name="XHydroFLux",    comment='XHydroFLux', unit="kg/s")
 AddGlobal(name="YHydroFLux",    comment='YHydroFLux', unit="kg/s")
 AddGlobal(name="ZHydroFLux",    comment='ZHydroFLux', unit="kg/s")
+AddGlobal(name="XHydroFLux2",    comment='XHydroFLux', unit="kg/s")
+AddGlobal(name="YHydroFLux2",    comment='YHydroFLux', unit="kg/s")
+AddGlobal(name="ZHydroFLux2",    comment='ZHydroFLux', unit="kg/s")
 
 AddGlobal(name="HeatFluxX",    comment='Heat flux from body in X-direction', unit="W")
 AddGlobal(name="HeatFluxY",    comment='Heat flux from body in Y-direction', unit="W")
 AddGlobal(name="HeatFluxZ",    comment='Heat flux from body in Z-direction', unit="W")
+AddGlobal(name="HeatFluxX2",    comment='Heat flux from body in X-direction', unit="W")
+AddGlobal(name="HeatFluxY2",    comment='Heat flux from body in Y-direction', unit="W")
+AddGlobal(name="HeatFluxZ2",    comment='Heat flux from body in Z-direction', unit="W")
+
 AddGlobal(name="HeatSource",   comment='Total Heat flux from body', 		 unit="W")
 
 # 	Outputs:
@@ -84,13 +91,12 @@ AddQuantity( name="RawU", unit="m/s", vector=T )
 
 
 # Boundary things
-AddNodeType("FluxMeasurment",  group="OBJECTIVEFLUX")
-AddNodeType("FluxMeasurment2",  group="OBJECTIVEFLUX")
-AddNodeType("ForceMeasurment", group="OBJECTIVEFORCE")
+AddNodeType("ForceMeasurmentZone", group="OBJECTIVEFORCE")
+AddNodeType("FluxMeasurmentZone1",  group="OBJECTIVEFLUX")
+AddNodeType("FluxMeasurmentZone2",  group="OBJECTIVEFLUX")
 
 AddNodeType(name="DarcySolid", group="ADDITIONALS")
 AddNodeType(name="Smoothing",  group="ADDITIONALS")
-
 
 AddNodeType(name="HeaterDirichletTemperatureEQ",  group="ADDITIONALS_HEAT")
 AddNodeType(name="HeaterDirichletTemperatureABB", group="ADDITIONALS_HEAT")
