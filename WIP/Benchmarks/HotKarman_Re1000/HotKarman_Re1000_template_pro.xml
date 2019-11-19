@@ -7,11 +7,11 @@
         D0_stl=c(100), # cylinder's diameter in the stl file
         grid_scale=c(0.32), # no of lattice units describing the cylinder 
         bc=c("HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureEQ"), # "HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureABB", "HeaterDirichletTemperatureEQ","HeaterNeumannHeatFluxCylinder"
-        collision=c("Cumulants, CM_HIGHER"), # "Cumulants","CM_HIGHER"
+        collision=c("CM_HIGHER"), # "Cumulants","CM_HIGHER"
         hpc=c("prometheus"), # "prometheus", "dwarf"
         nu=c(0.005), 
         k=c(0.005/0.7),
-        Re=c(100)
+        Re=c(1000)
     )
 
     dir_name <-"batch_HotKarman_Re1000" 
