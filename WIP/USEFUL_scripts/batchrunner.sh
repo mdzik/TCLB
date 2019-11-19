@@ -5,14 +5,14 @@ set -e
 
 DIRNAME=$1
 
-MODEL="d3q27q27_cm_cht_IBB"
+MODEL="d3q27q27_cm_cht_OutFlowNeumann_AVG_IBB"
 
 if test -d $DIRNAME
 then
     for i in $DIRNAME*.xml
     do
         # echo -e "\n Launching $i !"
-        eval "p/run $MODEL $i 1 --time=8:00:00"
+        eval "p/run $MODEL $i 4 --time=24:00:00"
     done
 else
 	echo directory doesnt exists
