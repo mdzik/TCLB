@@ -2,12 +2,13 @@
 
 <?R
     tab = expand.grid(
-        sizer=c(4, 2, 1, 0.5, 0.25), 
+        #sizer=c(4, 2, 1, 0.5, 0.25), 
+        sizer=c(4, 2, 1), 
         D0_stl=c(100), # cylinder's diameter in the stl file
         grid_scale=c(0.32), # no of lattice units describing the cylinder 
-        bc=c("HeaterDirichletTemperatureIABB"), # "HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureEQ","HeaterNeumannHeatFluxCylinder"
-        collision=c("Cumulant","CM_HIGHER"),
-        hpc=c("dwarf"), # "prometheus", "dwarf"
+        bc=c("HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureEQ"), # "HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureABB", "HeaterDirichletTemperatureEQ","HeaterNeumannHeatFluxCylinder"
+        collision=c("Cumulants, CM_HIGHER"), # "Cumulants","CM_HIGHER"
+        hpc=c("prometheus"), # "prometheus", "dwarf"
         nu=c(0.005), 
         k=c(0.005/0.7),
         Re=c(100)
@@ -34,7 +35,7 @@
     }
 
     options(digits=10)
-    write.csv(tab, "JFM_DDF_template.csv", row.names=FALSE)
+    write.csv(tab, "HotKarman_Re1000_template.csv", row.names=FALSE)
     for (i in 1:nrow(tab)) {
         attach(tab[i,,drop=FALSE])
         print(xml)
@@ -46,28 +47,26 @@ See
 `Two-dimensional simulation of unsteady heat transfer from a circular cylinder in crossflow`
 by Dalsem Bouhaire and Vincent H. Chu
 J. Fluid. Mech. vol. 570, pp177-215, 2007
-This is a 2D-hack
  -->
 
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="<?%s output ?>">
     <Geometry nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="3" >   
-        <!-- <CM_HIGHER><Box/></CM_HIGHER> -->
       <<?%s collision ?>> <Box/> </<?%s collision ?>>  
-            <!--            
-            <Wall mask="ALL">
-            <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
-              scale="<?%f sizer*grid_scale ?>" 
-              Xrot="0d" 
-              x="<?%f sizer*grid_scale*0.25*672 ?>" 
-              y="<?%f sizer*grid_scale*0.5*192 ?>" 
-              z="0" 
-              side="surface"/>
-            </Wall> -->
 
         <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
         <!-- <EPressure name="Outlet"><Box dx="-1"/></EPressure> -->
         <ENeumann name="Outlet"><Box dx="-1"/></ENeumann>
+
+        <IBB name="border" >
+            <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
+              scale="<?%f sizer*grid_scale ?>" 
+              Xrot="0d" 
+              x="<?%f sizer*0.25*672 ?>" 
+              y="<?%f sizer*0.5*192 ?>" 
+              z="0" 
+              side="surface"/>
+        </IBB>
 
         <<?%s bc ?> name="BC_heat_cylinder"> 
             <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
@@ -129,7 +128,7 @@ This is a 2D-hack
     <Solve Iterations="3">  <VTK Iterations="1"/> </Solve > 
     <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="3" />
 
-    <Solve Iterations="20000"> 
+    <Solve Iterations="10000"> 
         <VTK Iterations="1000" what="H,T,U,Rho,averageT,averageU"/> 
         <Average Iterations="1000"/>
         <Log Iterations="2000"/>
@@ -137,11 +136,11 @@ This is a 2D-hack
     
 
     <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="3" />
-    <Solve Iterations="500000" > <Log Iterations="2000"/> </Solve>
+    <Solve Iterations="1000000" > <Log Iterations="2000"/> </Solve>
     
-    <Solve Iterations="10000"> 
-        <VTK Iterations="1000" what="H,T,U,Rho,averageT,averageU"/> 
-        <Average Iterations="1000"/>
+    <Solve Iterations="500000"> 
+        <VTK Iterations="10000" what="H,T,U,Rho,averageT,averageU"/> 
+        <Average Iterations="10000"/>
         <Log Iterations="2000"/>
     </Solve>
     <!-- <SaveMemoryDump Iterations="250000" file="test.tclbdump"/> -->
