@@ -1059,24 +1059,24 @@ CudaDeviceFunction void RunHOBoundaries()
 {	
 
 	#ifdef OPTIONS_IBB
-		real_t h1 = <?R C(sum(h)) ?>;
-
-		// This is a wet node BC. It is stored in separate HO_BOUNDARY group,
+		// IBB's are wet node BC. They are stored in separate HO_BOUNDARY group,
 		// because the regular wet BOUNDARY nodes have a limiter.
-		switch (NodeType & NODE_HO_BOUNDARY) {
-			case NODE_IBB:
-				HydroInterpolatedBounceBack();
-				ThermalInterpolatedBounceBack();
-				break;
+		if ((NodeType & NODE_HO_BOUNDARY_HYDRO) == NODE_HydroIBB){
+			HydroInterpolatedBounceBack();
+		}
+	
+		switch (NodeType & NODE_HO_BOUNDARY_HEAT) {
 			case NODE_HeaterDirichletTemperatureIABB:
-				HydroInterpolatedBounceBack();
+				real_t h1 = <?R C(sum(h)) ?>;
 				HeaterDirichletTemperatureInterpolatedAntiBounceBack();
+				real_t h2 = <?R C(sum(h)) ?>;
+				AddToHeatSource(h2-h1); 
+				break;
+			case NODE_ThermalIBB:
+				ThermalInterpolatedBounceBack();
 				break;
 		}
 
-
-		real_t h2 = <?R C(sum(h)) ?>;
-		AddToHeatSource(h2-h1); 
 	#endif
 }
 

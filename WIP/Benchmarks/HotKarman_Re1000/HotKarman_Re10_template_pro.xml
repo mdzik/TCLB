@@ -1,0 +1,141 @@
+        nu=c(0.1), 
+        k=c(0.1/0.71),
+        Re=c(10)
+
+<?R
+    tab = expand.grid(
+        #sizer=c(4, 2, 1, 0.5, 0.25), 
+        sizer=c(1, 0.5), 
+        D0_stl=c(100), # cylinder's diameter in the stl file
+        grid_scale=c(0.32), # no of lattice units describing the cylinder 
+        thermal_bc=c("HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureEQ"), # "HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureABB", "HeaterDirichletTemperatureEQ","HeaterNeumannHeatFluxCylinder"
+        #hydro_bc=c("HydroIBB"),  # "HydroIBB", "Wall mask=\"ALL\""
+        hydro_bc=c("HydroIBB", "Wall"),  # "HydroIBB", "Wall mask=\"ALL\""
+        collision=c("CM_HIGHER", "Cumulants"), # "Cumulants","CM_HIGHER"
+        nu=c(0.1), 
+        k=c(0.1/0.71),
+        Re=c(10)
+    )
+
+    dir_name <-"batch_HotKarman_ReXXX" 
+    dir.create(dir_name)
+    tab$name = paste0(
+                      "batch_HotKarman_Re", tab$Re,"_D0_", formatC(tab$D0_stl*tab$sizer*tab$grid_scale,digits = 2, format = "e"), "_nu_", tab$nu, 
+                      "_U_", formatC(tab$Re*tab$nu/(tab$sizer*tab$grid_scale*tab$D0_stl),digits = 2, format = "e"), 
+                      "_bc_", tab$hydro_bc, "_", tab$thermal_bc, "_", tab$collision)
+
+    tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
+
+    #tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/")) # prometheus
+    #tab$output = paste0("/home2/scratch/GG/",dir_name,"/",tab$name, "/") # dwarf
+    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+
+
+    options(digits=10)
+    write.csv(tab, "HotKarman_ReXXX_template.csv", row.names=FALSE)
+    for (i in 1:nrow(tab)) {
+        attach(tab[i,,drop=FALSE])
+        print(xml)
+        sink(xml) # save to a .xml file
+?>
+
+<!-- 
+See
+`Two-dimensional simulation of unsteady heat transfer from a circular cylinder in crossflow`
+by Dalsem Bouhaire and Vincent H. Chu
+J. Fluid. Mech. vol. 570, pp177-215, 2007
+ -->
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="<?%s output ?>">
+    <Geometry nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="3" >   
+      <<?%s collision ?>> <Box/> </<?%s collision ?>>  
+
+        <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
+        <!-- <EPressure name="Outlet"><Box dx="-1"/></EPressure> -->
+        <ENeumann name="Outlet"><Box dx="-1"/></ENeumann>
+
+        <IBB name="border" >
+            <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
+              scale="<?%f sizer*grid_scale ?>" 
+              Xrot="0d" 
+              x="<?%f sizer*0.25*672 ?>" 
+              y="<?%f sizer*0.5*192 ?>" 
+              z="0" 
+              side="surface"/>
+        </IBB>
+
+        <<?%s bc ?> name="BC_heat_cylinder"> 
+            <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
+              scale="<?%f sizer*grid_scale ?>" 
+              Xrot="0d" 
+              x="<?%f sizer*0.25*672 ?>" 
+              y="<?%f sizer*0.5*192 ?>" 
+              z="0" 
+              side="surface"/>
+        </<?%s bc ?>>  
+
+        <FluxMeasurmentZone1>
+            <!-- <Inlet/> -->
+            <Box nx="1"/>
+        </FluxMeasurmentZone1>
+
+        <FluxMeasurmentZone2>
+            <!-- <Outlet/> -->
+            <Box dx="-1"/>
+        </FluxMeasurmentZone2>
+    </Geometry>
+    <Model>
+        <Params
+          InitTemperature="10"
+          InitTemperature-Inlet="10"
+          InitTemperature-Outlet="10"
+          InitTemperature-BC_heat_cylinder="11"
+
+          InitHeatFlux-BC_heat_cylinder="0.001"
+        />
+
+      <Params 
+        nu="<?%f nu ?>"
+        conductivity="<?%f k ?>"
+
+        nu_buffer="0.166666"
+        conductivity_buffer="0.166666"
+
+        h_stability_enhancement="1."
+        cp="1."
+        material_density="1."
+      />
+
+      <Params VelocityX="<?%f Re*nu/(sizer*grid_scale*D0_stl) ?>" />
+
+      <!-- CylinderCenter is used only for heat flux bc -->
+      <Params CylinderCenterX="<?%f sizer*grid_scale*0.25*672 ?>" />
+      <Params CylinderCenterY="<?%f sizer*grid_scale*0.5*192 ?>"/> 
+    
+    </Model>
+   
+    <Solve Iterations="3">  <VTK Iterations="1"/> </Solve > 
+    <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="3" />
+
+    <Solve Iterations="10000"> 
+        <VTK Iterations="1000" what="H,T,U,Rho,averageT,averageU"/> 
+        <Average Iterations="1000"/>
+        <Log Iterations="1000"/>
+    </Solve>
+    
+    <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="3" />
+    <Solve Iterations="2000000"> 
+        <VTK Iterations="50000" what="H,T,U,Rho,averageT,averageU"/> 
+        <Average Iterations="25000"/>
+        <Log Iterations="1000"/>
+    </Solve>
+    <!-- <SaveMemoryDump Iterations="250000" file="test.tclbdump"/> -->
+  </CLBConfig>
+
+
+<?R
+    sink()
+    detach()
+}
+?>

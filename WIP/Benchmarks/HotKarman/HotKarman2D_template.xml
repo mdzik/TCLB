@@ -24,7 +24,6 @@
 <!-- <CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/HotKarman2D_template/"> -->q
     <Geometry nx="1000" ny="150">
       <CM><Box /></CM>    
-        <CM><Box/></CM>
         <WVelocity><Inlet/></WVelocity>
         <!-- <EPressure><Outlet/></EPressure> -->
         <!-- <EConvect><Outlet/></EConvect> -->

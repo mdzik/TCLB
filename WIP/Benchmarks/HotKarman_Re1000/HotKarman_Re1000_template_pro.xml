@@ -1,16 +1,15 @@
 
-
 <?R
     tab = expand.grid(
         #sizer=c(4, 2, 1, 0.5, 0.25), 
-        sizer=c(4, 2, 1), 
+        sizer=c(1, 0.5), 
         D0_stl=c(100), # cylinder's diameter in the stl file
         grid_scale=c(0.32), # no of lattice units describing the cylinder 
-        bc=c("HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureEQ"), # "HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureABB", "HeaterDirichletTemperatureEQ","HeaterNeumannHeatFluxCylinder"
-        collision=c("CM_HIGHER"), # "Cumulants","CM_HIGHER"
-        hpc=c("prometheus"), # "prometheus", "dwarf"
-        nu=c(0.005), 
-        k=c(0.005/0.7),
+        thermal_bc=c("HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureEQ"), # "HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureABB", "HeaterDirichletTemperatureEQ","HeaterNeumannHeatFluxCylinder"
+        hydro_bc=c("HydroIBB", "Wall"),  # "HydroIBB", "Wall"
+        collision=c("CM_HIGHER", "Cumulants"), # "Cumulants","CM_HIGHER"
+        nu=c(0.0055), 
+        k=c(0.0055/0.71),
         Re=c(1000)
     )
 
@@ -19,20 +18,14 @@
     tab$name = paste0(
                       "batch_HotKarman_Re", tab$Re,"_D0_", formatC(tab$D0_stl*tab$sizer*tab$grid_scale,digits = 2, format = "e"), "_nu_", tab$nu, 
                       "_U_", formatC(tab$Re*tab$nu/(tab$sizer*tab$grid_scale*tab$D0_stl),digits = 2, format = "e"), 
-                      "_bc_", tab$bc, "_", tab$collision)
+                      "_bc_", tab$hydro_bc, "_", tab$thermal_bc, "_", tab$collision)
 
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
 
-    if(tab$hpc=="prometheus")
-    {
-        tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/"))
-        
-    } else if(tab$hpc=="dwarf")
-    {
-        tab$output = paste0("/home2/scratch/GG/",dir_name,"/",tab$name, "/")
-    } else {
-        tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
-    }
+    tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/")) # prometheus
+    #tab$output = paste0("/home2/scratch/GG/",dir_name,"/",tab$name, "/") # dwarf
+    #tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+
 
     options(digits=10)
     write.csv(tab, "HotKarman_Re1000_template.csv", row.names=FALSE)
@@ -86,13 +79,6 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
         <FluxMeasurmentZone2>
             <!-- <Outlet/> -->
             <Box dx="-1"/>
-<!--             <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
-              scale="<?%f sizer*grid_scale ?>" 
-              Xrot="0d" 
-               x="<?%f sizer*0.25*672 ?>" 
-              y="<?%f sizer*0.5*192 ?>" 
-              z="0" 
-              side="surface"/> -->
         </FluxMeasurmentZone2>
     </Geometry>
     <Model>
@@ -131,18 +117,16 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
     <Solve Iterations="10000"> 
         <VTK Iterations="1000" what="H,T,U,Rho,averageT,averageU"/> 
         <Average Iterations="1000"/>
-        <Log Iterations="2000"/>
+        <Log Iterations="1000"/>
     </Solve>
     
-
     <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="3" />
-    <Solve Iterations="1000000" > <Log Iterations="2000"/> </Solve>
-    
-    <Solve Iterations="500000"> 
-        <VTK Iterations="10000" what="H,T,U,Rho,averageT,averageU"/> 
-        <Average Iterations="10000"/>
-        <Log Iterations="2000"/>
+    <Solve Iterations="2000000"> 
+        <VTK Iterations="50000" what="H,T,U,Rho,averageT,averageU"/> 
+        <Average Iterations="25000"/>
+        <Log Iterations="1000"/>
     </Solve>
+
     <!-- <SaveMemoryDump Iterations="250000" file="test.tclbdump"/> -->
   </CLBConfig>
 
