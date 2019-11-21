@@ -6,7 +6,7 @@
 
 SetFactory("OpenCASCADE");
 
-radius=50;
+radius=5;
 side_length = 3;
 c_offset = 3;
 Cylinder(3) = {0, 0,  -c_offset,  0, 0, 2.*side_length+2.*c_offset, radius, 2*Pi};
