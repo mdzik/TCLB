@@ -9,7 +9,8 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
 
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/stl_bc_tests/batch_HotKarman_Re10_D0_3.20e+01_nu_0.1_U_3.12e-02_bc_Wall_HeaterDirichletTemperatureEQ_Cumulants_test/">
-    <Geometry nx="672.000000" ny="192.000000" nz="3" >   
+    <!-- <Geometry nx="672.000000" ny="192.000000" nz="3" >   -->
+    <Geometry nx="304.000000" ny="192.000000" nz="3" > 
       <Cumulants> <Box/> </Cumulants>  
 
   <!--   <WVelocity>
@@ -30,8 +31,8 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
               side="surface"/>
         </HydroIBB> -->
 
-        <Wall mask="ALL">
-            <Cylinder dx="152" dy="80" nx="32" ny="32" nz="3"/>
+        <!-- <Wall mask="ALL"> -->
+            <!-- <Cylinder dx="152" dy="80" nx="32" ny="32" nz="3"/> -->
 <!--             <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D10_Z9.stl" 
               scale="3.2" 
               Xrot="0d" 
@@ -39,9 +40,9 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
               y="96.000000" 
               z="0" 
               side="in"/> -->
-        </Wall>  
+        <!-- </Wall>   -->
 
-<!--       <HeaterDirichletTemperatureIABB name="BC_heat_cylinder"> 
+      <HeaterDirichletTemperatureIABB name="BC_heat_cylinder"> 
             <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D10_Z9.stl" 
               scale="3.2" 
               Xrot="0d" 
@@ -49,18 +50,18 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
               y="96.000000" 
               z="0" 
               side="surface"/>
-      </HeaterDirichletTemperatureIABB >  -->
+      </HeaterDirichletTemperatureIABB > 
 
-        <HeaterDirichletTemperatureEQ name="BC_heat_cylinder"> 
+<!--         <HeaterDirichletTemperatureEQ name="BC_heat_cylinder"> 
            <Cylinder dx="152" dy="80" nx="32" ny="32" nz="3"/>
-    <!--         <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D10_Z9.stl" 
+            <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D10_Z9.stl" 
               scale="3.2" 
               Xrot="0d" 
               x="168.000000" 
               y="96.000000" 
               z="0" 
-              side="in"/> -->
-        </HeaterDirichletTemperatureEQ>  
+              side="in"/>
+        </HeaterDirichletTemperatureEQ>   -->
 
         <FluxMeasurmentZone1>
             <!-- <Inlet/> -->

@@ -91,12 +91,12 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
 
         <FluxMeasurmentZone1>
             <!-- <Inlet/> -->
-            <Box nx="1"/>
+            <Box dx="25" nx="1"/>
         </FluxMeasurmentZone1>
 
         <FluxMeasurmentZone2>
             <!-- <Outlet/> -->
-            <Box dx="-1"/>
+            <Box dx="-50" nx="1"/>
         </FluxMeasurmentZone2>
     </Geometry>
     <Model>
