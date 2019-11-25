@@ -51,15 +51,26 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
         <!-- <EPressure name="Outlet"><Box dx="-1"/></EPressure> -->
         <ENeumann name="Outlet"><Box dx="-1"/></ENeumann>
 
-        <IBB name="border" >
-            <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
+        <!-- <IBB name="border" >
+          <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
               scale="<?%f sizer*grid_scale ?>" 
               Xrot="0d" 
               x="<?%f sizer*0.25*672 ?>" 
               y="<?%f sizer*0.5*192 ?>" 
               z="0" 
               side="surface"/>
-        </IBB>
+        </IBB> -->
+
+        <Wall mask="ALL">
+            <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
+              scale="<?%f sizer*grid_scale ?>" 
+              Xrot="0d" 
+              x="<?%f sizer*0.25*672 ?>" 
+              y="<?%f sizer*0.5*192 ?>" 
+              z="0" 
+              side="in"/>
+        </Wall> 
+        
 
         <<?%s bc ?> name="BC_heat_cylinder"> 
             <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
@@ -68,7 +79,7 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
               x="<?%f sizer*0.25*672 ?>" 
               y="<?%f sizer*0.5*192 ?>" 
               z="0" 
-              side="surface"/>
+              side="in"/>
         </<?%s bc ?>>  
 
         <FluxMeasurmentZone1>

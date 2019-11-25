@@ -1061,34 +1061,35 @@ CudaDeviceFunction void RunHOBoundaries()
 	// because the regular wet BOUNDARY nodes have a limiter.
 
 	#ifdef OPTIONS_IBB
-
-		// if ((NodeType & NODE_HO_BOUNDARY_HYDRO) == NODE_HydroIBB){
-		// 	HydroInterpolatedBounceBack();
-		// }
-	
-		// switch (NodeType & NODE_HO_BOUNDARY_HEAT) {
-		// 	case NODE_HeaterDirichletTemperatureIABB:
-		// 		real_t h1 = <?R C(sum(h)) ?>;
-		// 		HeaterDirichletTemperatureInterpolatedAntiBounceBack();
-		// 		real_t h2 = <?R C(sum(h)) ?>;
-		// 		AddToHeatSource(h2-h1); 
-		// 		break;
-		// 	case NODE_ThermalIBB:
-		// 		ThermalInterpolatedBounceBack();
-		// 		break;
-		// }
-
 		real_t h1 = <?R C(sum(h)) ?>;
-		switch (NodeType & NODE_HO_BOUNDARY) {
-			case NODE_IBB:
-				HydroInterpolatedBounceBack();
+
+		if ((NodeType & NODE_HO_BOUNDARY_HYDRO) == NODE_HydroIBB){
+			HydroInterpolatedBounceBack();
+		}
+	
+		switch (NodeType & NODE_HO_BOUNDARY_HEAT) {
+			case NODE_HeaterDirichletTemperatureIABB:
+				real_t h1 = <?R C(sum(h)) ?>;
+				HeaterDirichletTemperatureInterpolatedAntiBounceBack();
+				real_t h2 = <?R C(sum(h)) ?>;
+				AddToHeatSource(h2-h1); 
+				break;
+			case NODE_ThermalIBB:
 				ThermalInterpolatedBounceBack();
 				break;
-			case NODE_HeaterDirichletTemperatureIABB:
-				HydroInterpolatedBounceBack();
-				HeaterDirichletTemperatureInterpolatedAntiBounceBack();
-				break;
 		}
+
+		
+		// switch (NodeType & NODE_HO_BOUNDARY) {
+		// 	case NODE_IBB:
+		// 		HydroInterpolatedBounceBack();
+		// 		ThermalInterpolatedBounceBack();
+		// 		break;
+		// 	case NODE_HeaterDirichletTemperatureIABB:
+		// 		HydroInterpolatedBounceBack();
+		// 		HeaterDirichletTemperatureInterpolatedAntiBounceBack();
+		// 		break;
+		// }
 
 
 		real_t h2 = <?R C(sum(h)) ?>;

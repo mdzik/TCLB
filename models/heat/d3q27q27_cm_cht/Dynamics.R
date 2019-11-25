@@ -122,16 +122,16 @@ AddSetting(name="Sigma_GH", 		  default="1", comment='Initial width of the Gauss
 
 #Interpolated BounceBack Node
 
-if(Options$IBB){
-	AddNodeType("HeaterDirichletTemperatureIABB", group="HO_BOUNDARY") 
-	AddNodeType("IBB", 							  group="HO_BOUNDARY") 
-}
-
 # if(Options$IBB){
-# 	AddNodeType("HeaterDirichletTemperatureIABB", group="HO_BOUNDARY_HEAT") 
-# 	AddNodeType("ThermalIBB", 					  group="HO_BOUNDARY_HEAT") 
-# 	AddNodeType("HydroIBB", 					  group="HO_BOUNDARY_HYDRO") 
+# 	AddNodeType("HeaterDirichletTemperatureIABB", group="HO_BOUNDARY") 
+# 	AddNodeType("IBB", 							  group="HO_BOUNDARY") 
 # }
+
+if(Options$IBB){
+	AddNodeType("HeaterDirichletTemperatureIABB", group="HO_BOUNDARY_HEAT") 
+	AddNodeType("ThermalIBB", 					  group="HO_BOUNDARY_HEAT") 
+	AddNodeType("HydroIBB", 					  group="HO_BOUNDARY_HYDRO") 
+}
 
 #Smagorinsky coefficient
 if(Options$SMAG)
