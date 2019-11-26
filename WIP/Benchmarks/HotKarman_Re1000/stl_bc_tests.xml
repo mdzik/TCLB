@@ -21,7 +21,7 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
         <!-- <EPressure name="Outlet"><Box dx="-1"/></EPressure> -->
         <ENeumann name="Outlet"><Box dx="-1"/></ENeumann>
 
-  <!--       <HydroIBB>
+        <HydroIBB>
             <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D10_Z9.stl" 
               scale="3.2" 
               Xrot="0d" 
@@ -29,7 +29,7 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
               y="96.000000" 
               z="0" 
               side="surface"/>
-        </HydroIBB> -->
+        </HydroIBB>
 
         <!-- <Wall mask="ALL"> -->
             <!-- <Cylinder dx="152" dy="80" nx="32" ny="32" nz="3"/> -->
@@ -52,16 +52,16 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
               side="surface"/>
       </HeaterDirichletTemperatureIABB > 
 
-<!--         <HeaterDirichletTemperatureEQ name="BC_heat_cylinder"> 
-           <Cylinder dx="152" dy="80" nx="32" ny="32" nz="3"/>
-            <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D10_Z9.stl" 
+        <!-- <HeaterDirichletTemperatureEQ name="BC_heat_cylinder">  -->
+           <!-- <Cylinder dx="152" dy="80" nx="32" ny="32" nz="3"/> -->
+     <!--        <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D10_Z9.stl" 
               scale="3.2" 
               Xrot="0d" 
               x="168.000000" 
               y="96.000000" 
               z="0" 
-              side="in"/>
-        </HeaterDirichletTemperatureEQ>   -->
+              side="in"/> -->
+        <!-- </HeaterDirichletTemperatureEQ>   -->
 
         <FluxMeasurmentZone1>
             <!-- <Inlet/> -->
@@ -74,36 +74,30 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
         </FluxMeasurmentZone2>
     </Geometry>
     <Model>
-        <Params
-          InitTemperature="10"
-          InitTemperature-Inlet="10"
-          InitTemperature-Outlet="10"
-          InitTemperature-BC_heat_cylinder="11"
 
-          InitHeatFlux-BC_heat_cylinder="0.001"
-        />
+    	<Param name="InitTemperature" value="10"/>
+    	<Param name="InitTemperature" value="10" zone="Inlet"/>
+    	<!-- <Param name="InitTemperature" value="10" zone="Outlet"/> -->
+    	<Param name="InitTemperature" value="11" zone="BC_heat_cylinder"/>
 
-      <Params 
-        nu="0.100000"
-        conductivity="0.140845"
 
-        nu_buffer="0.166666"
-        conductivity_buffer="0.166666"
+    	<Param name="nu" value="0.100000"/>
+		<Param name="conductivity" value="0.140845"/>
+		
+		<Param name="nu_buffer" value="0.166666"/>
+		<Param name="conductivity_buffer" value="0.166666"/>
+    	<Param name="h_stability_enhancement" value="1."/>
+		<Param name="cp" value="1."/>
+		<Param name="material_density" value="1."/>
 
-        h_stability_enhancement="1."
-        cp="1."
-        material_density="1."
-      />
-
-      <Params VelocityX="0.031250" />
+	 	<Param name="VelocityX" value="0.031250"/>
 
       <!-- CylinderCenter is used only for heat flux bc 
-      <Params CylinderCenterX="53.760000" />
-      <Params CylinderCenterY="30.720000"/> 
-      -->
+      <!-- <Param name="InitHeatFlux" value="0.001" zone="BC_heat_cylinder"/> -->
+<!--       <Params CylinderCenterX="53.760000" />
+      <Params CylinderCenterY="30.720000"/>  -->
     
     </Model>
-   
     <Solve Iterations="3">  <VTK Iterations="1"/> </Solve > 
     <Failcheck Iterations="5000" nx="672.000000" ny="192.000000" nz="3" />
 

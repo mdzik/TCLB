@@ -6,9 +6,9 @@
         sizer=c(1), 
         D0_stl=c(100), # cylinder's diameter in the stl file
         grid_scale=c(0.32), # no of lattice units describing the cylinder 
-        thermal_bc=c("HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureEQ"), # "HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureABB", "HeaterDirichletTemperatureEQ","HeaterNeumannHeatFluxCylinder"
-        #hydro_bc=c("HydroIBB"),  # "HydroIBB", "Wall mask=\"ALL\""
-        hydro_bc=c("HydroIBB", "Wall"),  # "HydroIBB", "Wall mask=\"ALL\""
+        # "HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureABB", "HeaterDirichletTemperatureEQ","HeaterNeumannHeatFluxCylinder"
+        # "HydroIBB", "Wall mask=\"ALL\""
+        bc_order=c("1st", "2nd"),
         collision=c("CM_HIGHER", "Cumulants"), # "Cumulants","CM_HIGHER"
         nu=c(0.1), 
         k=c(0.1/0.71),
@@ -20,14 +20,13 @@
     tab$name = paste0(
                       "batch_HotKarman_Re", tab$Re,"_D0_", formatC(tab$D0_stl*tab$sizer*tab$grid_scale,digits = 2, format = "e"), "_nu_", tab$nu, 
                       "_U_", formatC(tab$Re*tab$nu/(tab$sizer*tab$grid_scale*tab$D0_stl),digits = 2, format = "e"), 
-                      "_bc_", tab$hydro_bc, "_", tab$thermal_bc, "_", tab$collision)
+                      "_", tab$bc_order, "_order_bc_", tab$collision)
 
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
 
     #tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/")) # prometheus
     #tab$output = paste0("/home2/scratch/GG/",dir_name,"/",tab$name, "/") # dwarf
     tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
-
 
     options(digits=10)
     write.csv(tab, "HotKarman_ReXXX_template.csv", row.names=FALSE)
@@ -54,13 +53,13 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
         <ENeumann name="Outlet"><Box dx="-1"/></ENeumann>
 
         <?R
-        if(hydro_bc == "Wall" )
-        {
-          cat(sprintf("<%s mask=\"ALL\">\n", hydro_bc))
-        } else
-        {
-          cat(sprintf("<%s>\n", hydro_bc))
-        }
+          if(bc_order == "1st" )
+          {
+            cat(sprintf("<Wall mask=\"ALL\">"))
+          } else if (bc_order == "2nd")
+          {
+            cat(sprintf("<HydroIBB>"))
+          }
         ?>  
         <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
               scale="<?%f sizer*grid_scale ?>" 
@@ -69,65 +68,92 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
               y="<?%f sizer*0.5*192 ?>" 
               z="0"               
               <?R   
-                if(hydro_bc == "Wall")
+                if(bc_order == "1st")
                 {
                   cat(sprintf("side=\"in\""))
-                } else
+                } else if (bc_order == "2nd")
                 {
                   cat(sprintf("side=\"surface\""))
                 }
-              />
-        </<?%s hydro_bc ?>>  
+              ?>/>
+        <?R
+          if(bc_order == "1st" )
+          {
+            cat(sprintf("</Wall>\n"))
+          } else if (bc_order == "2nd")
+          {
+            cat(sprintf("</HydroIBB>\n"))
+          }
+        ?>  
+        
 
-        <<?%s thermal_bc ?> name="BC_heat_cylinder"> 
-            <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
+        <?R
+          if(bc_order == "1st" )
+          {
+            cat(sprintf("<HeaterDirichletTemperatureEQ name=\"BC_heat_cylinder\">"))
+          } else if (bc_order == "2nd")
+          {
+            cat(sprintf("<HeaterDirichletTemperatureIABB name=\"BC_heat_cylinder\">"))
+          }
+        ?>  
+        <STL file="WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl" 
               scale="<?%f sizer*grid_scale ?>" 
               Xrot="0d" 
               x="<?%f sizer*0.25*672 ?>" 
               y="<?%f sizer*0.5*192 ?>" 
-              z="0" 
-              side="surface"/>
-        </<?%s thermal_bc ?>>  
+              z="0"               
+              <?R   
+                if(bc_order == "1st")
+                {
+                  cat(sprintf("side=\"in\""))
+                } else if (bc_order == "2nd")
+                {
+                  cat(sprintf("side=\"surface\""))
+                }
+              ?>/>
+        <?R
+        if(bc_order == "1st" )
+        {
+          cat(sprintf("</HeaterDirichletTemperatureEQ>\n"))
+        } else if (bc_order == "2nd")
+        {
+          cat(sprintf("</HeaterDirichletTemperatureIABB>\n"))
+        }
+        ?>  
 
         <FluxMeasurmentZone1>
             <!-- <Inlet/> -->
-            <Box dx="25" nx="1"/>
+            <Box dx="50" nx="1"/>
         </FluxMeasurmentZone1>
 
         <FluxMeasurmentZone2>
             <!-- <Outlet/> -->
-            <Box dx="-50" nx="1"/>
+            <Box dx="-100" nx="1"/>
         </FluxMeasurmentZone2>
     </Geometry>
+
     <Model>
-        <Params
-          InitTemperature="10"
-          InitTemperature-Inlet="10"
-          InitTemperature-Outlet="10"
-          InitTemperature-BC_heat_cylinder="11"
+      <Param name="InitTemperature" value="10"/>
+      <Param name="InitTemperature" value="10" zone="Inlet"/>
+      <!-- <Param name="InitTemperature" value="10" zone="Outlet"/> -->
+      <Param name="InitTemperature" value="11" zone="BC_heat_cylinder"/>
 
-          InitHeatFlux-BC_heat_cylinder="0.001"
-        />
+      <Param name="nu" value="<?%f nu ?>"/>
+      <Param name="conductivity" value="<?%f k ?>"/>
 
-      <Params 
-        nu="<?%f nu ?>"
-        conductivity="<?%f k ?>"
+      <Param name="nu_buffer" value="0.166666"/>
+      <Param name="conductivity_buffer" value="0.166666"/>
+      <Param name="h_stability_enhancement" value="1."/>
+      <Param name="cp" value="1."/>
+      <Param name="material_density" value="1."/>
 
-        nu_buffer="0.166666"
-        conductivity_buffer="0.166666"
+      <Param name="VelocityX" value="<?%f Re*nu/(sizer*grid_scale*D0_stl) ?>" />
 
-        h_stability_enhancement="1."
-        cp="1."
-        material_density="1."
-      />
+      <!-- CylinderCenter is used only for heat flux bc -->
+      <!-- <Param name="InitHeatFlux" value="0.001" zone="BC_heat_cylinder"/> -->
+      <!-- <Params CylinderCenterX="<?%f sizer*grid_scale*0.25*672 ?>" /> -->
+      <!-- <Params CylinderCenterY="<?%f sizer*grid_scale*0.5*192 ?>"/> -->
 
-      <Params VelocityX="<?%f Re*nu/(sizer*grid_scale*D0_stl) ?>" />
-
-      <!-- CylinderCenter is used only for heat flux bc 
-      <Params CylinderCenterX="<?%f sizer*grid_scale*0.25*672 ?>" />
-      <Params CylinderCenterY="<?%f sizer*grid_scale*0.5*192 ?>"/> 
-      -->
-    
     </Model>
    
     <Solve Iterations="3">  <VTK Iterations="1"/> </Solve > 
@@ -140,7 +166,6 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
     </Solve>
     <!-- <SaveMemoryDump Iterations="250000" file="test.tclbdump"/> -->
   </CLBConfig>
-
 
 <?R
     sink()
