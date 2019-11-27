@@ -12,6 +12,7 @@ then
     	if test -f $i
 		then
 			echo "=== reading tail of $i ==="
+			grep -nr "Setting output path to: /net/scratch/people/" $i
 			tail --lines 5 $i
 		else
 			echo -e "\n no local logs"
@@ -23,6 +24,7 @@ then
 		if test -f $i
 		then
 			echo "=== reading tail of $j ==="
+			grep -nr "Setting output path to: /net/scratch/people/" $i
 			tail --lines 5 $i
 		else
 			echo -e "\n no slurm logs"
