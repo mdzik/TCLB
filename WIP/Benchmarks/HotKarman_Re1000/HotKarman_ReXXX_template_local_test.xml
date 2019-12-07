@@ -2,34 +2,38 @@
 
 <?R
     tab = expand.grid(
-        #sizer=c(4, 2, 1, 0.5, 0.25), 
-        sizer=c(1), 
+        sizer=c(4), 
         D0_stl=c(100), # cylinder's diameter in the stl file
         grid_scale=c(0.32), # no of lattice units describing the cylinder 
         # "HeaterDirichletTemperatureIABB", "HeaterDirichletTemperatureABB", "HeaterDirichletTemperatureEQ","HeaterNeumannHeatFluxCylinder"
         # "HydroIBB", "Wall mask=\"ALL\""
+        ny=(192), # domain size in y dimension: 768-> RB=1/24;  384-> RB=1/12
         bc_order=c("1st", "2nd"),
-        collision=c("CM_HIGHER", "Cumulants"), # "Cumulants","CM_HIGHER"
-        nu=c(0.1), 
-        k=c(0.1/0.71),
-        Re=c(10)
+        collision=c("CM_HIGHER"), # "Cumulants","CM_HIGHER"
+        nu=c(0.003), 
+        k=c(0.003/0.71),
+        Re=c(1000)
     )
 
     dir_name <-"batch_HotKarman_ReXXX" 
     dir.create(dir_name)
     tab$name = paste0(
-                      "batch_HotKarman_Re", tab$Re,"_D0_", formatC(tab$D0_stl*tab$sizer*tab$grid_scale,digits = 2, format = "e"), "_nu_", tab$nu, 
+                      "batch_HotKarman_Re", tab$Re,"_D0_", formatC(tab$D0_stl*tab$sizer*tab$grid_scale,digits = 2, format = "e"), 
+                      "_nu_", tab$nu, 
                       "_U_", formatC(tab$Re*tab$nu/(tab$sizer*tab$grid_scale*tab$D0_stl),digits = 2, format = "e"), 
-                      "_", tab$bc_order, "_order_bc_", tab$collision)
+                      "_", tab$bc_order, "_order_bc",
+                      "_BR_", formatC(tab$D0_stl*tab$sizer*tab$grid_scale/(tab$sizer*tab$ny), digits = 2, format = "e"),
+                      "_", tab$collision)
 
+    # gsub("/","o", fractions(.14))
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
 
-    #tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/")) # prometheus
-    #tab$output = paste0("/home2/scratch/GG/",dir_name,"/",tab$name, "/") # dwarf
+    # tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/")) # prometheus
+    # tab$output = paste0("/home2/scratch/GG/",dir_name,"/",tab$name, "/") # dwarf
     tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
 
     options(digits=10)
-    write.csv(tab, "HotKarman_ReXXX_template.csv", row.names=FALSE)
+    write.csv(tab, "HotKarman_Re1000_template.csv", row.names=FALSE)
     for (i in 1:nrow(tab)) {
         attach(tab[i,,drop=FALSE])
         print(xml)
@@ -45,7 +49,7 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
 
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="<?%s output ?>">
-    <Geometry nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="3" >   
+    <Geometry nx="<?%f 672*sizer ?>" ny="<?%f ny*sizer ?>" nz="3" >    
       <<?%s collision ?>> <Box/> </<?%s collision ?>>  
 
         <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
@@ -65,7 +69,7 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
               scale="<?%f sizer*grid_scale ?>" 
               Xrot="0d" 
               x="<?%f sizer*0.25*672 ?>" 
-              y="<?%f sizer*0.5*192 ?>" 
+              y="<?%f sizer*0.5*ny ?>" 
               z="0"               
               <?R   
                 if(bc_order == "1st")
@@ -100,7 +104,7 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
               scale="<?%f sizer*grid_scale ?>" 
               Xrot="0d" 
               x="<?%f sizer*0.25*672 ?>" 
-              y="<?%f sizer*0.5*192 ?>" 
+              y="<?%f sizer*0.5*ny ?>" 
               z="0"               
               <?R   
                 if(bc_order == "1st")
@@ -120,6 +124,24 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
           cat(sprintf("</HeaterDirichletTemperatureIABB>\n"))
         }
         ?>  
+
+        <?R
+          if(bc_order == "2nd" )
+          {
+            cat(sprintf("
+            <Wall mask=\"ALL\">
+              <STL file=\"WIP/Benchmarks/HotKarman_Re1000/cylinder_noXY_D100_Z9.stl\" 
+              scale=\"%f\" 
+              Xrot=\"0d\" 
+              x=\"%f\" 
+              y=\"%f\"
+              z=\"0\"               
+              side=\"in\"
+              />
+            </Wall> 
+            ", sizer*grid_scale, sizer*0.25*672, sizer*0.5*ny))
+          }
+        ?> 
 
         <FluxMeasurmentZone1>
             <!-- <Inlet/> -->
@@ -152,18 +174,20 @@ J. Fluid. Mech. vol. 570, pp177-215, 2007
       <!-- CylinderCenter is used only for heat flux bc -->
       <!-- <Param name="InitHeatFlux" value="0.001" zone="BC_heat_cylinder"/> -->
       <!-- <Params CylinderCenterX="<?%f sizer*grid_scale*0.25*672 ?>" /> -->
-      <!-- <Params CylinderCenterY="<?%f sizer*grid_scale*0.5*192 ?>"/> -->
+      <!-- <Params CylinderCenterY="<?%f sizer*grid_scale*0.5*ny ?>"/> -->
 
     </Model>
    
     <Solve Iterations="3">  <VTK Iterations="1"/> </Solve > 
-    <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f 192*sizer ?>" nz="3" />
 
-    <Solve Iterations="25000"> 
+    
+    <Failcheck Iterations="5000" nx="<?%f 672*sizer ?>" ny="<?%f ny*sizer ?>" nz="3" />
+    <Solve Iterations="20000"> 
         <VTK Iterations="1000" what="H,T,U,Rho,averageT,averageU"/> 
-        <Average Iterations="5000"/>
-        <Log Iterations="1000"/>
+        <Average Iterations="1000"/>
     </Solve>
+    
+
     <!-- <SaveMemoryDump Iterations="250000" file="test.tclbdump"/> -->
   </CLBConfig>
 
