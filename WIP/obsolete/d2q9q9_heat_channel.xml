@@ -1,0 +1,46 @@
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/d2q9q9_test_cm/">
+      <Geometry nx="1024" ny="100" >
+      <!-- <BGK><Box /></BGK>     -->
+      <CM><Box /></CM>
+      <!-- <Smoothing><Box /></Smoothing>  -->
+      
+        <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
+        <!-- <EPressure name="Outlet"><Box dx="-1"/></EPressure> -->
+        <ENeumann name="Outlet"><Box dx="-1"/></ENeumann>
+
+
+<!--         <None name="init_T_region">
+            <Sphere dx="50" nx="50" dy="25" ny="50" /> 
+        </None>    -->     
+
+        <Wall mask="ALL" name="box" >     
+           <Box dx="200" dy="35" nx="10" ny="30"/>
+        </Wall>
+
+  </Geometry>
+    <Model>
+    <Params
+        nu="0.001666666" 
+        k ="0.001666666" 
+        cp="1.0"
+
+        InitTemperature="1.0"
+        InitTemperature-init_T_region="1.5"
+
+        InitTemperature-Inlet="1"
+        InitTemperature-Outlet="1"
+
+        />
+    <Params  />
+    <Params VelocityX="0.1" />
+    </Model> 
+
+
+<Solve Iterations="5"> <VTK Iterations="1"/> </Solve>
+<Failcheck Iterations="1000" nx="500" ny="100" />
+<Log Iterations="1000"/>
+<Solve Iterations="30000"> <VTK Iterations="1000"/> </Solve>
+</CLBConfig>
+

@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/">
+<!-- 3D Poiseuille Test Case
+	Run with d3q27_pf_velocity model
+
+	Using to implement Cascaded relaxation
+ -->
+    <Geometry nx="32" ny="4" nz="66">
+	<MRT><Box /></MRT>
+	<None name="l">
+	     <Box nz="33"/>
+	</None>
+	<Wall mask="ALL">
+	     <Box dz="-1" />
+	</Wall>
+	<Wall mask="ALL">
+	     <Box nz="1"/>
+	</Wall>
+    </Geometry>
+    <Model>
+	<Params
+			Density_h="1" 	 Density_l="1.0" 
+    			PhaseField="1.0" PhaseField-l="0.0"
+				/>
+        <Params 	IntWidth="5" M="0.02" sigma="5.0e-5" />
+        <Params 	Viscosity_l="0.016666666667" 
+			Viscosity_h="0.16666666667"
+			GravitationX="1e-6"
+		/>
+    </Model>
+<VTK/>
+<Solve Iterations="40000" output="output/">
+<VTK   Iterations="1000" />
+</Solve>
+</CLBConfig>
