@@ -1,3 +1,3 @@
 ADJOINT=0
-TEST=FALSE
-OPT="OutFlowConvective*OutFlowNeumann"
+TEST=TRUE
+OPT="OutFlowConvective*OutFlowNeumann*AVG*IBB*SMAG*CHT"

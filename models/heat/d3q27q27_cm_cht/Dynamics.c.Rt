@@ -1353,15 +1353,16 @@ CudaDeviceFunction void relax_and_collide_ADE_Cumulants(real_t rho, real_t omega
 
 	#ifdef OPTIONS_SMAG
 		//Calculating turbulent viscosity for Smagorinsky  turbulence model
-		real_t tau_0 = 1./omega_ade;
-		real_t tau_t;
-		real_t q;
+		// real_t tau_0 = 1./omega_ade;
+		// real_t tau_t;
+		// real_t q;
 
-		q = sqrt((c200-1.0/3)*(c200-1.0/3)+(c020-1.0/3)*(c020-1.0/3)+(c002-1.0/3)*(c002-1.0/3)+2*(c110*c110)+2*(c101*c101)+2*(c011*c011));
-		tau_t = 0.5 * (sqrt( tau_0 * tau_0 + 18 * Smag * Smag * q) - tau_0);
-		w[0] = 1.0 / (tau_0 + tau_t);
+		// TODO: shall hydro cumulants be used here?
+		// q = sqrt((c200-1.0/3)*(c200-1.0/3)+(c020-1.0/3)*(c020-1.0/3)+(c002-1.0/3)*(c002-1.0/3)+2*(c110*c110)+2*(c101*c101)+2*(c011*c011));
+		// tau_t = 0.5 * (sqrt( tau_0 * tau_0 + 18 * Smag * Smag * q) - tau_0);
+		// w[0] = 1.0 / (tau_0 + tau_t);
 
-		if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*conductivity_buffer+0.5);
+		// if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*conductivity_buffer+0.5);
 	#endif
 
 	// Galilean Correction
@@ -1464,6 +1465,7 @@ CudaDeviceFunction void relax_and_collide_ADE_Cumulants(real_t rho, real_t omega
 	h020 = -h022 + h020; h021 = ( h022 + h021 )/2.; h022 = h022 - h021; 
 	h120 = -h122 + h120; h121 = ( h122 + h121 )/2.; h122 = h122 - h121; 
 	h220 = -h222 + h220; h221 = ( h222 + h221 )/2.; h222 = h222 - h221;
+
 }
 
 CudaDeviceFunction void relax_and_collide_ADE_CM_HIGHER_NONLINEAR(real_t rho, real_t omega_ade, vector_t u_hydro) 
@@ -2216,7 +2218,6 @@ CudaDeviceFunction vector_t relax_and_collide_hydro(vector_t Force, real_t omega
 		real_t <?%s i ?>;
 	<?R } ?>	
 
-
 	c100 = f100/f000;
 	c200 = ( -c100*f100 + f200 )/f000;
 	c010 = f010/f000;
@@ -2465,8 +2466,6 @@ CudaDeviceFunction void CollisionCM_HIGHER(){
 	if ((NodeType & NODE_BOUNDARY) != 0) omega_k = 1.0/(3*conductivity_buffer+0.5);
 
 	relax_and_collide_ADE_CM_HIGHER(rho, omega_k, u);
-
-
 }
 
 CudaDeviceFunction void CollisionCM_HIGHER_NONLINEAR(){
