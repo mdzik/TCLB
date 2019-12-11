@@ -467,10 +467,10 @@ CudaDeviceFunction void ImposeHeatFlux(vector_t n)
 	real_t temp002 = 0;
 	real_t temp120 = n.x*third_order_cm;
 	real_t temp102 = n.x*third_order_cm;
-	real_t temp210 = n.z*third_order_cm;
-	real_t temp201 = n.y*third_order_cm;
-	real_t temp012 = n.z*third_order_cm;
-	real_t temp021 = n.y*third_order_cm;
+	real_t temp210 = n.y*third_order_cm;
+	real_t temp201 = n.z*third_order_cm;
+	real_t temp012 = n.y*third_order_cm;
+	real_t temp021 = n.z*third_order_cm;
 	real_t temp111 = 0;
 	real_t temp220 = 0;
 	real_t temp202 = 0;
