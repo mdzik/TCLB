@@ -14,6 +14,7 @@
 <!-- 
 Second Order BC on cylinder  
 -->
+
 <!--         <HydroIBB>
             <STL file="example/heat/cylinder_XYplane_D10_Z9.stl" 
               scale="3.0" 
@@ -32,9 +33,9 @@ Second Order BC on cylinder
               z="0" 
               side="surface"/>
         </HeaterDirichletTemperatureIABB > 
+
+
  -->
-
-
 <!-- First order BC on cylinder: 
 Read cylinder from stl
 -->
@@ -110,12 +111,12 @@ draw cylinder using primitive functions
     </Model>
    
     <Solve Iterations="3">  <VTK Iterations="1"/> </Solve > 
-    <Failcheck Iterations="5000" nx="512" ny="100" />
+    <Failcheck Iterations="100" nx="512" ny="100" />
 
-    <Solve Iterations="30000"> 
-      <VTK Iterations="1000" what="H,T,U,Rho"/> 
+    <Solve Iterations="50000"> 
+      <VTK Iterations="5" what="H,T,U,Rho"/> 
         <!-- <VTK Iterations="1000" what="H,T,U,Rho,averageT,averageU"/>  -->
-        <Average Iterations="5000"/>
+        <!-- <Average Iterations="5000"/> -->
         <Log Iterations="1000"/>
     </Solve>
   </CLBConfig>
