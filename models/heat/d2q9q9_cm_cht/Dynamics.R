@@ -11,19 +11,17 @@ AddDensity(
 	name = fname,
 	dx   = U[,1],
 	dy   = U[,2],
-	# dz   = U[,3],
 	comment=paste("flow LB density F",1:9-1),
 	group="f"
 )
 
-for (f in fname) AddField(f,dx=0,dy=0, dz=0) # Make f accessible also in present node (not only streamed)
+for (f in fname) AddField(f,dx=0,dy=0) # Make f accessible also in present node (not only streamed)
 
 hname =  paste("h",P$x,P$y,P$z,sep="")
 AddDensity(
 	name = hname,
 	dx   = U[,1],
 	dy   = U[,2],
-	# dz   = U[,3],
 	comment=paste("heat LB density H",1:9),
 	group="h"
 )
@@ -143,7 +141,6 @@ if (Options$OutFlowConvective)
 		name = holdname,
 		dx   = U[,1],
 		dy   = U[,2],
-		# dz   = U[,3],
 		comment=paste("heat LB density H",0:8),
 		group="hold"
 	)
@@ -153,7 +150,6 @@ if (Options$OutFlowConvective)
 		name = foldname,
 		dx   = U[,1],
 		dy   = U[,2],
-		# dz   = U[,3],
 		comment=paste("flow LB density F",0:8),
 		group="fold"
 	)

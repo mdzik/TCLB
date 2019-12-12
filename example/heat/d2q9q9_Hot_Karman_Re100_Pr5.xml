@@ -2,7 +2,7 @@
 <!-- To be used with d2q9q9_cm_cht_OutFlowNeumann_AVG_IBB -->
 
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/d3q27q27_HotKarman_Re100_Pr5/">
+<CLBConfig version="2.0" output="output/d2q9q9_HotKarman_Re100_Pr5_exp/">
     <Geometry nx="512" ny="100" > 
     <Cumulants> <Box/> </Cumulants>  
       <!-- <CM_HIGHER> <Box/> </CM_HIGHER>   -->
@@ -32,10 +32,10 @@ Second Order BC on cylinder
               y="50.000000" 
               z="0" 
               side="surface"/>
-        </HeaterDirichletTemperatureIABB > 
+        </HeaterDirichletTemperatureIABB >  -->
 
 
- -->
+
 <!-- First order BC on cylinder: 
 Read cylinder from stl
 -->
@@ -65,11 +65,10 @@ Read cylinder from stl
 <!-- First order BC on cylinder: 
 draw cylinder using primitive functions 
  -->
-
-              
+      
         <Wall mask="ALL">
           <Cylinder dx="120" dy="35" nx="30" ny="30"/>
-        </Wall>  
+        </Wall>
         <HeaterDirichletTemperatureEQ name="BC_heat_cylinder"> 
             <Cylinder dx="120" dy="35" nx="30" ny="30"/>
         </HeaterDirichletTemperatureEQ>   
@@ -110,13 +109,12 @@ draw cylinder using primitive functions
     
     </Model>
    
-    <Solve Iterations="3">  <VTK Iterations="1"/> </Solve > 
+    <Solve Iterations="3"> <VTK Iterations="1"/> </Solve> 
     <Failcheck Iterations="100" nx="512" ny="100" />
-
-    <Solve Iterations="50000"> 
-      <VTK Iterations="5" what="H,T,U,Rho"/> 
+    <Solve Iterations="20000"> 
+      <VTK Iterations="1000" what="H,T,U,Rho"/> 
         <!-- <VTK Iterations="1000" what="H,T,U,Rho,averageT,averageU"/>  -->
         <!-- <Average Iterations="5000"/> -->
-        <Log Iterations="1000"/>
+        <Log Iterations="100"/>
     </Solve>
   </CLBConfig>

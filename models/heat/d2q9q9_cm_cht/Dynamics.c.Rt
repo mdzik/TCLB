@@ -412,10 +412,10 @@ CudaDeviceFunction void ENeumann()
 	// See 'Evaluation of outflow boundary conditions for two-phase lattice Boltzmann equation' 
 	// by Qin Lou, Zhaoli Guo and Baochang Shi from 2013 for details.
 	<?R
-		if (Options$OutFlowNeumann){
-			C(f, PV(paste0(f_neighbours,"(",-Density$dx[Density$group=="f"]-1,",",-Density$dy[Density$group=="f"],")")))
-			C(h, PV(paste0(h_neighbours,"(",-Density$dx[Density$group=="h"]-1,",",-Density$dy[Density$group=="h"],")")))
-		}
+	if (Options$OutFlowNeumann){
+		C(f, PV(paste0(f_neighbours,"(",-Density$dx[Density$group=="f"]-1,",",-Density$dy[Density$group=="f"],")")))
+		C(h, PV(paste0(h_neighbours,"(",-Density$dx[Density$group=="h"]-1,",",-Density$dy[Density$group=="h"],")")))
+	}
 	?>
 }
 #endif
@@ -481,51 +481,53 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 
 CudaDeviceFunction void HeaterSource()
 {
-	real_t T = InitTemperature;
-	real_t rho = getRho();
-	vector_t u = getU_();
-	real_t H = rho*cp*T;  
+	// TODO:
+	// real_t T = InitTemperature;
+	// real_t rho = getRho();
+	// vector_t u = getU_();
+	// real_t H = rho*cp*T;  
 
-	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
-	#ifdef OPTIONS_CHT
-		real_t Sigma2 = 1./3.*h_stability_enhancement/(cp*rho);
-	#else
-		real_t Sigma2 = 1./3.;
-	#endif
-	real_t uxuy = u.x*u.y;
-	real_t ux2 = u.x*u.x;
-	real_t uy2 = u.y*u.y;
+	// //=== THIS IS AUTOMATICALLY GENERATED CODE ===
+	// #ifdef OPTIONS_CHT
+	// 	real_t Sigma2 = 1./3.*h_stability_enhancement/(cp*rho);
+	// #else
+	// 	real_t Sigma2 = 1./3.;
+	// #endif
+	// real_t uxuy = u.x*u.y;
+	// real_t ux2 = u.x*u.x;
+	// real_t uy2 = u.y*u.y;
 
-	//equilibrium in central moments space
-	real_t heq000 = H;
-	real_t heq100 = 0;
-	real_t heq010 = 0;
-	real_t heq200 = H*Sigma2;
-	real_t heq020 = H*Sigma2;
-	real_t heq110 = 0;
-	real_t heq210 = 0;
-	real_t heq120 = 0;
-	real_t heq220 = H*Sigma2*Sigma2;
-	//back to raw moments
-	real_t temp000 = heq000;
-	real_t temp100 = heq000*u.x + heq100;
-	real_t temp010 = heq000*u.y + heq010;
-	real_t temp200 = heq000*ux2 + 2.*heq100*u.x + heq200;
-	real_t temp020 = heq000*uy2 + 2.*heq010*u.y + heq020;
-	real_t temp110 = heq000*uxuy + heq010*u.x + heq100*u.y + heq110;
-	real_t temp210 = heq000*ux2*u.y + heq010*ux2 + 2.*heq100*uxuy + 2.*heq110*u.x + heq200*u.y + heq210;
-	real_t temp120 = heq000*u.x*uy2 + 2.*heq010*uxuy + heq020*u.x + heq100*uy2 + 2.*heq110*u.y + heq120;
-	real_t temp220 = heq000*ux2*uy2 + 2.*heq010*ux2*u.y + heq020*ux2 + 2.*heq100*u.x*uy2 + 4.*heq110*uxuy + 2.*heq120*u.x + heq200*uy2 + 2.*heq210*u.y + heq220;
-	//back to density-probability functions
-	h000 += temp000 - temp020 - temp200 + temp220;
-	h100 += 1/2.*temp100 - 1/2.*temp120 + 1/2.*temp200 - 1/2.*temp220;
-	h200 += -1/2.*temp100 + 1/2.*temp120 + 1/2.*temp200 - 1/2.*temp220;
-	h010 += 1/2.*temp010 + 1/2.*temp020 - 1/2.*temp210 - 1/2.*temp220;
-	h110 += 1/4.*temp110 + 1/4.*temp120 + 1/4.*temp210 + 1/4.*temp220;
-	h210 += -1/4.*temp110 - 1/4.*temp120 + 1/4.*temp210 + 1/4.*temp220;
-	h020 += -1/2.*temp010 + 1/2.*temp020 + 1/2.*temp210 - 1/2.*temp220;
-	h120 += -1/4.*temp110 + 1/4.*temp120 - 1/4.*temp210 + 1/4.*temp220;
-	h220 += 1/4.*temp110 - 1/4.*temp120 - 1/4.*temp210 + 1/4.*temp220;
+	// //back from cm_eq to raw moments
+	// real_t temp000 = H;
+	// real_t temp100 = H*u.x;
+	// real_t temp010 = H*u.y;
+	// real_t temp200 = H*(Sigma2 + ux2);
+	// real_t temp020 = H*(Sigma2 + uy2);
+	// real_t temp110 = H*uxuy;
+	// real_t temp210 = H*u.y*(Sigma2 + ux2);
+	// real_t temp120 = H*u.x*(Sigma2 + uy2);
+	// real_t temp220 = H*(Sigma2*Sigma2 + Sigma2*ux2 + Sigma2*uy2 + ux2*uy2);
+	// //back to density-probability functions
+	// real_t heq000 = temp000 - temp020 - temp200 + temp220;
+	// real_t heq100 = 1/2.*temp100 - 1/2.*temp120 + 1/2.*temp200 - 1/2.*temp220;
+	// real_t heq200 = -1/2.*temp100 + 1/2.*temp120 + 1/2.*temp200 - 1/2.*temp220;
+	// real_t heq010 = 1/2.*temp010 + 1/2.*temp020 - 1/2.*temp210 - 1/2.*temp220;
+	// real_t heq110 = 1/4.*temp110 + 1/4.*temp120 + 1/4.*temp210 + 1/4.*temp220;
+	// real_t heq210 = -1/4.*temp110 - 1/4.*temp120 + 1/4.*temp210 + 1/4.*temp220;
+	// real_t heq020 = -1/2.*temp010 + 1/2.*temp020 + 1/2.*temp210 - 1/2.*temp220;
+	// real_t heq120 = -1/4.*temp110 + 1/4.*temp120 - 1/4.*temp210 + 1/4.*temp220;
+	// real_t heq220 = 1/4.*temp110 - 1/4.*temp120 - 1/4.*temp210 + 1/4.*temp220;
+
+	// //add source term
+	// h000 += heq000;
+	// h100 += heq100;
+	// h010 += heq010;
+	// h110 += heq110;
+	// h200 += heq200;
+	// h020 += heq020;
+	// h120 += heq120;
+	// h210 += heq210;
+	// h220 += heq220;
 }
 
 CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
@@ -778,9 +780,9 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 				} else { 
 					<?R C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[bounce[i]])  ?>	
 				}	
-			
+							
 				<?R # C(h[bounce[i]], -1*ha + 2*rh_eq[bounce[i]])  ?>	 	// p =1
-					
+				
 			}
 	<?R } ?>
 
@@ -869,21 +871,21 @@ CudaDeviceFunction void RunHOBoundaries()
 	// because the regular wet BOUNDARY nodes have a limiter.
 
 	#ifdef OPTIONS_IBB
-		// if ((NodeType & NODE_HO_BOUNDARY_HYDRO) == NODE_HydroIBB){
-		// 	HydroInterpolatedBounceBack();
-		// }
+		if ((NodeType & NODE_HO_BOUNDARY_HYDRO) == NODE_HydroIBB){
+			HydroInterpolatedBounceBack();
+		}
 	
-		// switch (NodeType & NODE_HO_BOUNDARY_HEAT) {
-		// 	case NODE_HeaterDirichletTemperatureIABB:
-		// 		real_t h1 = <?R C(sum(h)) ?>;
-		// 		HeaterDirichletTemperatureInterpolatedAntiBounceBack();
-		// 		real_t h2 = <?R C(sum(h)) ?>;
-		// 		AddToHeatSource(h2-h1); 
-		// 		break;
-		// 	case NODE_ThermalIBB:
-		// 		ThermalInterpolatedBounceBack();
-		// 		break;
-		// }
+		switch (NodeType & NODE_HO_BOUNDARY_HEAT) {
+			case NODE_HeaterDirichletTemperatureIABB:
+				real_t h1 = <?R C(sum(h)) ?>;
+				HeaterDirichletTemperatureInterpolatedAntiBounceBack();
+				real_t h2 = <?R C(sum(h)) ?>;
+				AddToHeatSource(h2-h1); 
+				break;
+			case NODE_ThermalIBB:
+				ThermalInterpolatedBounceBack();
+				break;
+		}
 
 	#endif
 }
