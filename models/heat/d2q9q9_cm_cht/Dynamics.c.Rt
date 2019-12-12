@@ -413,8 +413,8 @@ CudaDeviceFunction void ENeumann()
 	// by Qin Lou, Zhaoli Guo and Baochang Shi from 2013 for details.
 	<?R
 		if (Options$OutFlowNeumann){
-			C(f, PV(paste0(f_neighbours,"(",-Density$dx[Density$group=="f"]-1,",",-Density$dy[Density$group=="f"],",",-Density$dz[Density$group=="f"],")")))
-			C(h, PV(paste0(h_neighbours,"(",-Density$dx[Density$group=="h"]-1,",",-Density$dy[Density$group=="h"],",",-Density$dz[Density$group=="h"],")")))
+			C(f, PV(paste0(f_neighbours,"(",-Density$dx[Density$group=="f"]-1,",",-Density$dy[Density$group=="f"],")")))
+			C(h, PV(paste0(h_neighbours,"(",-Density$dx[Density$group=="h"]-1,",",-Density$dy[Density$group=="h"],")")))
 		}
 	?>
 }
@@ -606,7 +606,7 @@ CudaDeviceFunction void HydroInterpolatedBounceBack()
         sel = DensityAll$group=="f"
         attach(DensityAll[sel,])
         f = PV(name)
-        fold = PV(name,"(0,0,0)")
+        fold = PV(name,"(0,0)")
         fpre = PV(name,"(",-dx,",",-dy,",",-dz,")")
         QU = cbind(dx,dy,dz)
         detach()
@@ -659,7 +659,7 @@ CudaDeviceFunction void ThermalInterpolatedBounceBack()
         sel = DensityAll$group=="h"
         attach(DensityAll[sel,])
         h = PV(name)
-        rhold = PV(name,"(0,0,0)")
+        rhold = PV(name,"(0,0)")
         QU = cbind(dx,dy,dz)
         detach()
         Qw = PV( paste("Q",P$x,P$y,P$z,sep=""))
@@ -753,7 +753,7 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 		sel = DensityAll$group=="h"
 		attach(DensityAll[sel,])
 		h = PV(name)
-		rhold = PV(name,"(0,0,0)")
+		rhold = PV(name,"(0,0)")
 		rh_eq = PV(paste("heq",P$x,P$y,P$z,sep=""))
 
 		QU = cbind(dx,dy,dz)
@@ -774,26 +774,26 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 				real_t ha = <?R C(rhold[i]) ?>;  
 
 				if (p > 1.0) { 
-					<?R # C(h[bounce[i]], -1*ha*op + rhold[bounce[i]]*(p-1)*op + 2*op*rh_eq[bounce[i]]) ?>
+					<?R C(h[bounce[i]], -1*ha*op + rhold[bounce[i]]*(p-1)*op + 2*op*rh_eq[bounce[i]]) ?>
 				} else { 
-					<?R # C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[bounce[i]])  ?>	
+					<?R C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[bounce[i]])  ?>	
 				}	
-				// p =1
-				<?R # C(h[bounce[i]], -1*ha + 2*rh_eq[bounce[i]])  ?>	
+			
+				<?R # C(h[bounce[i]], -1*ha + 2*rh_eq[bounce[i]])  ?>	 	// p =1
 					
 			}
 	<?R } ?>
 
 	// impose eq ;p
-	h000 = heq000;
-	h100 = heq100;
-	h200 = heq200;
-	h010 = heq010;
-	h020 = heq020;
-	h110 = heq110;
-	h210 = heq210;
-	h120 = heq120;
-	h220 = heq220;
+	// h000 = heq000;
+	// h100 = heq100;
+	// h200 = heq200;
+	// h010 = heq010;
+	// h020 = heq020;
+	// h110 = heq110;
+	// h210 = heq210;
+	// h120 = heq120;
+	// h220 = heq220;
 
 }
 

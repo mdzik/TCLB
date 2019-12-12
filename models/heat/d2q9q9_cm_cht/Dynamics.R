@@ -11,7 +11,7 @@ AddDensity(
 	name = fname,
 	dx   = U[,1],
 	dy   = U[,2],
-	dz   = U[,3],
+	# dz   = U[,3],
 	comment=paste("flow LB density F",1:9-1),
 	group="f"
 )
@@ -23,12 +23,12 @@ AddDensity(
 	name = hname,
 	dx   = U[,1],
 	dy   = U[,2],
-	dz   = U[,3],
+	# dz   = U[,3],
 	comment=paste("heat LB density H",1:9),
 	group="h"
 )
 
-for (h in hname) AddField(h,dx=0,dy=0, dz=0) # Make h accessible also in present node (not only streamed)
+for (h in hname) AddField(h,dx=0,dy=0) # Make h accessible also in present node (not only streamed)
 
 
 #	Inputs: Flow Properties
@@ -133,7 +133,7 @@ if(Options$SMAG)
 	AddSetting(name="Smag", default=0, comment='Smagorinsky coefficient for SGS modeling')
 }
 
-AddDensity(name="U", dx=0, dy=0, dz=0, group="Vel")  
+AddDensity(name="U", dx=0, dy=0, group="Vel")  
 # AddDensity(name="V", dx=0, dy=0, dz=0, group="Vel")
 # AddDensity(name="W", dx=0, dy=0, dz=0, group="Vel")
 if (Options$OutFlowConvective)
@@ -143,7 +143,7 @@ if (Options$OutFlowConvective)
 		name = holdname,
 		dx   = U[,1],
 		dy   = U[,2],
-		dz   = U[,3],
+		# dz   = U[,3],
 		comment=paste("heat LB density H",0:8),
 		group="hold"
 	)
@@ -153,13 +153,13 @@ if (Options$OutFlowConvective)
 		name = foldname,
 		dx   = U[,1],
 		dy   = U[,2],
-		dz   = U[,3],
+		# dz   = U[,3],
 		comment=paste("flow LB density F",0:8),
 		group="fold"
 	)
 
 	for (d in rows(DensityAll)) {
-		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy, dz=-d$dz )
+		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy )
 	}
 
 	AddField(name="U",dx=c(-1,0))
@@ -169,7 +169,7 @@ if (Options$OutFlowConvective)
 if (Options$OutFlowNeumann)
 {
 	for (d in rows(DensityAll)) {
-		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy, dz=-d$dz )
+		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy )
 	}
 	AddNodeType(name="ENeumann", group="BOUNDARY")
 }
@@ -185,13 +185,13 @@ if (Options$AVG) {
 	AddQuantity(name="averageP",	unit="Pa")
 	AddQuantity(name="averageT",	unit="K")
 
-	AddDensity(name="avgT",		dx=0,dy=0,dz=0,average=TRUE)
-	AddDensity(name="avgP",		dx=0,dy=0,dz=0,average=TRUE)
-	AddDensity(name="varUX",	dx=0,dy=0,dz=0,average=TRUE)
-	AddDensity(name="varUY",	dx=0,dy=0,dz=0,average=TRUE)
-	AddDensity(name="varUXUY",	dx=0,dy=0,dz=0,average=TRUE)
-	AddDensity(name="avgdxu2",	dx=0,dy=0,dz=0,average=TRUE)
-	AddDensity(name="avgdyv2",	dx=0,dy=0,dz=0,average=TRUE)
+	AddDensity(name="avgT",		dx=0,dy=0,average=TRUE)
+	AddDensity(name="avgP",		dx=0,dy=0,average=TRUE)
+	AddDensity(name="varUX",	dx=0,dy=0,average=TRUE)
+	AddDensity(name="varUY",	dx=0,dy=0,average=TRUE)
+	AddDensity(name="varUXUY",	dx=0,dy=0,average=TRUE)
+	AddDensity(name="avgdxu2",	dx=0,dy=0,average=TRUE)
+	AddDensity(name="avgdyv2",	dx=0,dy=0,average=TRUE)
 	AddDensity(name="avgUX",	average=TRUE)
 	AddDensity(name="avgUY",	average=TRUE)
 
