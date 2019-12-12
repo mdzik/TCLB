@@ -11,24 +11,24 @@ AddDensity(
 	name = fname,
 	dx   = U[,1],
 	dy   = U[,2],
-	#dz   = U[,3],
+	dz   = U[,3],
 	comment=paste("flow LB density F",1:9-1),
 	group="f"
 )
 
-for (f in fname) AddField(f,dx=0,dy=0) # Make f accessible also in present node (not only streamed)
+for (f in fname) AddField(f,dx=0,dy=0, dz=0) # Make f accessible also in present node (not only streamed)
 
 hname =  paste("h",P$x,P$y,P$z,sep="")
 AddDensity(
 	name = hname,
 	dx   = U[,1],
 	dy   = U[,2],
-	#dz   = U[,3],
+	dz   = U[,3],
 	comment=paste("heat LB density H",1:9),
 	group="h"
 )
 
-for (h in hname) AddField(h,dx=0,dy=0) # Make h accessible also in present node (not only streamed)
+for (h in hname) AddField(h,dx=0,dy=0, dz=0) # Make h accessible also in present node (not only streamed)
 
 
 #	Inputs: Flow Properties
@@ -138,11 +138,12 @@ AddDensity(name="U", dx=0, dy=0, dz=0, group="Vel")
 # AddDensity(name="W", dx=0, dy=0, dz=0, group="Vel")
 if (Options$OutFlowConvective)
 {
-	holdname =  paste("hold",P$x,P$y,sep="")
+	holdname =  paste("hold",P$x,P$y,P$z,sep="")
 	AddDensity(
 		name = holdname,
 		dx   = U[,1],
 		dy   = U[,2],
+		dz   = U[,3],
 		comment=paste("heat LB density H",0:8),
 		group="hold"
 	)
@@ -152,12 +153,13 @@ if (Options$OutFlowConvective)
 		name = foldname,
 		dx   = U[,1],
 		dy   = U[,2],
+		dz   = U[,3],
 		comment=paste("flow LB density F",0:8),
 		group="fold"
 	)
 
 	for (d in rows(DensityAll)) {
-		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy )
+		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy, dz=-d$dz )
 	}
 
 	AddField(name="U",dx=c(-1,0))
@@ -167,7 +169,7 @@ if (Options$OutFlowConvective)
 if (Options$OutFlowNeumann)
 {
 	for (d in rows(DensityAll)) {
-		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy )
+		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy, dz=-d$dz )
 	}
 	AddNodeType(name="ENeumann", group="BOUNDARY")
 }

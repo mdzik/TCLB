@@ -259,15 +259,43 @@ CudaDeviceFunction void Init() {
 CudaDeviceFunction void HydroBounceBack()
 {
 	<?R 
-		FullBounceBack(group='f')
+		# FullBounceBack(group='f') # to much stuff gets generated in the IBB mode Oo
 	?> 
+
+	real_t tmp;
+	tmp = f010;
+	f010 = f020;
+	f020 = tmp;
+	tmp = f120;
+	f120 = f210;
+	f210 = tmp;
+	tmp = f100;
+	f100 = f200;
+	f200 = tmp;
+	tmp = f110;
+	f110 = f220;
+	f220 = tmp;
 }
 
 CudaDeviceFunction void ThermalBounceBack()
 {
 	<?R 
-		FullBounceBack(group='h')
+		# FullBounceBack(group='h')
 	?> 
+
+	real_t tmp;
+	tmp = h010;
+	h010 = h020;
+	h020 = tmp;
+	tmp = h120;
+	h120 = h210;
+	h210 = tmp;
+	tmp = h100;
+	h100 = h200;
+	h200 = tmp;
+	tmp = h110;
+	h110 = h220;
+	h220 = tmp;
 }
 
 CudaDeviceFunction void WVelocity()
@@ -479,25 +507,25 @@ CudaDeviceFunction void HeaterSource()
 	real_t heq120 = 0;
 	real_t heq220 = H*Sigma2*Sigma2;
 	//back to raw moments
-	real_t temp000 = h000;
-	real_t temp100 = h000*u.x + h100;
-	real_t temp010 = h000*u.y + h010;
-	real_t temp200 = h000*ux2 + 2.*h100*u.x + h200;
-	real_t temp020 = h000*uy2 + 2.*h010*u.y + h020;
-	real_t temp110 = h000*uxuy + h010*u.x + h100*u.y + h110;
-	real_t temp210 = h000*ux2*u.y + h010*ux2 + 2.*h100*uxuy + 2.*h110*u.x + h200*u.y + h210;
-	real_t temp120 = h000*u.x*uy2 + 2.*h010*uxuy + h020*u.x + h100*uy2 + 2.*h110*u.y + h120;
-	real_t temp220 = h000*ux2*uy2 + 2.*h010*ux2*u.y + h020*ux2 + 2.*h100*u.x*uy2 + 4.*h110*uxuy + 2.*h120*u.x + h200*uy2 + 2.*h210*u.y + h220;
+	real_t temp000 = heq000;
+	real_t temp100 = heq000*u.x + heq100;
+	real_t temp010 = heq000*u.y + heq010;
+	real_t temp200 = heq000*ux2 + 2.*heq100*u.x + heq200;
+	real_t temp020 = heq000*uy2 + 2.*heq010*u.y + heq020;
+	real_t temp110 = heq000*uxuy + heq010*u.x + heq100*u.y + heq110;
+	real_t temp210 = heq000*ux2*u.y + heq010*ux2 + 2.*heq100*uxuy + 2.*heq110*u.x + heq200*u.y + heq210;
+	real_t temp120 = heq000*u.x*uy2 + 2.*heq010*uxuy + heq020*u.x + heq100*uy2 + 2.*heq110*u.y + heq120;
+	real_t temp220 = heq000*ux2*uy2 + 2.*heq010*ux2*u.y + heq020*ux2 + 2.*heq100*u.x*uy2 + 4.*heq110*uxuy + 2.*heq120*u.x + heq200*uy2 + 2.*heq210*u.y + heq220;
 	//back to density-probability functions
-	heq000 = temp000 - temp020 - temp200 + temp220;
-	heq100 = 1/2.*temp100 - 1/2.*temp120 + 1/2.*temp200 - 1/2.*temp220;
-	heq200 = -1/2.*temp100 + 1/2.*temp120 + 1/2.*temp200 - 1/2.*temp220;
-	heq010 = 1/2.*temp010 + 1/2.*temp020 - 1/2.*temp210 - 1/2.*temp220;
-	heq110 = 1/4.*temp110 + 1/4.*temp120 + 1/4.*temp210 + 1/4.*temp220;
-	heq210 = -1/4.*temp110 - 1/4.*temp120 + 1/4.*temp210 + 1/4.*temp220;
-	heq020 = -1/2.*temp010 + 1/2.*temp020 + 1/2.*temp210 - 1/2.*temp220;
-	heq120 = -1/4.*temp110 + 1/4.*temp120 - 1/4.*temp210 + 1/4.*temp220;
-	heq220 = 1/4.*temp110 - 1/4.*temp120 - 1/4.*temp210 + 1/4.*temp220;
+	h000 += temp000 - temp020 - temp200 + temp220;
+	h100 += 1/2.*temp100 - 1/2.*temp120 + 1/2.*temp200 - 1/2.*temp220;
+	h200 += -1/2.*temp100 + 1/2.*temp120 + 1/2.*temp200 - 1/2.*temp220;
+	h010 += 1/2.*temp010 + 1/2.*temp020 - 1/2.*temp210 - 1/2.*temp220;
+	h110 += 1/4.*temp110 + 1/4.*temp120 + 1/4.*temp210 + 1/4.*temp220;
+	h210 += -1/4.*temp110 - 1/4.*temp120 + 1/4.*temp210 + 1/4.*temp220;
+	h020 += -1/2.*temp010 + 1/2.*temp020 + 1/2.*temp210 - 1/2.*temp220;
+	h120 += -1/4.*temp110 + 1/4.*temp120 - 1/4.*temp210 + 1/4.*temp220;
+	h220 += 1/4.*temp110 - 1/4.*temp120 - 1/4.*temp210 + 1/4.*temp220;
 }
 
 CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
@@ -746,12 +774,27 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 				real_t ha = <?R C(rhold[i]) ?>;  
 
 				if (p > 1.0) { 
-					<?R C(h[bounce[i]], -1*ha*op + rhold[bounce[i]]*(p-1)*op + 2*op*rh_eq[bounce[i]]) ?>
+					<?R # C(h[bounce[i]], -1*ha*op + rhold[bounce[i]]*(p-1)*op + 2*op*rh_eq[bounce[i]]) ?>
 				} else { 
-					<?R C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[bounce[i]])  ?>	
+					<?R # C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[bounce[i]])  ?>	
 				}	
+				// p =1
+				<?R # C(h[bounce[i]], -1*ha + 2*rh_eq[bounce[i]])  ?>	
+					
 			}
 	<?R } ?>
+
+	// impose eq ;p
+	h000 = heq000;
+	h100 = heq100;
+	h200 = heq200;
+	h010 = heq010;
+	h020 = heq020;
+	h110 = heq110;
+	h210 = heq210;
+	h120 = heq120;
+	h220 = heq220;
+
 }
 
 #endif
@@ -826,21 +869,21 @@ CudaDeviceFunction void RunHOBoundaries()
 	// because the regular wet BOUNDARY nodes have a limiter.
 
 	#ifdef OPTIONS_IBB
-		if ((NodeType & NODE_HO_BOUNDARY_HYDRO) == NODE_HydroIBB){
-			HydroInterpolatedBounceBack();
-		}
+		// if ((NodeType & NODE_HO_BOUNDARY_HYDRO) == NODE_HydroIBB){
+		// 	HydroInterpolatedBounceBack();
+		// }
 	
-		switch (NodeType & NODE_HO_BOUNDARY_HEAT) {
-			case NODE_HeaterDirichletTemperatureIABB:
-				real_t h1 = <?R C(sum(h)) ?>;
-				HeaterDirichletTemperatureInterpolatedAntiBounceBack();
-				real_t h2 = <?R C(sum(h)) ?>;
-				AddToHeatSource(h2-h1); 
-				break;
-			case NODE_ThermalIBB:
-				ThermalInterpolatedBounceBack();
-				break;
-		}
+		// switch (NodeType & NODE_HO_BOUNDARY_HEAT) {
+		// 	case NODE_HeaterDirichletTemperatureIABB:
+		// 		real_t h1 = <?R C(sum(h)) ?>;
+		// 		HeaterDirichletTemperatureInterpolatedAntiBounceBack();
+		// 		real_t h2 = <?R C(sum(h)) ?>;
+		// 		AddToHeatSource(h2-h1); 
+		// 		break;
+		// 	case NODE_ThermalIBB:
+		// 		ThermalInterpolatedBounceBack();
+		// 		break;
+		// }
 
 	#endif
 }
