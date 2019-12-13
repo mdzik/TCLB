@@ -139,8 +139,8 @@ if (Options$OutFlowConvective)
 	holdname =  paste("hold",P$x,P$y,P$z,sep="")
 	AddDensity(
 		name = holdname,
-		dx   = U[,1],
-		dy   = U[,2],
+		dx   = 0,
+		dy   = 0,
 		comment=paste("heat LB density H",0:8),
 		group="hold"
 	)
@@ -148,8 +148,8 @@ if (Options$OutFlowConvective)
 	foldname =  paste("fold",P$x,P$y,P$z,sep="")
 	AddDensity(
 		name = foldname,
-		dx   = U[,1],
-		dy   = U[,2],
+		dx   = 0,
+		dy   = 0,
 		comment=paste("flow LB density F",0:8),
 		group="fold"
 	)

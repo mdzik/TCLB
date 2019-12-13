@@ -402,7 +402,6 @@ CudaDeviceFunction void EConvective()
 	// See 'Evaluation of outflow boundary conditions for two-phase lattice Boltzmann equation' 
 	// by Qin Lou, Zhaoli Guo and Baochang Shi from 2013 for details.
 
-	// TODO: it may be crashing... however the version based on index notation (f[0], f[1]...) used to work.
 	real_t U_local = myMax(0, U(-1,0,0)); 
 	real_t invU = 1.0/(1+ U_local);
 

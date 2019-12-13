@@ -6,16 +6,17 @@
     <Geometry nx="512" ny="100" > 
     <Cumulants> <Box/> </Cumulants>  
       <!-- <CM_HIGHER> <Box/> </CM_HIGHER>   -->
-        <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
-        <ENeumann name="Outlet"><Box dx="-1"/></ENeumann>
-        <!-- <EPressure name="Outlet"><Box dx="-1"/></EPressure> -->
+      <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
+      <ENeumann name="Outlet"><Box dx="-1"/></ENeumann>
+      <!-- <EConvective name="Outlet"><Box dx="-1"/></EConvective> -->
+      <!-- <EPressure name="Outlet"><Box dx="-1"/></EPressure> -->
 
 
 <!-- 
 Second Order BC on cylinder  
 -->
-
-<!--         <HydroIBB>
+<!-- 
+        <HydroIBB>
             <STL file="example/heat/cylinder_XYplane_D10_Z9.stl" 
               scale="3.0" 
               Xrot="0d" 
@@ -32,9 +33,9 @@ Second Order BC on cylinder
               y="50.000000" 
               z="0" 
               side="surface"/>
-        </HeaterDirichletTemperatureIABB >  -->
+        </HeaterDirichletTemperatureIABB > 
 
-
+ -->
 
 <!-- First order BC on cylinder: 
 Read cylinder from stl
@@ -115,6 +116,6 @@ draw cylinder using primitive functions
       <VTK Iterations="1000" what="H,T,U,Rho"/> 
         <!-- <VTK Iterations="1000" what="H,T,U,Rho,averageT,averageU"/>  -->
         <!-- <Average Iterations="5000"/> -->
-        <Log Iterations="100"/>
+        <Log Iterations="1000"/>
     </Solve>
   </CLBConfig>

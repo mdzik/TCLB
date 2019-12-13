@@ -151,7 +151,7 @@ CudaDeviceFunction float2 Color() {
 	float2 ret;
 	
 	ret.x = getT_();
-	ret.x -= 1;  // hack for better preview.
+	ret.x -= 10;  // hack for better preview.
 	ret.y = ret.x;
 
 
@@ -254,7 +254,7 @@ CudaDeviceFunction void EPressure()
        __typeof__ (b) _b = (b); \
      _a > _b ? _a : _b; })
 
-CudaDeviceFunction void EConvect()
+CudaDeviceFunction void EConvective()
 {
 	real_t U_local = myMax(0, U(-1,0,0)); // anty-cofka
 	real_t invU = 1.0/(1+ U_local);
@@ -630,7 +630,7 @@ CudaDeviceFunction void relax_and_collide_ADE(real_t h_in[9], real_t rho, real_t
 	real_t H = h_in[0] + h_in[1] + h_in[2] + h_in[3] + h_in[4] + h_in[5] + h_in[6] + h_in[7] + h_in[8];
 
 	// real_t Sigma2 = (h_stability_enhancement*1./3.)/(cp*rho); #TODO: towards CHT
-	real_t Sigma2 = 1./3.; #TODO: minimizes T artefacts
+	real_t Sigma2 = 1./3.; //TODO: minimizes T artefacts
 	real_t temp[9];
 	for (int i = 0; i < 9; i++) {
 		temp[i] = h_in[i];}

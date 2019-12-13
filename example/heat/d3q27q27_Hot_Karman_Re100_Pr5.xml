@@ -8,6 +8,7 @@
       <!-- <CM_HIGHER> <Box/> </CM_HIGHER>   -->
         <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
         <ENeumann name="Outlet"><Box dx="-1"/></ENeumann>
+        <!-- <EConvective name="Outlet"><Box dx="-1"/></EConvective> -->
         <!-- <EPressure name="Outlet"><Box dx="-1"/></EPressure> -->
 
 
@@ -65,7 +66,7 @@ Read cylinder from stl
 draw cylinder using primitive functions 
  -->
 
-      <!--         
+      <!--               
         <Wall mask="ALL">
           <Cylinder dx="120" dy="35" nx="30" ny="30" nz="3"/>
         </Wall>  
