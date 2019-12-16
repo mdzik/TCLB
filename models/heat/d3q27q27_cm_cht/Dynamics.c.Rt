@@ -173,10 +173,10 @@ CudaDeviceFunction float2 Color() {
 		ret.y = 1;
 	}
 
-	vector_t u = getU_();
-	ret.x = sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
-	// ret.x = u.x;
-	ret.y = ret.x ;
+	// vector_t u = getU_();
+	// ret.x = sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
+	// // ret.x = u.x;
+	// ret.y = ret.x ;
 
 	return ret;
 }
@@ -798,7 +798,6 @@ CudaDeviceFunction void ThermalInterpolatedBounceBack()
         attach(DensityAll[sel,])
         h = PV(name)
         rhold = PV(name,"(0,0,0)")
-        QU = cbind(dx,dy,dz)
         detach()
         Qw = PV( paste("Q",P$x,P$y,P$z,sep=""))
         Q = PV("q")
@@ -951,7 +950,6 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 		rhold = PV(name,"(0,0,0)")
 		rh_eq = PV(paste("heq",P$x,P$y,P$z,sep=""))
 
-		QU = cbind(dx,dy,dz)
 		detach()
 		Qw = PV( paste("Q",P$x,P$y,P$z,sep=""))
 		Q = PV("q")

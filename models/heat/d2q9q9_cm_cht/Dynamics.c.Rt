@@ -661,7 +661,6 @@ CudaDeviceFunction void ThermalInterpolatedBounceBack()
         attach(DensityAll[sel,])
         h = PV(name)
         rhold = PV(name,"(0,0)")
-        QU = cbind(dx,dy,dz)
         detach()
         Qw = PV( paste("Q",P$x,P$y,P$z,sep=""))
         Q = PV("q")
@@ -703,10 +702,10 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 	
 	real_t T = InitTemperature;
 	real_t rho = getRho();
+
 	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU_(); 
 	real_t H = rho*cp*T;
-	
-	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
+
 	#ifdef OPTIONS_CHT
 		real_t Sigma2 = 1./3.*h_stability_enhancement/(cp*rho);
 	#else
@@ -727,15 +726,15 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 	real_t heq120 = 0;
 	real_t heq220 = H*Sigma2*Sigma2;
 	//back to raw moments
-	real_t temp000 = h000;
-	real_t temp100 = h000*u.x + h100;
-	real_t temp010 = h000*u.y + h010;
-	real_t temp200 = h000*ux2 + 2.*h100*u.x + h200;
-	real_t temp020 = h000*uy2 + 2.*h010*u.y + h020;
-	real_t temp110 = h000*uxuy + h010*u.x + h100*u.y + h110;
-	real_t temp210 = h000*ux2*u.y + h010*ux2 + 2.*h100*uxuy + 2.*h110*u.x + h200*u.y + h210;
-	real_t temp120 = h000*u.x*uy2 + 2.*h010*uxuy + h020*u.x + h100*uy2 + 2.*h110*u.y + h120;
-	real_t temp220 = h000*ux2*uy2 + 2.*h010*ux2*u.y + h020*ux2 + 2.*h100*u.x*uy2 + 4.*h110*uxuy + 2.*h120*u.x + h200*uy2 + 2.*h210*u.y + h220;
+	real_t temp000 = heq000;
+	real_t temp100 = heq000*u.x + heq100;
+	real_t temp010 = heq000*u.y + heq010;
+	real_t temp200 = heq000*ux2 + 2.*heq100*u.x + heq200;
+	real_t temp020 = heq000*uy2 + 2.*heq010*u.y + heq020;
+	real_t temp110 = heq000*uxuy + heq010*u.x + heq100*u.y + heq110;
+	real_t temp210 = heq000*ux2*u.y + heq010*ux2 + 2.*heq100*uxuy + 2.*heq110*u.x + heq200*u.y + heq210;
+	real_t temp120 = heq000*u.x*uy2 + 2.*heq010*uxuy + heq020*u.x + heq100*uy2 + 2.*heq110*u.y + heq120;
+	real_t temp220 = heq000*ux2*uy2 + 2.*heq010*ux2*u.y + heq020*ux2 + 2.*heq100*u.x*uy2 + 4.*heq110*uxuy + 2.*heq120*u.x + heq200*uy2 + 2.*heq210*u.y + heq220;
 	//back to density-probability functions
 	heq000 = temp000 - temp020 - temp200 + temp220;
 	heq100 = 1/2.*temp100 - 1/2.*temp120 + 1/2.*temp200 - 1/2.*temp220;
@@ -757,7 +756,6 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 		rhold = PV(name,"(0,0)")
 		rh_eq = PV(paste("heq",P$x,P$y,P$z,sep=""))
 
-		QU = cbind(dx,dy,dz)
 		detach()
 		Qw = PV( paste("Q",P$x,P$y,P$z,sep=""))
 		Q = PV("q")
@@ -775,27 +773,14 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 				real_t ha = <?R C(rhold[i]) ?>;  
 
 				if (p > 1.0) { 
-					<?R # C(h[bounce[i]], -1*ha*op + rhold[bounce[i]]*(p-1)*op + 2*op*rh_eq[bounce[i]]) ?>
+					<?R  C(h[bounce[i]], -1*ha*op + rhold[bounce[i]]*(p-1)*op + 2*op*rh_eq[bounce[i]]) ?>
 				} else { 
-					<?R # C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[bounce[i]])  ?>	
+					<?R  C(h[bounce[i]], -1*(ha*p + h[i]*(1-p)) + 2*rh_eq[bounce[i]])  ?>	
 				}	
 							
 				<?R # C(h[bounce[i]], -1*ha + 2*rh_eq[bounce[i]])  ?>	 	// p =1
-				
 			}
 	<?R } ?>
-
-	// impose eq ;p
-	h000 = heq000;
-	h100 = heq100;
-	h200 = heq200;
-	h010 = heq010;
-	h020 = heq020;
-	h110 = heq110;
-	h210 = heq210;
-	h120 = heq120;
-	h220 = heq220;
-
 }
 
 #endif

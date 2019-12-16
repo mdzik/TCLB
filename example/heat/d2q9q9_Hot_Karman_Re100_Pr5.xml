@@ -2,10 +2,10 @@
 <!-- To be used with d2q9q9_cm_cht_OutFlowNeumann_AVG_IBB -->
 
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/d2q9q9_HotKarman_Re100_Pr5_exp/">
+<CLBConfig version="2.0" output="output/d2q9q9_HotKarman_Re100_Pr5/">
     <Geometry nx="512" ny="100" > 
-    <Cumulants> <Box/> </Cumulants>  
       <!-- <CM_HIGHER> <Box/> </CM_HIGHER>   -->
+      <Cumulants> <Box/> </Cumulants>  
       <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
       <ENeumann name="Outlet"><Box dx="-1"/></ENeumann>
       <!-- <EConvective name="Outlet"><Box dx="-1"/></EConvective> -->
@@ -15,7 +15,6 @@
 <!-- 
 Second Order BC on cylinder  
 -->
-<!-- 
         <HydroIBB>
             <STL file="example/heat/cylinder_XYplane_D10_Z9.stl" 
               scale="3.0" 
@@ -35,7 +34,6 @@ Second Order BC on cylinder
               side="surface"/>
         </HeaterDirichletTemperatureIABB > 
 
- -->
 
 <!-- First order BC on cylinder: 
 Read cylinder from stl
@@ -67,14 +65,15 @@ Read cylinder from stl
 draw cylinder using primitive functions 
  -->
       
+      <!--        
         <Wall mask="ALL">
           <Cylinder dx="120" dy="35" nx="30" ny="30"/>
         </Wall>
         <HeaterDirichletTemperatureEQ name="BC_heat_cylinder"> 
             <Cylinder dx="120" dy="35" nx="30" ny="30"/>
-        </HeaterDirichletTemperatureEQ>   
+        </HeaterDirichletTemperatureEQ>    
+      -->
      
-
         <FluxMeasurmentZone1>
             <Box dx="25" nx="1"/>
         </FluxMeasurmentZone1>
@@ -112,10 +111,9 @@ draw cylinder using primitive functions
    
     <Solve Iterations="3"> <VTK Iterations="1"/> </Solve> 
     <Failcheck Iterations="100" nx="512" ny="100" />
-    <Solve Iterations="20000"> 
+
+    <Solve Iterations="30000"> 
       <VTK Iterations="1000" what="H,T,U,Rho"/> 
-        <!-- <VTK Iterations="1000" what="H,T,U,Rho,averageT,averageU"/>  -->
-        <!-- <Average Iterations="5000"/> -->
-        <Log Iterations="1000"/>
+      <Log Iterations="1000"/>
     </Solve>
   </CLBConfig>
