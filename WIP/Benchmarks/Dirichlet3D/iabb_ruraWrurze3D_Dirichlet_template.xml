@@ -2,11 +2,9 @@
 <?R
     tab = expand.grid(
         nu=c(1e-01), 
-        #k_material=c(0.1666666, 1e-01, 1e-02, 1e-03, 1e-04, 1e-05),
-        k_material=c(1e-01),
-        # effdiam=c(120,92,60,46,30), 
+        k_material=c(0.1666666, 1e-01, 1e-02),
+        # effdiam=c(120,92,60,46,30), # these dont converge with 2nd order
         effdiam=c(118,94,66,46,30), 
-        # effdiam=c(120),
         collision=c("CM_HIGHER"),
         bb_type=c("iabb", "abb", "eq")
     )
@@ -36,7 +34,7 @@
         <<?%s collision ?>>
             <Box/>
         </<?%s collision ?>> 
-        <FluxMeasurment> <Box nz="1"/> </FluxMeasurment>
+        <FluxMeasurmentZone1> <Box nz="1"/> </FluxMeasurmentZone1>
 
         <Wall mask="ALL" name="border" >
             <STL file="<?%s stl_pipe_path ?>" scale="1" Xrot="0d" x="0" y="0" z="0" side="in"/>
@@ -54,11 +52,17 @@
             cat(sprintf("\t\t<STL file=\"%s\" scale=\"1\" Xrot=\"0d\" x=\"0\" y=\"0\" z=\"0\" side=\"surface\" />\n", stl_pipe_path))
             cat(sprintf("\t</HeaterDirichletTemperatureIABB>\n"))
         }
+        else if(bb_type=="eq")
+        {
+            cat(sprintf("<HeaterDirichletTemperatureEQ name=\"dirichlet_cold\">\n"))
+            cat(sprintf("\t\t<STL file=\"%s\" scale=\"1\" Xrot=\"0d\" x=\"0\" y=\"0\" z=\"0\" side=\"in\" />\n", stl_pipe_path))
+            cat(sprintf("\t</HeaterDirichletTemperatureEQ>\n"))
+        }
         ?>
 
         <Wall mask="ALL" name="border" >
             <STL file="<?%s stl_cylinder_path ?>" scale="1" Xrot="0d" x="0" y="0" z="0" side="in"/>
-        </Wall>
+        </Wall>        
         <?R
         if(bb_type=="abb")
         {
@@ -72,28 +76,29 @@
             cat(sprintf("\t\t<STL file=\"%s\" scale=\"1\" Xrot=\"0d\" x=\"0\" y=\"0\" z=\"0\" side=\"surface\" />\n", stl_cylinder_path))
             cat(sprintf("\t</HeaterDirichletTemperatureIABB>\n"))
         }
+        else if(bb_type=="eq")
+        {
+            cat(sprintf("<HeaterDirichletTemperatureEQ mask=\"COLLISION\" name=\"dirichlet_hot\">\n"))
+            cat(sprintf("\t\t<STL file=\"%s\" scale=\"1\" Xrot=\"0d\" x=\"0\" y=\"0\" z=\"0\" side=\"in\" />\n", stl_cylinder_path))
+            cat(sprintf("\t</HeaterDirichletTemperatureEQ>\n"))
+        }
         ?>
     </Geometry>
     <Model>
-        <Params
-            InitTemperature="10.5"
-            InitTemperature-dirichlet_hot="11"
-            InitTemperature-dirichlet_cold="10"
-            />
-        <Params/>
+    <Param name="InitTemperature" value="10.5"/>
+    <Param name="InitTemperature" value="11" zone="dirichlet_hot"/>
+    <Param name="InitTemperature" value="10" zone="dirichlet_cold"/>
 
-        <Params
-            nu="<?%f nu ?>"
-            nu_buffer="<?%f nu ?>"
-            conductivity="<?%f k_material ?>"
+    <Param name="nu" value="<?%f nu ?>"/>
+    <Param name="nu_buffer" value="<?%f nu ?>"/>
+    <Param name="conductivity" value="<?%f k_material ?>"/>
 
-            h_stability_enhancement="1."
-            cp="1."
-            material_density="1."
-            />
-        <Params/>
-	    <Params GravitationZ="<?%e 16.*0.01*nu/(effdiam * effdiam) ?>" />
-	    <!-- <Params BoussinesqCoeff="1"/> -->
+    <Param name="h_stability_enhancement" value="1."/>
+    <Param name="cp" value="1."/>
+    <Param name="material_density" value="1."/>
+
+    <Params name="GravitationZ" value="<?%e 16.*0.01*nu/(effdiam * effdiam) ?>" />
+        <!-- <Params BoussinesqCoeff="1"/> -->
         <!-- gx = 4 * uz_max * nu / (rho * R * R) -->
         <!-- we set uz_max=0.01 - max velocity -->
     </Model>
@@ -104,10 +109,6 @@
 <!-- <Solve Iterations="500000"></Solve>
 <Stop XHydroFLuxChange="1e-11" Times="5" Iterations="10000"/> -->
 <Solve Iterations="100000"><VTK Iterations="10000" what="T,U,Rho"/> </Solve>
-<!-- <Solve Iterations="500000"></Solve>
-<Stop XHydroFLuxChange="1e-11" Times="5" Iterations="10000"/>
-<Solve Iterations="500000"><VTK Iterations="10000" what="T,U,Rho"/> </Solve>
- -->
 </CLBConfig>
 
 <?R

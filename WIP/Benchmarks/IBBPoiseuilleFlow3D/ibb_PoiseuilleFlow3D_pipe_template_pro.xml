@@ -1,0 +1,80 @@
+
+<?R
+    tab = expand.grid(
+        # nu=c(1e-01, 0.1666666, 1e-02, 1e-03), 
+        nu=c(1e-01), 
+        effdiam=c(15,23,31,45,61,93,121), 
+        collision=c("CM_HIGHER"), # "Cumulants","CM_HIGHER"
+        bb_type=c("bb","ibb")
+    )
+
+    dir_name <- "batch_IBB_Poiseuille_pipe"
+    dir.create(dir_name)
+    tab$name = paste0(tab$bb_type, "_Poiseuille_pipe_", tab$collision,"_nu_",tab$nu, "_effdiam_", tab$effdiam)
+    tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
+
+    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+    # tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/"))
+
+    tab$stl_path = paste0("WIP/Benchmarks/IBBPoiseuilleFlow3D/pipe_D", tab$effdiam,"_L127.stl")
+    options(digits=10)
+    write.csv(tab, "HotKarman3D_template.csv", row.names=FALSE)
+    for (i in 1:nrow(tab)) {
+        attach(tab[i,,drop=FALSE])
+        print(xml)
+        sink(xml) # save to a .xml file
+?>
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="<?%s output ?>">
+    <Geometry nx="128" ny="128" nz="3">
+        <<?%s collision ?>>
+            <Box/>
+        </<?%s collision ?>> 
+        <FluxMeasurmentZone1> <Box nz="1"/> </FluxMeasurmentZone1>
+		<?R
+        if(bb_type=="ibb")
+        {
+	        cat(sprintf("<HydroIBB name=\"border\">\n"))
+	        cat(sprintf("\t\t<STL file=\"%s\" scale=\"1\" Xrot=\"0d\" x=\"0\" y=\"0\" z=\"0\" side=\"surface\" />\n", stl_path))
+	        cat(sprintf("\t</HydroIBB>\n"))
+	    }
+        else if(bb_type=="bb"){
+            cat(sprintf("<Wall mask=\"ALL\" name=\"border\">\n"))
+            cat(sprintf("\t\t<STL file=\"%s\" scale=\"1\" Xrot=\"0d\" x=\"0\" y=\"0\" z=\"0\" side=\"in\" />\n", stl_path))
+            cat(sprintf("</Wall>"))
+
+        }
+		?>
+    </Geometry>
+    <Model>
+
+        <Param name="InitTemperature" value="10"/>
+        <Param name="nu" value="<?%f nu ?>"/>
+        <Param name="nu_buffer" value="<?%f nu ?>"/>
+
+        <Param name="conductivity" value="0.1666666"/>
+
+        <Param name="h_stability_enhancement" value="1."/>
+        <Param name="cp" value="1."/>
+        <Param name="material_density" value="1."/>
+
+	    <Param name="GravitationZ" value="<?%e 16.*0.01*nu/(effdiam * effdiam) ?>"/>
+	    <Param name="BoussinesqCoeff" value="0."/>
+        <!-- gx = 4 * uz_max * nu / (rho * R * R) -->
+        <!-- we set uz_max=0.01 - max velocity -->
+    </Model>
+<Failcheck Iterations="10000" nx="128" ny="128" nz="3" />
+<!-- <TXT Iterations="50000" what="T,U"/> -->
+<Solve Iterations="1"> <VTK Iterations="1"/> </Solve>
+<Log Iterations="5000"/>
+<Solve Iterations="<?%d round(1.5e6*log(1./nu)) ?>"></Solve>
+<Stop ZHydroFLuxChange="1e-11" Times="6" Iterations="10000"/>
+<Solve Iterations="100000"><VTK Iterations="10000" what="T,U,Rho"/> </Solve>
+</CLBConfig>
+
+<?R
+    sink()
+    detach()
+}
+?>

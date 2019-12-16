@@ -173,10 +173,10 @@ CudaDeviceFunction float2 Color() {
 		ret.y = 1;
 	}
 
-	// vector_t u = getU_();
-	// // ret.x = sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
+	vector_t u = getU_();
+	ret.x = sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
 	// ret.x = u.x;
-	// ret.y = u.y;
+	ret.y = ret.x ;
 
 	return ret;
 }
@@ -2389,7 +2389,7 @@ CudaDeviceFunction vector_t getForce(real_t localTemp, real_t rho)
 	// F_b = (rho(T) - rho_0)*Grav_Y = -Grav_Y*rho_0*thermal_exp_coeff*(Temp-Temp_0)
 	// see chapter 8.4.1, eq 8.44, p313 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
-	real_t refTemperature = 0;
+	real_t refTemperature = 10;
 	real_t BoussinesqForceX = -GravitationX*BoussinesqCoeff*(localTemp - refTemperature); // BoussinesqCoeff=rho_0*thermal_exp_coeff
 	real_t BoussinesqForceY = -GravitationY*BoussinesqCoeff*(localTemp - refTemperature); // BoussinesqCoeff=rho_0*thermal_exp_coeff
 	real_t BoussinesqForceZ = -GravitationZ*BoussinesqCoeff*(localTemp - refTemperature); // BoussinesqCoeff=rho_0*thermal_exp_coeff
