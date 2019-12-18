@@ -14,25 +14,19 @@ library(MASS)  # lib which converts decimal -> fraction
         collision=c("CM_HIGHER", "Cumulants"), # "Cumulants","CM_HIGHER"
         nu=c(0.03), 
         Pr=c(10,100), # Pr = nu/(k/(rho*cp))
-        Re=c(10)
+        Re=c(10),
+        is3d=c(TRUE, FALSE)
     )
 
     # dir_name <-"batch_HotKarman_Re10_Pr10" 
     # dir_name <- paste0("batch_HotKarman_Re",tab$Re[[1]])
     # dir.create(tab$dir_name)
       
-<<<<<<< HEAD:WIP/Benchmarks/HotKarman_Re10/HotKarman_Re10_template_pro.xml
-    tab$dir_name = paste0("batch_HotKarman_Re",tab$Re, "_Pr", tab$Pr, "_sizer", tab$sizer)
+    tab$dir_name = paste0("batch_HotKarman_Re",tab$Re, "_sizer", tab$sizer, "_is3d_", tab$is3d)
 
     tab$name = paste0(
                       "batch_HotKarman_Re", tab$Re,
                       "_Pr_", tab$Pr,
-=======
-    tab$dir_name = paste0("batch_HotKarman_Re",tab$Re, "_Pr", tab$Pr)
-
-    tab$name = paste0(
-                      "batch_HotKarman_Re", tab$Re,
->>>>>>> dee32e9ce2e7aaa0a57ebc2acf6434c4be3c6ef6:WIP/Benchmarks/HotKarman_Re10/HotKarman_Re10_template_pro.xml
                       "_D0_", formatC(tab$D0_stl*tab$sizer*tab$grid_scale,digits = 2, format = "e"), 
                       "_BR_", gsub("/","o", fractions(tab$D0_stl*tab$sizer*tab$grid_scale/(tab$sizer*tab$ny))),
                       #"_BR_", formatC(tab$D0_stl*tab$sizer*tab$grid_scale/(tab$sizer*tab$ny), digits = 2, format = "e"),
@@ -43,9 +37,9 @@ library(MASS)  # lib which converts decimal -> fraction
 
     tab$xml = paste0(paste0(tab$dir_name,"/",tab$name),".xml")
 
-    tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",tab$dir_name,"/",tab$name, "/")) # prometheus
+    # tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",tab$dir_name,"/",tab$name, "/")) # prometheus
     # tab$output = paste0("/home2/scratch/GG/",tab$dir_name,"/",tab$name, "/") # dwarf
-    # tab$output = paste0(paste0("output/",tab$dir_name,"/",tab$name,"/"))
+    tab$output = paste0(paste0("output/",tab$dir_name,"/",tab$name,"/"))
 
     options(digits=10)
     write.csv(tab, "HotKarman_Re10_template.csv", row.names=FALSE)
@@ -65,7 +59,15 @@ Benchmark against FEM
 
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="<?%s output ?>">
-    <Geometry nx="<?%f nx*sizer ?>" ny="<?%f ny*sizer ?>" nz="3" >    
+    <?R
+    if(is3d)
+    {
+      cat(sprintf(" <Geometry nx=\"%f\" ny=\"%f\" nz=\"3\" >", nx*sizer , ny*sizer))
+    } else
+    {
+      cat(sprintf(" <Geometry nx=\"%f\" ny=\"%f\" >", nx*sizer , ny*sizer))
+    }
+    ?>   
       <<?%s collision ?>> <Box/> </<?%s collision ?>>  
 
         <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
@@ -196,15 +198,15 @@ Benchmark against FEM
    
     <Solve Iterations="3">  <VTK Iterations="1"/> </Solve > 
 
-    <!--
-    <Failcheck Iterations="5000" nx="<?%f nx*sizer ?>" ny="<?%f ny*sizer ?>" nz="3" />
-    <Solve Iterations="10000"> 
-        <VTK Iterations="1000" what="H,T,U,Rho,averageT,averageU"/> 
-        <Average Iterations="1000"/>
-    </Solve>
-    -->
-
-    <Failcheck Iterations="5000" nx="<?%f nx*sizer ?>" ny="<?%f ny*sizer ?>" nz="3" />
+    <?R
+    if(is3d)
+    {
+      cat(sprintf(" <Failcheck Iterations=\"10000\"  nx=\"%f\" ny=\"%f\" nz=\"3\" />", nx*sizer , ny*sizer))
+    } else
+    {
+      cat(sprintf(" <Failcheck Iterations=\"10000\"  nx=\"%f\" ny=\"%f\" />", nx*sizer , ny*sizer))
+    }
+    ?>  
     <!-- <Stop HeatFluxX2Change="1e-11" Times="5" Iterations="20000"/> -->
     <Solve Iterations="<?%d 1500000*sizer ?>"> 
         <VTK Iterations="100000" what="H,T,U,Rho"/> 
