@@ -64,13 +64,28 @@ CudaDeviceFunction real_t getconductivity(){
 }
 
 
+CudaDeviceFunction real_t getRho_(){
+	real_t rho = <?R C(sum(f)) ?>;
+	return rho;
+}
+
+
 CudaDeviceFunction real_t getRho(){
+	// Use this function is only for vtk output.
+	// Nodes are created using streamed, post-collision DF.
+	// RunBoundaries are called in orded to assign the desired value at the boundary.
+	// It can make a difference in convergence study and nicer preview.
+
+	RunBoundariesHydrodynamics();
+	RunBoundariesHeat();	
+	RunHOBoundaries();
+
 	real_t rho = <?R C(sum(f)) ?>;
 	return rho;
 }
 
 CudaDeviceFunction real_t getP_fluctuations(){
-	return (getRho()-material_density)/3.0;
+	return (getRho_()-material_density)/3.0;
 }
 
 
@@ -92,8 +107,8 @@ CudaDeviceFunction vector_t getU(){
 	}
     else{
 		u = getRawU();
-		real_t localTemperature = getT();
-		real_t rho = getRho();
+		real_t localTemperature = getT_();
+		real_t rho = getRho_();
 		vector_t Force = getForce(localTemperature, rho);
 		u.x += Force.x/(2*rho);
 		u.y += Force.y/(2*rho);
@@ -106,7 +121,7 @@ CudaDeviceFunction vector_t getU_()
 {
 	real_t localTemperature = getT_();
 	vector_t u = getRawU();
-	real_t rho = getRho();
+	real_t rho = getRho_();
 	vector_t Force = getForce(localTemperature, rho);
 	u.x += Force.x/(2*rho);
 	u.y += Force.y/(2*rho);
@@ -115,7 +130,7 @@ CudaDeviceFunction vector_t getU_()
 }
  
 CudaDeviceFunction vector_t getRawU(){
-	real_t d = getRho();
+	real_t d = getRho_();
 	vector_t u;
 	<?R C(PV(c("u.x","u.y", "u.z")), f %*% U) ?>
 	u.x /= d;
@@ -135,13 +150,13 @@ CudaDeviceFunction real_t getT(){
 	RunBoundariesHeat();	
 	RunHOBoundaries();
 
-	real_t rho = getRho();
+	real_t rho = getRho_();
 	real_t m00_H = <?R C(sum(h)) ?>;
 	return m00_H/(rho*cp);
 }
 
 CudaDeviceFunction real_t getT_(){
-	real_t rho = getRho();
+	real_t rho = getRho_();
 	real_t m00_H = <?R C(sum(h)) ?>;
 	return m00_H/(rho*cp);
 }
@@ -444,7 +459,7 @@ CudaDeviceFunction void ImposeHeatFlux(vector_t n)
 	#else
 		real_t Sigma2 = 1/3.;
 	#endif
-	real_t rho = getRho();
+	real_t rho = getRho_();
 	real_t imposed_heat_flux = InitHeatFlux;
 	real_t first_order_cm = -2*imposed_heat_flux*h_stability_enhancement;
 	real_t third_order_cm = first_order_cm*Sigma2;
@@ -518,7 +533,7 @@ CudaDeviceFunction void ImposeHeatFlux(vector_t n)
 CudaDeviceFunction void HeaterSource()
 {
 	real_t T = InitTemperature;
-	real_t rho = getRho();
+	real_t rho = getRho_();
 	vector_t u = getU_();
 
 	real_t H = rho*cp*T;  
@@ -602,7 +617,7 @@ CudaDeviceFunction void HeatDirichletEquilibriumScheme()
 	// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
 	// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 	real_t T = InitTemperature;
-	real_t rho = getRho();
+	real_t rho = getRho_();
 
 	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU_(); 
 	real_t H = rho*cp*T;
@@ -623,7 +638,7 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 	}
 
 	real_t T = InitTemperature;
-	real_t rho = getRho();
+	real_t rho = getRho_();
 	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU_(); 
 	real_t H = rho*cp*T;
 
@@ -838,7 +853,7 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 	// Be aware that the IBB is a wet node BC, thus a collision has to be done.
 	
 	real_t T = InitTemperature;
-	real_t rho = getRho();
+	real_t rho = getRho_();
 	vector_t u; u.x=0; u.y=0; u.z=0;  // TODO: or vector_t u = getU_(); 
 	real_t H = rho*cp*T;
 	
@@ -1038,12 +1053,14 @@ CudaDeviceFunction void RunBoundariesHeat()
 			AddToHeatSource(h2-h1);  
 			break;
 		case NODE_HeaterNeumannHeatFluxEast:
-			h1 = <?R C(sum(h)) ?>;   		
-			vector_t n{-1.,0,0};
-			ImposeHeatFlux(n);
-			h2 = <?R C(sum(h)) ?>;
-			AddToHeatSource(h2-h1);  
-			break;
+			{
+				h1 = <?R C(sum(h)) ?>;   		
+				vector_t n{-1.,0,0};
+				ImposeHeatFlux(n);
+				h2 = <?R C(sum(h)) ?>;
+				AddToHeatSource(h2-h1);  
+				break;
+			}
 	}
 }
 
@@ -1053,17 +1070,20 @@ CudaDeviceFunction void RunHOBoundaries()
 	// because the regular wet BOUNDARY nodes have a limiter.
 
 	#ifdef OPTIONS_IBB
+
 		if ((NodeType & NODE_HO_BOUNDARY_HYDRO) == NODE_HydroIBB){
 			HydroInterpolatedBounceBack();
 		}
 	
 		switch (NodeType & NODE_HO_BOUNDARY_HEAT) {
 			case NODE_HeaterDirichletTemperatureIABB:
+			{
 				real_t h1 = <?R C(sum(h)) ?>;
 				HeaterDirichletTemperatureInterpolatedAntiBounceBack();
 				real_t h2 = <?R C(sum(h)) ?>;
 				AddToHeatSource(h2-h1); 
 				break;
+			}
 			case NODE_ThermalIBB:
 				ThermalInterpolatedBounceBack();
 				break;
@@ -2403,7 +2423,7 @@ CudaDeviceFunction vector_t getForce(real_t localTemp, real_t rho)
 
 CudaDeviceFunction void CollisionCM(){
 	real_t localTemperature = getT_();
-	real_t rho = getRho();
+	real_t rho = getRho_();
 	vector_t Force = getForce(localTemperature, rho);
 
 	// add Darcy force to stop flow within solid regions
@@ -2435,7 +2455,7 @@ CudaDeviceFunction void CollisionCM(){
 
 CudaDeviceFunction void CollisionCM_HIGHER(){
 	real_t localTemperature = getT_();
-	real_t rho = getRho();
+	real_t rho = getRho_();
 	vector_t Force = getForce(localTemperature, rho);
 
 	// add Darcy force to stop flow within solid regions
@@ -2467,7 +2487,7 @@ CudaDeviceFunction void CollisionCM_HIGHER(){
 
 CudaDeviceFunction void CollisionCM_HIGHER_NONLINEAR(){
 	real_t localTemperature = getT_();
-	real_t rho = getRho();
+	real_t rho = getRho_();
 	vector_t Force = getForce(localTemperature, rho);
 
 	// add Darcy force to stop flow within solid regions
@@ -2499,7 +2519,7 @@ CudaDeviceFunction void CollisionCM_HIGHER_NONLINEAR(){
 
 CudaDeviceFunction void CollisionCumulants(){
 	real_t localTemperature = getT_();
-	real_t rho = getRho();
+	real_t rho = getRho_();
 	vector_t Force = getForce(localTemperature, rho);
 
 	// add Darcy force to stop flow within solid regions
@@ -2532,7 +2552,7 @@ CudaDeviceFunction void CollisionCumulants(){
 
 CudaDeviceFunction void Collision_thermalBGK(){
 	real_t localTemperature = getT_();
-	real_t rho = getRho();
+	real_t rho = getRho_();
 	vector_t Force = getForce(localTemperature, rho);
 
 	// add Darcy force to stop flow within solid regions
