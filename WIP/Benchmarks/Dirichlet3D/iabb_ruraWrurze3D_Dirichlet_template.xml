@@ -54,7 +54,7 @@
         }
         else if(bb_type=="eq")
         {
-            cat(sprintf("<HeaterDirichletTemperatureEQ name=\"dirichlet_cold\">\n"))
+            cat(sprintf("<HeaterDirichletTemperatureEQ mask=\"COLLISION\" name=\"dirichlet_cold\">\n"))
             cat(sprintf("\t\t<STL file=\"%s\" scale=\"1\" Xrot=\"0d\" x=\"0\" y=\"0\" z=\"0\" side=\"in\" />\n", stl_pipe_path))
             cat(sprintf("\t</HeaterDirichletTemperatureEQ>\n"))
         }
@@ -97,7 +97,7 @@
     <Param name="cp" value="1."/>
     <Param name="material_density" value="1."/>
 
-    <Params name="GravitationZ" value="<?%e 16.*0.01*nu/(effdiam * effdiam) ?>" />
+    <Param name="GravitationZ" value="<?%e 16.*0.01*nu/(effdiam * effdiam) ?>" />
         <!-- <Params BoussinesqCoeff="1"/> -->
         <!-- gx = 4 * uz_max * nu / (rho * R * R) -->
         <!-- we set uz_max=0.01 - max velocity -->
@@ -108,7 +108,7 @@
 <Log Iterations="5000"/>
 <!-- <Solve Iterations="500000"></Solve>
 <Stop XHydroFLuxChange="1e-11" Times="5" Iterations="10000"/> -->
-<Solve Iterations="100000"><VTK Iterations="10000" what="T,U,Rho"/> </Solve>
+<Solve Iterations="1000000"><VTK Iterations="100000" what="H,T,U,Rho"/> </Solve>
 </CLBConfig>
 
 <?R

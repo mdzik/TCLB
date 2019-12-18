@@ -1,0 +1,54 @@
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/batch_HotKarman3D_Cumulants/keep_nu_and_k_sizer_1_Re10_Pr100/">
+    <Geometry nx="1000" ny="150" nz="3" >
+        <Cumulants><Box/></Cumulants>
+        <WVelocity><Inlet/></WVelocity>
+        <!-- <EPressure><Outlet/></EPressure> -->
+        <!-- <EConvect><Outlet/></EConvect> -->
+        <ENeumann><Outlet/></ENeumann>
+
+        <Wall mask="ALL">
+            <!-- <Channel/> -->
+            <Cylinder dx="285" dy="60" nx="30" ny="30" nz="3"/>
+        </Wall>
+
+        <HeaterDirichletTemperatureEQ mask="COLLISION" name="dirichlet_hot"> 
+        	<Cylinder dx="285" dy="60" nx="30" ny="30" nz="3"/>
+        </HeaterDirichletTemperatureEQ>  
+
+        <MeasurmentArea>
+            <Cylinder dx="285" dy="60" nx="30" ny="30" nz="3"/>
+            <!-- <Outlet/> -->
+        </MeasurmentArea>
+    </Geometry>
+
+    <Model>
+        <Params
+            InitTemperature="10"
+            InitTemperature-dirichlet_hot="11"
+            InitTemperature-dirichlet_cold="10"
+            />
+        <Params/>
+
+        <Params
+            nu="0.03"
+            conductivity="0.0003"
+            conductivity_buffer="0.0003"
+            h_stability_enhancement="1."
+            cp="1"
+            material_density="1"
+            />
+        <Params/>
+        <Params VelocityX="0.01" />
+        <!-- <Params VelocityX="1.0E-02" /> -->
+    </Model>
+
+<Failcheck Iterations="10000" nx="1000" ny="150" nz="3" />
+<!-- <TXT Iterations="50000" what="T,U"/> -->
+<Log Iterations="2000"/>
+<Solve Iterations="2000000"> </Solve>
+<Stop HeatSourceChange="1e-10" HeatFluxXChange="1e-10" Times="10" Iterations="25000"/>
+<Solve Iterations="2000000"> <VTK Iterations="50000"/> </Solve>
+</CLBConfig>
+
