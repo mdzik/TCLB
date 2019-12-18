@@ -21,11 +21,18 @@ library(MASS)  # lib which converts decimal -> fraction
     # dir_name <- paste0("batch_HotKarman_Re",tab$Re[[1]])
     # dir.create(tab$dir_name)
       
+<<<<<<< HEAD:WIP/Benchmarks/HotKarman_Re10/HotKarman_Re10_template_pro.xml
     tab$dir_name = paste0("batch_HotKarman_Re",tab$Re, "_Pr", tab$Pr, "_sizer", tab$sizer)
 
     tab$name = paste0(
                       "batch_HotKarman_Re", tab$Re,
                       "_Pr_", tab$Pr,
+=======
+    tab$dir_name = paste0("batch_HotKarman_Re",tab$Re, "_Pr", tab$Pr)
+
+    tab$name = paste0(
+                      "batch_HotKarman_Re", tab$Re,
+>>>>>>> dee32e9ce2e7aaa0a57ebc2acf6434c4be3c6ef6:WIP/Benchmarks/HotKarman_Re10/HotKarman_Re10_template_pro.xml
                       "_D0_", formatC(tab$D0_stl*tab$sizer*tab$grid_scale,digits = 2, format = "e"), 
                       "_BR_", gsub("/","o", fractions(tab$D0_stl*tab$sizer*tab$grid_scale/(tab$sizer*tab$ny))),
                       #"_BR_", formatC(tab$D0_stl*tab$sizer*tab$grid_scale/(tab$sizer*tab$ny), digits = 2, format = "e"),
