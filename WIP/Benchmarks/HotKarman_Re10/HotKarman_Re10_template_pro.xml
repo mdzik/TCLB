@@ -22,11 +22,11 @@ library(MASS)  # lib which converts decimal -> fraction
     # dir_name <- paste0("batch_HotKarman_Re",tab$Re[[1]])
     # dir.create(tab$dir_name)
       
-    tab$dir_name = paste0("batch_HotKarman_Re",tab$Re, "_sizer", tab$sizer, "_is3d_", tab$is3d)
+_    tab$dir_name = paste0("batch_HotKarman_Re",tab$Re, "_sizer", tab$sizer, "_is3d_", tab$is3d)
 
     tab$name = paste0(
                       "batch_HotKarman_Re", tab$Re,
-                      "_Pr_", tab$Pr,
+                      "_Pr", tab$Pr,
                       "_D0_", formatC(tab$D0_stl*tab$sizer*tab$grid_scale,digits = 2, format = "e"), 
                       "_BR_", gsub("/","o", fractions(tab$D0_stl*tab$sizer*tab$grid_scale/(tab$sizer*tab$ny))),
                       #"_BR_", formatC(tab$D0_stl*tab$sizer*tab$grid_scale/(tab$sizer*tab$ny), digits = 2, format = "e"),
@@ -37,9 +37,9 @@ library(MASS)  # lib which converts decimal -> fraction
 
     tab$xml = paste0(paste0(tab$dir_name,"/",tab$name),".xml")
 
-    # tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",tab$dir_name,"/",tab$name, "/")) # prometheus
+    tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",tab$dir_name,"/",tab$name, "/")) # prometheus
     # tab$output = paste0("/home2/scratch/GG/",tab$dir_name,"/",tab$name, "/") # dwarf
-    tab$output = paste0(paste0("output/",tab$dir_name,"/",tab$name,"/"))
+    # tab$output = paste0(paste0("output/",tab$dir_name,"/",tab$name,"/"))
 
     options(digits=10)
     write.csv(tab, "HotKarman_Re10_template.csv", row.names=FALSE)
