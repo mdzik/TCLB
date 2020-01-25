@@ -1070,7 +1070,6 @@ CudaDeviceFunction void RunHOBoundaries()
 	// because the regular wet BOUNDARY nodes have a limiter.
 
 	#ifdef OPTIONS_IBB
-
 		if ((NodeType & NODE_HO_BOUNDARY_HYDRO) == NODE_HydroIBB){
 			HydroInterpolatedBounceBack();
 		}
