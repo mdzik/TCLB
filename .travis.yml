@@ -54,7 +54,6 @@ before_install:
     - tools/install.sh rinside
     - sudo tools/install.sh python-dev
     - tools/install.sh rpython
-    - gem install coveralls-lcov
     - tools/install.sh submodules
     # - sudo tools/install.sh cuda 10.0.130-1
     - wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_10.0.130-1_amd64.deb
@@ -92,7 +91,7 @@ jobs:
           - tools/deploy.docs.sh
 
 after_success:
-    - tools/coveralls.sh
+    - bash <(curl -s https://codecov.io/bash) -y .codecov.yaml
 
 after_failure:
     - dmesg
