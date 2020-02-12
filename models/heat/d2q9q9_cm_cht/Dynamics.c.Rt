@@ -1,5 +1,7 @@
+
+// maintainer: Grzegorz Gruszczynski @ggruszczynski
 <?R 
-    # c_header();
+    c_header();
 	source("conf.R")
 	source("lib/lattice.R")
 	source("lib/feq.R")

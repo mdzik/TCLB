@@ -172,9 +172,13 @@ CudaDeviceFunction void EPressure()
  real_t uz = Jz/rho;
  real_t uy = Jy/rho;
  real_t rhoT = rho*Temperature;	
- rho =2*g1 + g0 + g3 + g4 + g5 + g6;
+//  rho =2*g1 + g0 + g3 + g4 + g5 + g6;
+//  rho = rho/(1.+ux);
+//  g2 = g1 - rho*ux;
+
+ rho =2*g100 + g000 + g010 + g020 + g001 + g002;
  rho = rho/(1.+ux);
- g2 = g1 - rho*ux;
+ g200 = g100 - rho*ux;
 
 }
 CudaDeviceFunction void NSymmetry()

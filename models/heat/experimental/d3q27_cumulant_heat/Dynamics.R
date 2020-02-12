@@ -13,8 +13,22 @@ AddDensity(
 	group="f"
 )
 
+
+# AddDensity(
+#         name = paste("g",1:7-1,sep=""),
+#         dx   = d3q7[,1],
+#         dy   = d3q7[,2],
+#         dz   = d3q7[,3],
+#         comment=paste("heat LB density G",1:7-1),
+#         group="g"
+# )
+
+mom_d3q7=provideDimnames(d3q7, base=list(paste(c(0:7)), c("x", "y", "z")))
+mom_d3q7 <- replace(mom_d3q7, mom_d3q7 == -1, 2) 
+mom_d3q7 <- as.data.frame(mom_d3q7)
+
 AddDensity(
-        name = paste("g",1:7-1,sep=""),
+        name = paste("g",mom_d3q7$x,mom_d3q7$y,mom_d3q7$z,sep=""),
         dx   = d3q7[,1],
         dy   = d3q7[,2],
         dz   = d3q7[,3],
