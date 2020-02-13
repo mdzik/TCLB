@@ -1,8 +1,8 @@
 
 // maintainer: Grzegorz Gruszczynski @ggruszczynski
 <?R 
-    c_header();
 	source("conf.R")
+	c_header();
 	source("lib/lattice.R")
 	source("lib/feq.R")
 	source("lib/boundary.R")

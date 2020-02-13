@@ -28,12 +28,13 @@ for (f in fname) AddField(f,dx=0,dy=0,dz=0) # Make f accessible also in present 
 # 	group="h"
 # )
 
-mom_d3q7=provideDimnames(d3q7, base=list(paste(c(0:7)), c("x", "y", "z")))
+mom_d3q7 = provideDimnames(d3q7, base=list(paste(c(0:7)), c("x", "y", "z")))
 mom_d3q7 <- replace(mom_d3q7, mom_d3q7 == -1, 2) 
 mom_d3q7 <- as.data.frame(mom_d3q7)
+hname = paste("h",mom_d3q7$x,mom_d3q7$y,mom_d3q7$z,sep="")
 
 AddDensity(
-        name = paste("h",mom_d3q7$x,mom_d3q7$y,mom_d3q7$z,sep=""),
+        name = hname,
         dx   = d3q7[,1],
         dy   = d3q7[,2],
         dz   = d3q7[,3],
@@ -42,7 +43,7 @@ AddDensity(
 )
 
 for (h in hname) AddField(h,dx=0,dy=0,dz=0) # Make h accessible also in present node (not only streamed)
-
+ 
 
 #	Inputs: Flow Properties
 AddSetting(name="VelocityX", 	default="0m/s",		comment='inlet/outlet/init x-velocity component', zonal=TRUE)

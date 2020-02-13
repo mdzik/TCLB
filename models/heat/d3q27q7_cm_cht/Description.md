@@ -2,7 +2,7 @@
 # This model uses
 
 * d3q27 cumulant collision kernel for hydrodynamics
-* d3q27 cumulant or cascaded collision kernel for heat
+* d3q7  cascaded collision kernel for heat
 * Boussinesq approx to couple heat with hydrodynamics
 
 ## BC
