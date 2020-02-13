@@ -507,7 +507,9 @@ CudaDeviceFunction void HeaterSource()
 	#endif
 
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
-
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+	real_t uz2 = u.z*u.z;
 	//back from cm_eq to raw moments
 	real_t temp000 = H;
 	real_t temp100 = H*u.x;
@@ -563,7 +565,9 @@ CudaDeviceFunction void HeatDirichletAntiBounceBackScheme()
 		real_t Sigma2 = 1/3.;
 	#endif
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
-
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+	real_t uz2 = u.z*u.z;
 	//back from cm_eq to raw moments
 	real_t temp000 = H;
 	real_t temp100 = H*u.x;
@@ -658,17 +662,17 @@ CudaDeviceFunction void ThermalInterpolatedBounceBack()
 	
 	cut_t q;
 	<?R
-        bounce = Bounce(U);
+        bounce = Bounce(UforHeat);
         sel = DensityAll$group=="h"
         attach(DensityAll[sel,])
         h = PV(name)
         rhold = PV(name,"(0,0,0)")
         detach()
-        Qw = PV( paste("Q",P$x,P$y,P$z,sep=""))
+        Qw = PV( paste("Q",mom_d3q7$x,mom_d3q7$y,mom_d3q7$z,sep=""))
         Q = PV("q")
 	
         for (i in 2:length(Qw)) {
-            C(Q,Qw[i]);
+			C(Q,Qw[i]);
 	?>
 			if (q != NO_CUT) {
 				<?R 
@@ -676,14 +680,13 @@ CudaDeviceFunction void ThermalInterpolatedBounceBack()
 					op = p^(-1);
 					ha = PV("ha");  
 				?>
-					real_t p = ((real_t)q) * (2.0 /CUT_MAX); // q * 0.005 * 2 
-					real_t ha = <?R C(rhold[i]) ?>; 
-					if (p > 1.0) { 
-						<?R C(h[bounce[i]],ha*op + rhold[bounce[i]]*(p-1)*op) ?>
-					} else { 
-						<?R C(h[bounce[i]],ha*p + h[i]*(1-p)) ?>
-					}
-				
+				real_t p = ((real_t)q) * (2.0 /CUT_MAX); // q * 0.005 * 2 
+				real_t ha = <?R C(rhold[i]) ?>; 
+				if (p > 1.0) { 
+					<?R C(h[bounce[i]],ha*op + rhold[bounce[i]]*(p-1)*op) ?>
+				} else { 
+					<?R C(h[bounce[i]],ha*p + h[i]*(1-p)) ?>
+				}
 			}
 	<?R } ?>
 }
@@ -713,7 +716,9 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 		real_t Sigma2 = 1/3.;
 	#endif
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
-
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+	real_t uz2 = u.z*u.z;
 	//back to raw moments
 	real_t temp000 = H;
 	real_t temp100 = H*u.x;
@@ -724,27 +729,27 @@ CudaDeviceFunction void HeaterDirichletTemperatureInterpolatedAntiBounceBack()
 	real_t temp002 = H*(Sigma2 + uz2);
 
 	//back to density-probability functions
-	heq000 = temp000 - temp002 - temp020 - temp200;
-	heq100 = 1/2.*temp100 + 1/2.*temp200;
-	heq200 = -1/2.*temp100 + 1/2.*temp200;
-	heq010 = 1/2.*temp010 + 1/2.*temp020;
-	heq020 = -1/2.*temp010 + 1/2.*temp020;
-	heq001 = 1/2.*temp001 + 1/2.*temp002;
-	heq002 = -1/2.*temp001 + 1/2.*temp002;
+	real_t heq000 = temp000 - temp002 - temp020 - temp200;
+	real_t heq100 = 1/2.*temp100 + 1/2.*temp200;
+	real_t heq200 = -1/2.*temp100 + 1/2.*temp200;
+	real_t heq010 = 1/2.*temp010 + 1/2.*temp020;
+	real_t heq020 = -1/2.*temp010 + 1/2.*temp020;
+	real_t heq001 = 1/2.*temp001 + 1/2.*temp002;
+	real_t heq002 = -1/2.*temp001 + 1/2.*temp002;
 
 
 	// Code below is generated with R
 	cut_t q;
 	<?R
-		bounce = Bounce(U);
+		bounce = Bounce(UforHeat);
 		sel = DensityAll$group=="h"
 		attach(DensityAll[sel,])
 		h = PV(name)
 		rhold = PV(name,"(0,0,0)")
-		rh_eq = PV(paste("heq",P$x,P$y,P$z,sep=""))
+		rh_eq = PV(paste("heq",mom_d3q7$x,mom_d3q7$y,mom_d3q7$z,sep=""))
 
 		detach()
-		Qw = PV( paste("Q",P$x,P$y,P$z,sep=""))
+		Qw = PV( paste("Q",mom_d3q7$x,mom_d3q7$y,mom_d3q7$z,sep=""))
 		Q = PV("q")
 
 		for (i in 2:length(Qw)) {
@@ -881,17 +886,11 @@ CudaDeviceFunction void Run() {
 	RunHOBoundaries();
 
     switch (NodeType & NODE_COLLISION) {    
-		case NODE_CM_HIGHER:
-			CollisionCM_HIGHER();
-			break;
-		case NODE_Cumulants:
-			CollisionCumulants();
+		case NODE_CM:
+			CollisionCM();
 			break;
 		case NODE_CM_HIGHER_NONLINEAR:
 			CollisionCM_HIGHER_NONLINEAR();
-			break;
-		case NODE_CM:
-			CollisionCM();
 			break;
 		case NODE_BGK:
 			Collision_thermalBGK();
@@ -979,6 +978,9 @@ CudaDeviceFunction void SetEquilibriumHeat(real_t H, real_t rho, vector_t u)
 		real_t Sigma2 = 1/3.;
 	#endif
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+	real_t uz2 = u.z*u.z;
 	//equilibrium in central moments space
 
 	//back to raw moments
@@ -1030,6 +1032,9 @@ CudaDeviceFunction void relax_and_collide_ADE_CM_HIGHER_NONLINEAR(real_t rho, re
 	u.x = h100/h000;
 	u.y = h010/h000;
 	u.z = h001/h000;
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+	real_t uz2 = u.z*u.z;
 
 	//central moments from raw moments
 	temp000 = h000;
@@ -1055,11 +1060,8 @@ CudaDeviceFunction void relax_and_collide_ADE_CM_HIGHER_NONLINEAR(real_t rho, re
 	u_new.y = u_hydro.y*omega_ade+u.y*(1.0-omega_ade);
 	u_new.z = u_hydro.z*omega_ade+u.z*(1.0-omega_ade);
 
-	uxuy = u_new.x*u_new.y;
 	ux2 = u_new.x*u_new.x;
 	uy2 = u_new.y*u_new.y;
-	uxuz = u_new.x*u_new.z;
-	uyuz = u_new.y*u_new.z;
 	uz2 = u_new.z*u_new.z;
 
 	//back to raw moments
@@ -1090,7 +1092,11 @@ CudaDeviceFunction void relax_and_collide_ADE_CM(real_t rho, real_t omega_ade, v
 		real_t Sigma2 = 1/3.;
 	#endif
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+	real_t uz2 = u.z*u.z;
 	real_t H = h000 + h001 + h002 + h010 + h020 + h100 + h200;
+
 	real_t temp000 = h000;
 	real_t temp100 = h100;
 	real_t temp010 = h010;
@@ -1157,6 +1163,9 @@ CudaDeviceFunction void relax_and_collide_ADE_SRT_from_cm_eq(real_t rho, real_t 
 	#endif
 
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+	real_t uz2 = u.z*u.z;
 	real_t H = h000 + h001 + h002 + h010 + h020 + h100 + h200;
 
 	//equilibrium in central moments space

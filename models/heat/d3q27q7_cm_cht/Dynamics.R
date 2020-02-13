@@ -126,9 +126,9 @@ AddNodeType(name="HeaterNeumannHeatFluxCylinder", group="ADDITIONALS_HEAT")
 AddNodeType(name="HeaterNeumannHeatFluxEast", 	  group="ADDITIONALS_HEAT")
 
 AddNodeType(name="CM",						group="COLLISION")
-AddNodeType(name="CM_HIGHER",				group="COLLISION")
+#AddNodeType(name="CM_HIGHER",				group="COLLISION")
 AddNodeType(name="CM_HIGHER_NONLINEAR",		group="COLLISION")
-AddNodeType(name="Cumulants",				group="COLLISION")
+#AddNodeType(name="Cumulants",				group="COLLISION")
 
 
 #	Benchmark things
@@ -159,13 +159,13 @@ AddDensity(name="U", dx=0, dy=0, dz=0, group="Vel")
 # AddDensity(name="W", dx=0, dy=0, dz=0, group="Vel")
 if (Options$OutFlowConvective)
 {
-	holdname =  paste("hold",P$x,P$y,P$z,sep="")
+	holdname = paste("hold",mom_d3q7$x,mom_d3q7$y,mom_d3q7$z,sep="")
 	AddDensity(
 		name = holdname,
 		dx   = 0,
 		dy   = 0,
 		dz   = 0,
-		comment=paste("heat LB density H",1:27-1),
+		comment=paste("heat LB density H",1:7-1),
 		group="hold"
 	)
 
@@ -190,7 +190,7 @@ if (Options$OutFlowConvective)
 if (Options$OutFlowNeumann)
 {
 	for (d in rows(DensityAll)) {
-		AddField( name=d$name, dx=-d$dx-1, dy=-d$dy, dz=-d$dz )
+		AddField(name=d$name, dx=-d$dx-1, dy=-d$dy, dz=-d$dz )
 	}
 	AddNodeType(name="ENeumann", group="BOUNDARY")
 }

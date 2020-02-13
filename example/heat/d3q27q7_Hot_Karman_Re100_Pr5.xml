@@ -2,10 +2,9 @@
 <!-- To be used with d3q27q27_cm_cht_OutFlowNeumann_AVG_IBB -->
 
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/d3q27q27_HotKarman_Re100_Pr5/">
+<CLBConfig version="2.0" output="output/d3q27q7_HotKarman_Re100_Pr5/">
     <Geometry nx="512" ny="100" nz="3" > 
-      <!-- <CM_HIGHER> <Box/> </CM_HIGHER>   -->
-      <Cumulants> <Box/> </Cumulants>  
+      <CM> <Box/> </CM>  
       <!-- <BGK> <Box/> </BGK>   -->
       <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
       <ENeumann name="Outlet"><Box dx="-1"/></ENeumann>
@@ -40,8 +39,8 @@ Second Order BC on cylinder
 Read cylinder from stl
 -->
 
-      <!--         
-        <Wall mask="ALL">
+              
+<!--         <Wall mask="ALL">
           <STL file="example/heat/cylinder_XYplane_D10_Z9.stl" 
               scale="3.0" 
               Xrot="0d" 
@@ -58,8 +57,8 @@ Read cylinder from stl
               y="50.000000" 
               z="0" 
               side="in"/>
-        </HeaterDirichletTemperatureEQ>   
-      -->
+        </HeaterDirichletTemperatureEQ>    -->
+     
 
 
 <!-- First order BC on cylinder: 
