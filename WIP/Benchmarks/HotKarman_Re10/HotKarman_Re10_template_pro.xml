@@ -11,18 +11,18 @@ library(MASS)  # lib which converts decimal -> fraction
         nx=(1000), # domain size in x direction
         ny=(150), # domain size in y direction
         bc_order=c("1st", "2nd"),
-        collision=c("CM_HIGHER", "Cumulants"), # "Cumulants","CM_HIGHER"
+        collision=c("CM_HIGHER"), # d3q27q27: "Cumulants","CM_HIGHER", "CM", "BGK" |  d3q27q7: "CM", "BGK" | d2q9q9: "Cumulants","CM_HIGHER", 
         nu=c(0.03), 
-        Pr=c(10,100), # Pr = nu/(k/(rho*cp))
+        Pr=c(10,100,1000), # Pr = nu/(k/(rho*cp))
         Re=c(10),
-        is3d=c(TRUE, FALSE)
+        is3d=c(TRUE)
     )
 
     # dir_name <-"batch_HotKarman_Re10_Pr10" 
     # dir_name <- paste0("batch_HotKarman_Re",tab$Re[[1]])
     # dir.create(tab$dir_name)
       
-_    tab$dir_name = paste0("batch_HotKarman_Re",tab$Re, "_sizer", tab$sizer, "_is3d_", tab$is3d)
+   tab$dir_name = paste0("batch_HotKarman_Re",tab$Re, "_sizer", tab$sizer, "_is3d_", tab$is3d)
 
     tab$name = paste0(
                       "batch_HotKarman_Re", tab$Re,

@@ -16,17 +16,6 @@ AddDensity(
 	group="f"
 )
 
-for (f in fname) AddField(f,dx=0,dy=0,dz=0) # Make f accessible also in present node (not only streamed)
-
-# hname =  paste("h",P$x,P$y,P$z,sep="")
-# AddDensity(
-# 	name = hname,
-# 	dx   = U[,1],
-# 	dy   = U[,2],
-# 	dz   = U[,3],
-# 	comment=paste("heat LB density H",1:27-1),
-# 	group="h"
-# )
 
 mom_d3q7 = provideDimnames(d3q7, base=list(paste(c(0:7)), c("x", "y", "z")))
 mom_d3q7 <- replace(mom_d3q7, mom_d3q7 == -1, 2) 
@@ -41,9 +30,6 @@ AddDensity(
         comment=paste("heat LB density H",1:7-1),
         group="h"
 )
-
-for (h in hname) AddField(h,dx=0,dy=0,dz=0) # Make h accessible also in present node (not only streamed)
- 
 
 #	Inputs: Flow Properties
 AddSetting(name="VelocityX", 	default="0m/s",		comment='inlet/outlet/init x-velocity component', zonal=TRUE)
@@ -127,7 +113,7 @@ AddNodeType(name="HeaterNeumannHeatFluxEast", 	  group="ADDITIONALS_HEAT")
 
 AddNodeType(name="CM",						group="COLLISION")
 #AddNodeType(name="CM_HIGHER",				group="COLLISION")
-AddNodeType(name="CM_HIGHER_NONLINEAR",		group="COLLISION")
+AddNodeType(name="CM_NONLINEAR",			group="COLLISION")
 #AddNodeType(name="Cumulants",				group="COLLISION")
 
 
@@ -143,6 +129,9 @@ AddSetting(name="Sigma_GH", 		 	default="1", comment='Initial width of the Gauss
 
 #	Interpolated BounceBack Node
 if(Options$IBB){
+	for (f in fname) AddField(f,dx=0,dy=0,dz=0) # Make f accessible also in present node (not only streamed)
+	for (h in hname) AddField(h,dx=0,dy=0,dz=0) # Make h accessible also in present node (not only streamed)
+	
 	AddNodeType("HeaterDirichletTemperatureIABB", group="HO_BOUNDARY_HEAT") 
 	AddNodeType("ThermalIBB", 					  group="HO_BOUNDARY_HEAT") 
 	AddNodeType("HydroIBB", 					  group="HO_BOUNDARY_HYDRO") 

@@ -889,11 +889,11 @@ CudaDeviceFunction void Run() {
 		case NODE_CM:
 			CollisionCM();
 			break;
-		case NODE_CM_HIGHER_NONLINEAR:
-			CollisionCM_HIGHER_NONLINEAR();
-			break;
 		case NODE_BGK:
 			Collision_thermalBGK();
+			break;
+		case NODE_CM_NONLINEAR:
+			CollisionCM_NONLINEAR();
 			break;
 	}
 
@@ -1003,7 +1003,7 @@ CudaDeviceFunction void SetEquilibriumHeat(real_t H, real_t rho, vector_t u)
 }
 
 
-CudaDeviceFunction void relax_and_collide_ADE_CM_HIGHER_NONLINEAR(real_t rho, real_t omega_ade, vector_t u_hydro) 
+CudaDeviceFunction void relax_and_collide_ADE_CM_NONLINEAR(real_t rho, real_t omega_ade, vector_t u_hydro) 
 {
 	#ifdef OPTIONS_CHT
 		real_t Sigma2 = 1/3.*h_stability_enhancement/(cp*rho);
@@ -1066,12 +1066,12 @@ CudaDeviceFunction void relax_and_collide_ADE_CM_HIGHER_NONLINEAR(real_t rho, re
 
 	//back to raw moments
 	temp000 = h000;
-	temp100 = h000*u.x + h100;  // TODO U_new here?
-	temp010 = h000*u.y + h010;
-	temp001 = h000*u.z + h001;
-	temp200 = h000*ux2 + 2.*h100*u.x + h200;
-	temp020 = h000*uy2 + 2.*h010*u.y + h020;
-	temp002 = h000*uz2 + 2.*h001*u.z + h002;
+	temp100 = h000*u_new.x + h100;
+	temp010 = h000*u_new.y + h010;
+	temp001 = h000*u_new.z + h001;
+	temp200 = h000*ux2 + 2.*h100*u_new.x + h200;
+	temp020 = h000*uy2 + 2.*h010*u_new.y + h020;
+	temp002 = h000*uz2 + 2.*h001*u_new.z + h002;
 
 	//back to density-probability functions
 	h000 = temp000 - temp002 - temp020 - temp200;
@@ -1464,7 +1464,7 @@ CudaDeviceFunction void CollisionCM(){
 }
 
 
-CudaDeviceFunction void CollisionCM_HIGHER_NONLINEAR(){
+CudaDeviceFunction void CollisionCM_NONLINEAR(){
 	real_t localTemperature = getT_();
 	real_t rho = getRho_();
 	vector_t Force = getForce(localTemperature, rho);
@@ -1493,7 +1493,7 @@ CudaDeviceFunction void CollisionCM_HIGHER_NONLINEAR(){
 	real_t omega_k = 1.0/(3*conductivity+0.5);
 	if ((NodeType & NODE_BOUNDARY) != 0) omega_k = 1.0/(3*conductivity_buffer+0.5);
 
-	relax_and_collide_ADE_CM_HIGHER_NONLINEAR(rho, omega_k, u);
+	relax_and_collide_ADE_CM_NONLINEAR(rho, omega_k, u);
 }
 
 CudaDeviceFunction void Collision_thermalBGK(){
