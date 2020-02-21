@@ -6,7 +6,7 @@ set -e
 DIRNAME=$1
 
 TCLB_PATH="~/GITHUB/TCLB/CLB"
-MODEL="d3q27q27_cm_cht_IBB"
+MODEL="d3q27q27_cm_cht_OutFlowNeumann_IBB"
 
 
 if test -d $DIRNAME
@@ -27,3 +27,4 @@ else
 fi
 
 echo -e "\n\n All jobs from $DIRNAME launched!"
+

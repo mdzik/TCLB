@@ -6,6 +6,7 @@
     <Geometry nx="512" ny="100" nz="3" > 
       <!-- <CM_HIGHER> <Box/> </CM_HIGHER>   -->
       <Cumulants> <Box/> </Cumulants>  
+      <!-- <CM> <Box/> </CM>   -->
       <!-- <BGK> <Box/> </BGK>   -->
       <WVelocity name="Inlet"><Box nx="1"/></WVelocity>
       <ENeumann name="Outlet"><Box dx="-1"/></ENeumann>
