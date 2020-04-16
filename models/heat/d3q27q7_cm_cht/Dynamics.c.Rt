@@ -171,9 +171,9 @@ CudaDeviceFunction real_t getH(){
 CudaDeviceFunction vector_t get_fDarcyStoper(real_t rho, vector_t u)
 {
 	vector_t fDarcy;
-	fDarcy.x = -2*rho*(u.x);
-	fDarcy.y = -2*rho*(u.y);
-	fDarcy.z = -2*rho*(u.z);
+	fDarcy.x = -rho*u.x;
+	fDarcy.y = -rho*u.y;
+	fDarcy.z = -rho*u.z;
 	return fDarcy;
 }
 
@@ -1321,7 +1321,7 @@ CudaDeviceFunction vector_t relax_and_collide_hydro(vector_t Force, real_t omega
 	c002 = (cc - 2*b + a)/3.; 
 
 	c010 = c010 + Force.y;    //010 - change only due to force term
-	c001 = c001 + Force.z ;   //001 - change only due to force term
+	c001 = c001 + Force.z;    //001 - change only due to force term
 
 	c110 = c110 * (1-w[0]);
 	c011 = c011 * (1-w[0]);

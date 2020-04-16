@@ -3,14 +3,14 @@
         sizer=c(4), 
         ux=c(0.0, 0.1), 
         k_material=c(1e-02,1e-03,1e-04,1e-05), 
-        # collision=c("CM", "BGK")
-        collision=c("Cumulants", "CM_HIGHER", "CM", "BGK")
+        collision=c("CM", "BGK")
+        # collision=c("Cumulants", "CM_HIGHER", "CM", "BGK")
         )
  
     dir_name <- "batch_square_advection"
     dir.create(dir_name)
 
-    tab$name = paste0("d3q27_", tab$collision, "_ux_", tab$ux, "_k_", tab$k_material, "_size_",32*tab$sizer, "lu")
+    tab$name = paste0("d3q7_", tab$collision, "_ux_", tab$ux, "_k_", tab$k_material, "_size_",32*tab$sizer, "lu")
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
     tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
 
