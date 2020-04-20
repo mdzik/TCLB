@@ -1,0 +1,159 @@
+// Model for solving the diffusion equation:
+// phi' = c*lap(phi)
+// phi' = c * (phi_xx + phi_yy)
+
+<?R
+	source("conf.R")
+	c_header();
+
+
+	h = PV(DensityAll$name[DensityAll$group=="h"])
+	i = PV(DensityAll$name[DensityAll$group=="i"])
+	r = PV(DensityAll$name[DensityAll$group=="r"])
+
+  w = rep(1./9.,nrow(h))
+
+  i0 = PV('i0');
+  h0 = PV('h0');
+  r0 = PV('r0');
+
+?>
+#define DIRMAX 9
+
+CudaDeviceFunction real_t random() {
+  return  real_t(rand()) / real_t(RAND_MAX);
+}
+
+CudaDeviceFunction real_t getRandom() {
+  return random();
+}
+
+CudaDeviceFunction float2 Color() {
+  float2 ret;
+  return ret;
+}
+
+CudaDeviceFunction real_t getInfected() {
+    return <?R C(sum(i)) ?>;
+  }
+CudaDeviceFunction real_t getHealthy() {
+    return <?R C(sum(h)) ?>;
+  }
+CudaDeviceFunction real_t getRecovered() {
+    return <?R C(sum(r)) ?>;
+  }
+
+CudaDeviceFunction void Init() { 
+
+    real_t i0 = 0;
+    real_t h0 = 0;
+    <?R
+      i0 = PV('i0');
+      h0 = PV('h0');
+      r0 = PV('r0');
+    ?>
+    
+    
+    for (int j=0; j < Population; j++){
+      if ( InfectedProb > random() ) i0 = i0 + 1;
+    }
+    
+    h0 = Population - i0;
+
+    real_t temp[9];
+    <?R 
+      temp = PV(paste('temp[',0:8,']',sep=""))
+    ?>
+
+    for (int j=0; j<9; j++) temp[j] = 0;
+    for (int j=0; j<h0; j++){
+      const int jj = random()*DIRMAX;
+      temp[jj] ++;
+    }
+    <?R C(h, temp); ?>
+
+    for (int j=0; j<9; j++) temp[j] = 0;
+    for (int j=0; j<i0; j++){
+      const int jj = random()*DIRMAX;
+      temp[jj] ++;
+    }
+    <?R C(i, temp); ?>
+
+    <?R C(r, w*PV('0')); ?>
+
+}
+
+CudaDeviceFunction void Run() {
+    real_t i0 = random();
+    real_t h0 = random();
+
+    real_t I,H,R;
+    real_t h2i = 0;
+    real_t i2r = 0;
+
+    <?R 
+      I = PV('I');
+      H = PV('H');
+      R = PV('R');
+    
+      
+      #h2i = H*PV('h_to_i')*(I*H^-1);
+      #i2r = I*PV('i_to_r')*i0;
+
+      C(I, sum(i));
+      C(H, sum(h));
+      C(R, sum(r));
+
+
+    ?>
+    
+    for (int j=0; j < min(H,I); j++){
+      if ( h_to_i > random()) h2i = h2i + 1;
+    }
+    
+    for (int j=0; j < int(I); j++){
+      if ( i_to_r > random()) i2r = i2r + 1;
+    }
+
+    <?R
+      
+      h2i = PV('h2i');
+      i2r = PV('i2r');
+
+      C(H,H-h2i);
+      C(I,I+h2i-i2r);
+      C(R,R+i2r);
+
+    ?>
+
+
+    real_t temp[9];
+    <?R 
+      temp = PV(paste('temp[',0:8,']',sep=""))
+    ?>
+
+    for (int j=0; j<9; j++) temp[j] = 0;
+    for (int j=0; j<H; j++){
+      const int jj = random()*DIRMAX;
+      temp[jj] ++;
+    }
+    <?R C(h, temp); ?>
+
+    for (int j=0; j<9; j++) temp[j] = 0;
+    for (int j=0; j<I; j++){
+      const int jj = random()*DIRMAX;
+      temp[jj] ++;
+    }
+    <?R C(i, temp); ?>
+
+    for (int j=0; j<9; j++) temp[j] = 0;
+    for (int j=0; j<R; j++){
+      const int jj = random()*DIRMAX;
+      temp[jj] ++;
+    }
+    <?R C(r, temp); ?>
+
+ }
+
+
+
