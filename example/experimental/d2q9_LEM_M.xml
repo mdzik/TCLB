@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/lem_m/">
+	<Geometry nx="200" ny="200">
+		<MRT>
+			<Box/>
+		</MRT>
+
+		<None name="epicenter">
+			<Box nx="10" ny="10"/>
+			<Box dx="80" dy="120" nx="10" ny="10"/>
+			<Box dx="40" dy="20" nx="10" ny="10"/>
+			<Box dx="10" dy="190" nx="10" ny="10"/>
+
+		</None>
+		<None name="city">
+			<Sphere dx="40" dy="40" nx="50" ny="50"/>
+		</None>
+	</Geometry>
+	<Model>
+		<Params diffusivity="0.1666"/>
+		<Params sir_beta="0.1"/><!-- s2i constant ->  infection rate -->
+		<Params sir_gamma="0.01"/><!-- i2r constant -> 1/gamma is the mean infective period -->
+		<Params PopulationDensity="1" />
+
+		<Params Init_S="1" />		
+		<Params Init_I="0" />
+		<Params Init_R="0" />
+		<Params Init_S-epicenter="0.97" />		
+		<Params Init_I-epicenter="0.03" />
+		<Params PopulationDensity-city="1" />
+
+    </Model>
+    <VTK/>
+
+	<VTK Iterations="1" what="Suspected,Infected,Recovered,Density"/>
+	<Solve Iterations="1000"/>
+</CLBConfig>
