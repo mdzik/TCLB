@@ -19,19 +19,31 @@ CudaDeviceFunction float2 Color() {
   return ret;
 }
 
-CudaDeviceFunction real_t getSuspected() {
+CudaDeviceFunction real_t getNoOfSuspected() {
+    return  PopulationDensity * (<?R C(sum(s)) ?>);
+  }
+
+CudaDeviceFunction real_t getNoOfInfected() {
+    return PopulationDensity * (<?R C(sum(i)) ?>);
+  }
+
+CudaDeviceFunction real_t getNoOfRecovered() {
+    return PopulationDensity * (<?R C(sum(r)) ?>);
+  }
+
+CudaDeviceFunction real_t getFractionSuspected() {
     return <?R C(sum(s)) ?>;
   }
 
-CudaDeviceFunction real_t getInfected() {
+CudaDeviceFunction real_t getFractionInfected() {
     return <?R C(sum(i)) ?>;
   }
 
-CudaDeviceFunction real_t getRecovered() {
+CudaDeviceFunction real_t getFractionRecovered() {
     return <?R C(sum(r)) ?>;
   }
 
-CudaDeviceFunction real_t getDensity() {
+CudaDeviceFunction real_t getPopulationDensity() {
   return PopulationDensity;
 }
 
@@ -39,18 +51,18 @@ CudaDeviceFunction void Init() {
   real_t rho = PopulationDensity;
 
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
-	real_t Sigma2 = 0.333333333333333*rho*stability_enhancement;
+	real_t Sigma2 = 0.333333333333333*stability_enhancement/rho;
 	 //--- processing s ---
 	//equilibrium
-	real_t s_eq_000 = Init_S;
+	real_t s_eq_000 = Init_S_Fraction;
 	real_t s_eq_100 = 0;
 	real_t s_eq_010 = 0;
-	real_t s_eq_200 = Init_S*Sigma2;
-	real_t s_eq_020 = Init_S*Sigma2;
+	real_t s_eq_200 = Init_S_Fraction*Sigma2;
+	real_t s_eq_020 = Init_S_Fraction*Sigma2;
 	real_t s_eq_110 = 0;
 	real_t s_eq_210 = 0;
 	real_t s_eq_120 = 0;
-	real_t s_eq_220 = Init_S*Sigma2*Sigma2;
+	real_t s_eq_220 = Init_S_Fraction*Sigma2*Sigma2;
 	//back to density-probability functions
 	s000 = s_eq_000 - s_eq_020 - s_eq_200 + s_eq_220;
 	s100 = 1/2.*s_eq_100 - 1/2.*s_eq_120 + 1/2.*s_eq_200 - 1/2.*s_eq_220;
@@ -63,15 +75,15 @@ CudaDeviceFunction void Init() {
 	s220 = 1/4.*s_eq_110 - 1/4.*s_eq_120 - 1/4.*s_eq_210 + 1/4.*s_eq_220;
 	 //--- processing i ---
 	//equilibrium
-	real_t i_eq_000 = Init_I;
+	real_t i_eq_000 = Init_I_Fraction;
 	real_t i_eq_100 = 0;
 	real_t i_eq_010 = 0;
-	real_t i_eq_200 = Init_I*Sigma2;
-	real_t i_eq_020 = Init_I*Sigma2;
+	real_t i_eq_200 = Init_I_Fraction*Sigma2;
+	real_t i_eq_020 = Init_I_Fraction*Sigma2;
 	real_t i_eq_110 = 0;
 	real_t i_eq_210 = 0;
 	real_t i_eq_120 = 0;
-	real_t i_eq_220 = Init_I*Sigma2*Sigma2;
+	real_t i_eq_220 = Init_I_Fraction*Sigma2*Sigma2;
 	//back to density-probability functions
 	i000 = i_eq_000 - i_eq_020 - i_eq_200 + i_eq_220;
 	i100 = 1/2.*i_eq_100 - 1/2.*i_eq_120 + 1/2.*i_eq_200 - 1/2.*i_eq_220;
@@ -84,15 +96,15 @@ CudaDeviceFunction void Init() {
 	i220 = 1/4.*i_eq_110 - 1/4.*i_eq_120 - 1/4.*i_eq_210 + 1/4.*i_eq_220;
 	 //--- processing r ---
 	//equilibrium
-	real_t r_eq_000 = Init_R;
+	real_t r_eq_000 = Init_R_Fraction;
 	real_t r_eq_100 = 0;
 	real_t r_eq_010 = 0;
-	real_t r_eq_200 = Init_R*Sigma2;
-	real_t r_eq_020 = Init_R*Sigma2;
+	real_t r_eq_200 = Init_R_Fraction*Sigma2;
+	real_t r_eq_020 = Init_R_Fraction*Sigma2;
 	real_t r_eq_110 = 0;
 	real_t r_eq_210 = 0;
 	real_t r_eq_120 = 0;
-	real_t r_eq_220 = Init_R*Sigma2*Sigma2;
+	real_t r_eq_220 = Init_R_Fraction*Sigma2*Sigma2;
 	//back to density-probability functions
 	r000 = r_eq_000 - r_eq_020 - r_eq_200 + r_eq_220;
 	r100 = 1/2.*r_eq_100 - 1/2.*r_eq_120 + 1/2.*r_eq_200 - 1/2.*r_eq_220;
@@ -126,7 +138,7 @@ CudaDeviceFunction void Run() {
 CudaDeviceFunction void relax_and_collide_SIR_M(real_t rho, real_t omega_ade) 
 {
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
-	real_t Sigma2 = 0.333333333333333*rho*stability_enhancement;
+	real_t Sigma2 = 0.333333333333333*stability_enhancement/rho;
 	real_t s = s000 + s010 + s020 + s100 + s110 + s120 + s200 + s210 + s220;
 	real_t i = i000 + i010 + i020 + i100 + i110 + i120 + i200 + i210 + i220;
 	real_t r = r000 + r010 + r020 + r100 + r110 + r120 + r200 + r210 + r220;
@@ -160,15 +172,15 @@ CudaDeviceFunction void relax_and_collide_SIR_M(real_t rho, real_t omega_ade)
 	s120 = temp110 + temp120 - temp210 - temp220;
 	s220 = temp110 + temp120 + temp210 + temp220;
 	//collide
-	real_t s_star_000 = -s*(sir_beta*i - 1.);
+	real_t s_star_000 = -s*(i*sir_beta - 1.);
 	real_t s_star_100 = -s100*(omega_ade - 1.);
 	real_t s_star_010 = -s010*(omega_ade - 1.);
-	real_t s_star_200 = -Sigma2*s*(sir_beta*i - 1.);
-	real_t s_star_020 = -Sigma2*s*(sir_beta*i - 1.);
+	real_t s_star_200 = -Sigma2*s*(i*sir_beta - 1.);
+	real_t s_star_020 = -Sigma2*s*(i*sir_beta - 1.);
 	real_t s_star_110 = 0;
 	real_t s_star_210 = -s210*(omega_ade - 1.);
 	real_t s_star_120 = -s120*(omega_ade - 1.);
-	real_t s_star_220 = -Sigma2*Sigma2*s*(sir_beta*i - 1.);
+	real_t s_star_220 = -Sigma2*Sigma2*s*(i*sir_beta - 1.);
 	//back to density-probability functions
 	s000 = s_star_000 - s_star_020 - s_star_200 + s_star_220;
 	s100 = 1/2.*s_star_100 - 1/2.*s_star_120 + 1/2.*s_star_200 - 1/2.*s_star_220;
@@ -200,15 +212,15 @@ CudaDeviceFunction void relax_and_collide_SIR_M(real_t rho, real_t omega_ade)
 	i120 = temp110 + temp120 - temp210 - temp220;
 	i220 = temp110 + temp120 + temp210 + temp220;
 	//collide
-	real_t i_star_000 = i*(sir_beta*s - sir_gamma + 1.);
+	real_t i_star_000 = i*(s*sir_beta - sir_gamma + 1.);
 	real_t i_star_100 = -i100*(omega_ade - 1.);
 	real_t i_star_010 = -i010*(omega_ade - 1.);
-	real_t i_star_200 = Sigma2*i*(sir_beta*s - sir_gamma + 1.);
-	real_t i_star_020 = Sigma2*i*(sir_beta*s - sir_gamma + 1.);
+	real_t i_star_200 = Sigma2*i*(s*sir_beta - sir_gamma + 1.);
+	real_t i_star_020 = Sigma2*i*(s*sir_beta - sir_gamma + 1.);
 	real_t i_star_110 = 0;
 	real_t i_star_210 = -i210*(omega_ade - 1.);
 	real_t i_star_120 = -i120*(omega_ade - 1.);
-	real_t i_star_220 = Sigma2*Sigma2*i*(sir_beta*s - sir_gamma + 1.);
+	real_t i_star_220 = Sigma2*Sigma2*i*(s*sir_beta - sir_gamma + 1.);
 	//back to density-probability functions
 	i000 = i_star_000 - i_star_020 - i_star_200 + i_star_220;
 	i100 = 1/2.*i_star_100 - 1/2.*i_star_120 + 1/2.*i_star_200 - 1/2.*i_star_220;
@@ -240,15 +252,15 @@ CudaDeviceFunction void relax_and_collide_SIR_M(real_t rho, real_t omega_ade)
 	r120 = temp110 + temp120 - temp210 - temp220;
 	r220 = temp110 + temp120 + temp210 + temp220;
 	//collide
-	real_t r_star_000 = sir_gamma*i + r;
+	real_t r_star_000 = i*sir_gamma + r;
 	real_t r_star_100 = -r100*(omega_ade - 1.);
 	real_t r_star_010 = -r010*(omega_ade - 1.);
-	real_t r_star_200 = Sigma2*(sir_gamma*i + r);
-	real_t r_star_020 = Sigma2*(sir_gamma*i + r);
+	real_t r_star_200 = Sigma2*(i*sir_gamma + r);
+	real_t r_star_020 = Sigma2*(i*sir_gamma + r);
 	real_t r_star_110 = 0;
 	real_t r_star_210 = -r210*(omega_ade - 1.);
 	real_t r_star_120 = -r120*(omega_ade - 1.);
-	real_t r_star_220 = Sigma2*Sigma2*(sir_gamma*i + r);
+	real_t r_star_220 = Sigma2*Sigma2*(i*sir_gamma + r);
 	//back to density-probability functions
 	r000 = r_star_000 - r_star_020 - r_star_200 + r_star_220;
 	r100 = 1/2.*r_star_100 - 1/2.*r_star_120 + 1/2.*r_star_200 - 1/2.*r_star_220;

@@ -14,10 +14,16 @@ for (fname0 in c('s', 'i', 'r') ) {
     )
 }
 # 	Outputs:
-AddQuantity(name="Suspected")
-AddQuantity(name="Infected")
-AddQuantity(name="Recovered")
-AddQuantity(name="Density")
+AddQuantity(name="NoOfSuspected")
+AddQuantity(name="NoOfInfected")
+AddQuantity(name="NoOfRecovered")
+
+AddQuantity(name="FractionSuspected")
+AddQuantity(name="FractionInfected")
+AddQuantity(name="FractionRecovered")
+
+AddQuantity(name="PopulationDensity")
+
 
 #	Inputs: Flow Properties
 # https://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology#The_SIR_model
@@ -30,14 +36,14 @@ AddQuantity(name="Density")
 # supposing "day" is the time unit[clarification needed]). 
 # If the duration of the infection is denoted D, then γ = 1/D, since an individual experiences one recovery in D units of time.
 
-AddSetting(name="sir_beta", default=0.0, comment="s2i constant ->  infection rate")
-AddSetting(name="sir_gamma", default=0.0, comment="i2r constant -> 1/gamma is the mean infective period")
-AddSetting(name="diffusivity", default=0.16666666, comment='spacial diffusivity people ;)',	zonal=T)
+AddSetting(name="sir_beta",              default=0.0,        comment="s2i constant ->  infection rate")
+AddSetting(name="sir_gamma",             default=0.0,        comment="i2r constant -> 1/gamma is the mean infective period")
+AddSetting(name="diffusivity",           default=0.16666666, comment='spacial diffusivity of people ;)',	zonal=T)
+AddSetting(name="stability_enhancement", default=1.0,        comment='magic stability enhancement')
 
-AddSetting(name="PopulationDensity", zonal=TRUE)
-AddSetting(name="stability_enhancement",  default=1.0, 	comment='magic stability enhancement')
-AddSetting(name="Init_S", zonal=TRUE)
-AddSetting(name="Init_I", zonal=TRUE)
-AddSetting(name="Init_R", zonal=TRUE)
+AddSetting(name="PopulationDensity",    zonal=TRUE)
+AddSetting(name="Init_S_Fraction",      zonal=TRUE)
+AddSetting(name="Init_I_Fraction",      zonal=TRUE)
+AddSetting(name="Init_R_Fraction",      zonal=TRUE)
 #	Boundary things:
 #AddNodeType(name="Dirichlet", group="BOUNDARY")
