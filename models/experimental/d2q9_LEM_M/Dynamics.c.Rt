@@ -20,39 +20,57 @@ CudaDeviceFunction float2 Color() {
 }
 
 CudaDeviceFunction real_t getNoOfSuspected() {
-    return  PopulationDensity * (<?R C(sum(s)) ?>);
-  }
+    return  populationDensity(0,0) * (<?R C(sum(s)) ?>);
+}
 
 CudaDeviceFunction real_t getNoOfInfected() {
-    return PopulationDensity * (<?R C(sum(i)) ?>);
-  }
+    return populationDensity(0,0) * (<?R C(sum(i)) ?>);
+}
 
 CudaDeviceFunction real_t getNoOfRecovered() {
-    return PopulationDensity * (<?R C(sum(r)) ?>);
-  }
+    return populationDensity(0,0) * (<?R C(sum(r)) ?>);
+}
 
 CudaDeviceFunction real_t getFractionSuspected() {
     return <?R C(sum(s)) ?>;
-  }
+}
 
 CudaDeviceFunction real_t getFractionInfected() {
     return <?R C(sum(i)) ?>;
-  }
+}
 
 CudaDeviceFunction real_t getFractionRecovered() {
     return <?R C(sum(r)) ?>;
-  }
+}
+
+CudaDeviceFunction real_t getFractionSum() {
+    return getFractionSuspected() + getFractionInfected() + getFractionRecovered();
+}
+
+CudaDeviceFunction real_t getTotalNoOfIndividuals() {
+	return  populationDensity(0,0) * getFractionSum();
+}
 
 CudaDeviceFunction real_t getPopulationDensity() {
-  return PopulationDensity;
+  return populationDensity(0,0);
+}
+
+CudaDeviceFunction void PopulationDensitySmoothing(){
+	real_t lap_popden = populationDensity(-1,0) + populationDensity(1,0) + populationDensity(0,-1) + populationDensity(0,1) - 4*populationDensity(0,0);
+	real_t temp = population_smoothing * population_smoothing * lap_popden;
+	populationDensity = populationDensity(0,0) + temp;
 }
 
 CudaDeviceFunction void Init() { 
-  real_t rho = PopulationDensity;
+	populationDensity = Init_PopulationDensity;
+	Init_eq(populationDensity);
+}
 
+CudaDeviceFunction void Init_eq(real_t rho)
+{
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
 	real_t Sigma2 = 0.333333333333333*stability_enhancement/rho;
-	 //--- processing s ---
+	//--- processing s ---
 	//equilibrium
 	real_t s_eq_000 = Init_S_Fraction;
 	real_t s_eq_100 = 0;
@@ -73,7 +91,7 @@ CudaDeviceFunction void Init() {
 	s020 = -1/2.*s_eq_010 + 1/2.*s_eq_020 + 1/2.*s_eq_210 - 1/2.*s_eq_220;
 	s120 = -1/4.*s_eq_110 + 1/4.*s_eq_120 - 1/4.*s_eq_210 + 1/4.*s_eq_220;
 	s220 = 1/4.*s_eq_110 - 1/4.*s_eq_120 - 1/4.*s_eq_210 + 1/4.*s_eq_220;
-	 //--- processing i ---
+	//--- processing i ---
 	//equilibrium
 	real_t i_eq_000 = Init_I_Fraction;
 	real_t i_eq_100 = 0;
@@ -94,7 +112,7 @@ CudaDeviceFunction void Init() {
 	i020 = -1/2.*i_eq_010 + 1/2.*i_eq_020 + 1/2.*i_eq_210 - 1/2.*i_eq_220;
 	i120 = -1/4.*i_eq_110 + 1/4.*i_eq_120 - 1/4.*i_eq_210 + 1/4.*i_eq_220;
 	i220 = 1/4.*i_eq_110 - 1/4.*i_eq_120 - 1/4.*i_eq_210 + 1/4.*i_eq_220;
-	 //--- processing r ---
+	//--- processing r ---
 	//equilibrium
 	real_t r_eq_000 = Init_R_Fraction;
 	real_t r_eq_100 = 0;
@@ -115,21 +133,25 @@ CudaDeviceFunction void Init() {
 	r020 = -1/2.*r_eq_010 + 1/2.*r_eq_020 + 1/2.*r_eq_210 - 1/2.*r_eq_220;
 	r120 = -1/4.*r_eq_110 + 1/4.*r_eq_120 - 1/4.*r_eq_210 + 1/4.*r_eq_220;
 	r220 = 1/4.*r_eq_110 - 1/4.*r_eq_120 - 1/4.*r_eq_210 + 1/4.*r_eq_220;
-
 }
 
 CudaDeviceFunction void Run() {
+	if ((NodeType & NODE_ADDITIONALS) == NODE_Smoothing){
+		PopulationDensitySmoothing();
+		Init_eq(populationDensity);
+	}
+	else{
+		populationDensity = populationDensity(0,0);
+		real_t omega_ade = 1.0/(3*diffusivity+0.5);
+			// if ((NodeType & NODE_BOUNDARY) != 0) omega_ade = 1.0/(3*diffusivity_buffer+0.5);
+		
+		switch (NodeType & NODE_COLLISION) {    
+			case NODE_MRT:
 
-  real_t rho = PopulationDensity;
-  real_t omega_ade = 1.0/(3*diffusivity+0.5);
-	// if ((NodeType & NODE_BOUNDARY) != 0) omega_ade = 1.0/(3*diffusivity_buffer+0.5);
-  
-  switch (NodeType & NODE_COLLISION) {    
-    case NODE_MRT:
-      relax_and_collide_SIR_M(rho, omega_ade);
-      break;
-  }
-
+			relax_and_collide_SIR_M(populationDensity, omega_ade);
+			break;
+		}
+	}
  }
 
 

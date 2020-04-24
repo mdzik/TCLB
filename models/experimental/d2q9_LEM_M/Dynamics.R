@@ -13,6 +13,7 @@ for (fname0 in c('s', 'i', 'r') ) {
         group=fname0
     )
 }
+
 # 	Outputs:
 AddQuantity(name="NoOfSuspected")
 AddQuantity(name="NoOfInfected")
@@ -24,8 +25,11 @@ AddQuantity(name="FractionRecovered")
 
 AddQuantity(name="PopulationDensity")
 
+# 	Outputs - debug:
+AddQuantity(name="FractionSum")
+AddQuantity(name="TotalNoOfIndividuals")
 
-#	Inputs: Flow Properties
+#   Inputs: Flow Properties
 # https://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology#The_SIR_model
 # Between S and I, the transition rate is βI/N, where β is the average number of contacts per person per time, 
 # multiplied by the probability of disease transmission in a contact between a susceptible and an infectious subject,
@@ -38,12 +42,18 @@ AddQuantity(name="PopulationDensity")
 
 AddSetting(name="sir_beta",              default=0.0,        comment="s2i constant ->  infection rate")
 AddSetting(name="sir_gamma",             default=0.0,        comment="i2r constant -> 1/gamma is the mean infective period")
-AddSetting(name="diffusivity",           default=0.16666666, comment='spacial diffusivity of people ;)',	zonal=T)
+AddSetting(name="diffusivity",           default=0.16666666, comment='spacial diffusivity for the fraction of suspected/infected/recovered',	zonal=T)
 AddSetting(name="stability_enhancement", default=1.0,        comment='magic stability enhancement')
 
-AddSetting(name="PopulationDensity",    zonal=TRUE)
+AddSetting(name="Init_PopulationDensity",    zonal=TRUE)
 AddSetting(name="Init_S_Fraction",      zonal=TRUE)
 AddSetting(name="Init_I_Fraction",      zonal=TRUE)
 AddSetting(name="Init_R_Fraction",      zonal=TRUE)
+
+#	CFD enhancements ;)
+AddField(name="populationDensity", stencil2d=1)
+AddNodeType(name="Smoothing", group="ADDITIONALS")  #  To smooth population density during initialization.
+AddSetting(name="population_smoothing")  #  To smooth population density during initialization.
+
 #	Boundary things:
 #AddNodeType(name="Dirichlet", group="BOUNDARY")

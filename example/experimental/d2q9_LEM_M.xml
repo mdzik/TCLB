@@ -1,10 +1,8 @@
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/lem_m/">
 	<Geometry nx="256" ny="256">
-		<MRT>
-			<Box/>
-		</MRT>
-
+		<MRT><Box/></MRT>
+		<Smoothing><Box/></Smoothing>
 		<None name="epicenter">
 			<Box nx="10" ny="10"/>
 			<Box dx="80" dy="120" nx="10" ny="10"/>
@@ -25,7 +23,7 @@
 		<Params diffusivity="0.1666"/>
 		<Params sir_beta="0.1"/><!-- s2i constant ->  infection rate -->
 		<Params sir_gamma="0.01"/><!-- i2r constant -> 1/gamma is the mean infective period -->
-		<Params stability_enhancement="1.0"/>
+		<Params stability_enhancement="0.1"/>
 
 		<Params Init_S_Fraction="1" />		
 		<Params Init_I_Fraction="0" />
@@ -34,17 +32,17 @@
 		<Params Init_S_Fraction-epicenter="0.97" />		
 		<Params Init_I_Fraction-epicenter="0.03" />
 
-		<Params PopulationDensity="50" />
-		<Params PopulationDensity-city="100" />
-		<Params PopulationDensity-desert="10" />
+		<Params Init_PopulationDensity="50" />
+		<Params Init_PopulationDensity-city="100" />
+		<Params Init_PopulationDensity-desert="10" />
 
-<!-- 		<Params PopulationDensity="2" />
-		<Params PopulationDensity-city="3" />
-		<Params PopulationDensity-desert="1" /> -->
+		<Param name="population_smoothing" value="0.1"/>
+<!-- 		<Params Init_PopulationDensity="2" />
+		<Params Init_PopulationDensity-city="3" />
+		<Params Init_PopulationDensity-desert="1" /> -->
     </Model>
 
-    <VTK Iterations="10"/>
-
-	<!-- <VTK Iterations="1" what="NoOfSuspected,NoOfInfected,NoOfRecovered,PopulationDensity"/> -->
-	<Solve Iterations="3000"/>
+	<Solve Iterations="500"><VTK Iterations="100"/></Solve>	<!-- Smoothing the population -->
+	<Geometry><None mask="ADDITIONALS"><Box nx="256" ny="256"/></None></Geometry>
+	<Solve Iterations="3000"><VTK Iterations="10"/></Solve>
 </CLBConfig>
