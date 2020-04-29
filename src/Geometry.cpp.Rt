@@ -63,7 +63,7 @@ inline void Geometry::ActivateCuts() {
 
 inline void Geometry::ActivateGrayScale() {
 	if (gray_scale == NULL) {
-		gray_scale = new unsigned char[region.sizeL()]; //#TODO: *26
+		gray_scale = new gray_t[region.sizeL()];
 		for (size_t i = 0; i < region.sizeL(); i++) {
 			gray_scale[i] = 0;
 		}
@@ -743,7 +743,7 @@ inline int Geometry::loadSweep(lbRegion reg, pugi::xml_node node)
 /// Load Image file
 inline int Geometry::loadImage(lbRegion reg, pugi::xml_node n)
 {
-	printf("===Image===\n");
+	output("loading image ...\n");
 	debug1("Filling Image with flag %d (&d)\n",fg,fg_mask);
 	DEBUG1(reg.print();)
 
@@ -767,25 +767,28 @@ inline int Geometry::loadImage(lbRegion reg, pugi::xml_node n)
 	double g_scaler = 0.587;
 	double b_scaler = 0.114;
 
-	for (int x = reg.dx; x < reg.dx + reg.nx; x++)
-		for (int y = reg.dy; y < reg.dy + reg.ny; y++)
+	gray_t gray_intensity;
+	for (int x = reg.dx; x < reg.dx + reg.nx; x++){
+		for (int y = reg.dy; y < reg.dy + reg.ny; y++){
 		    for (int z = reg.dz; z < reg.dz + reg.nz; z++) 
 				if (region.isIn(x, y, z)) {
-					debug1("x,y,z %d %d %d \n", x,y,z);
 					size_t k = region.offset(x, y, z);
 					
 					rgb_t pixel_colour;
 					image.get_pixel(x, y, pixel_colour);
-					unsigned char gray_intensity = static_cast<unsigned char>(
+					gray_intensity = static_cast<gray_t>(
 						r_scaler*pixel_colour.red
 						+ g_scaler*pixel_colour.green 
 						+ b_scaler*pixel_colour.blue
 					);
-					
-					
+
+					debug1("x,y,z, gray_intensity  %d %d %d \t %d \n", x,y,z, gray_intensity);
+
 					gray_scale[regsize+k] = gray_intensity;
 					Dot(x, y, z);
 				}
+			}
+		}
 	debug1("Parsed img (height x width) =  %d x %d \n", height, width);
 	return 0;
 }
@@ -1108,7 +1111,7 @@ int Geometry::loadZone(const char *name)
 	error("Unknown zone (in xml): %s", name);
 	return -1;
     }
-    E(Draw(node));
+    E(Draw(node)); //#TODO: co to jest E?
     return 0;
 
 }
@@ -1162,9 +1165,11 @@ int Geometry::load(pugi::xml_node & node)
 
 Geometry::~Geometry()
 {
-    debug1("[%d] Destroy geom\n", D_MPI_RANK);
+    debug2("~Geometry()\n");
     delete[]geom;
     if (Q != NULL) delete[] Q;
+	if (gray_scale != NULL) delete[] gray_scale;
+	debug2("~Geometry() Done\n");
 }
 
 

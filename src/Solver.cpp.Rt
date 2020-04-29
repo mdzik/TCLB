@@ -54,6 +54,7 @@ void MainFree( Solver *d);
 
 /// Solver destructor. Deletes most of the stuff
 	Solver::~Solver() {
+		debug2("~Solver()");
 		if (lattice) delete lattice;
 #ifdef GRAPHICS
 		if (bitmap) delete bitmap;

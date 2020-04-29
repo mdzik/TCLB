@@ -10,7 +10,8 @@
   typedef struct {real_t x,y,z;} vector_t;
 
   typedef unsigned short int cut_t;
-  
+  typedef unsigned char gray_t;
+
   #define NO_CUT 65535
   #define CUT_MAX 65000
   #define CUT_LEN(x__) (0.005f * (x__))

@@ -27,11 +27,10 @@ enum draw_mode {
 class Geometry {
 public:
   flag_t * geom; ///< Main table of flags/NodeType's
-  cut_t * Q;  //TODO: skad Q wie że jest ich 27?
-  unsigned char * gray_scale;
-  // color_t * gray_scale;  //#TODO: error: ‘color_t’ does not name a type; it is defined in types.h Oo
-  lbRegion region; ///< Lattive region
-  lbRegion totalregion; ///< Global Lattive region
+  cut_t * Q;
+  gray_t * gray_scale;
+  lbRegion region; ///< Lattice region
+  lbRegion totalregion; ///< Global Lattice region
   UnitEnv units; ///< Units object for unit calculations
   Geometry(const lbRegion& r, const lbRegion& tr, const UnitEnv& units_);
   ~Geometry();

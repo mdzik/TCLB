@@ -45,7 +45,7 @@ class LatticeContainer {
 #endif
   flag_t * NodeType; ///< Table of flags/NodeTypes of all the nodes
   cut_t* Q; 
-  unsigned char* gray_scale; 
+  gray_t* gray_scale; 
   size_t particle_data_size;
   real_t* particle_data;
   size_t balltree_data_size;
@@ -134,8 +134,8 @@ class LatticeContainer {
     return Q[i];
   }
 
-  CudaDeviceFunction inline const unsigned char getGray_scale(const int & x, const int & y, const int & z) {
-    if (gray_scale == NULL) return 0;
+  CudaDeviceFunction inline const gray_t getGray_scale(const int & x, const int & y, const int & z) {
+    if (gray_scale == NULL) return 123;  //#TODO: if (gray_scale == NULL) return sth usefull?
     size_t i = ((nz+z)*ny+y)*nx+x;
     return gray_scale[i];
   }

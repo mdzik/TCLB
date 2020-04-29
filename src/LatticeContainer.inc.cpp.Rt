@@ -222,6 +222,7 @@ void LatticeContainer::Alloc(int nx_, int ny_, int nz_)
     NodeType = (flag_t*)tmp;
 
     Q = NULL;
+    gray_scale = NULL;
     particle_data_size = 0;
     particle_data = NULL;
 
@@ -247,14 +248,16 @@ void LatticeContainer::ActivateCuts() {
 }
 
 void LatticeContainer::ActivateGrayScale() {
+  debug1("LatticeContainer::ActivateGrayScale()");
   if (gray_scale == NULL) {
           void * tmp;
-          size_t size = (size_t) nx*ny*nz*sizeof(unsigned char);
+          size_t size = (size_t) nx*ny*nz*sizeof(gray_t);
+          debug1("LatticeContainer::ActivateGrayScale() gray_scale == NULL --> need to allocate memory");
               ALLOCPRINT1;
           CudaMalloc( (void**)&tmp, size );
               ALLOCPRINT2;
           CudaMemset( tmp, 0, size ); 
-          gray_scale = (unsigned char*)tmp;
+          gray_scale = (gray_t*)tmp;
   }
 }
 
@@ -264,8 +267,10 @@ void LatticeContainer::ActivateGrayScale() {
 */
 void LatticeContainer::Free()
 {
+    debug2("LatticeContainer::Free()");
     CudaFree( NodeType );
     if (Q != NULL) CudaFree( Q ); 
+    if (gray_scale != NULL) CudaFree( gray_scale ); 
 }
 
 
