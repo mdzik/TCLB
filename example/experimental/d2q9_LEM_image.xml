@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/lem_image/">
 	<Geometry nx="32" ny="32">
+	<!-- <Geometry nx="128" ny="128"> -->
+	<!-- <Geometry nx="512" ny="512"> -->
 	<!-- <Geometry nx="1024" ny="1024"> -->
 		<MRT><Box/></MRT>
 		<Smoothing><Box/></Smoothing>
@@ -22,6 +24,8 @@
 
         <ImageReader name="BC_heat_cylinder"> 
       		<ImageBMP file="example/experimental/smile_32x32.bmp" />
+      		<!-- <ImageBMP file="example/experimental/input_128x128.bmp" /> -->
+      		<!-- <ImageBMP file="example/experimental/input_512x512.bmp" /> -->
       		<!-- <ImageBMP file="example/experimental/input_1024x1024.bmp" /> -->
         </ImageReader > 
 
@@ -39,18 +43,19 @@
 		<Param name="Init_S_Fraction" zone="epicenter" value="0.97"/>		
 		<Param name="Init_I_Fraction" zone="epicenter" value="0.03" />
 
-		<Param name="Init_PopulationDensity" value="50" />
+<!-- 		<Param name="Init_PopulationDensity" value="50" />
 		<Param name="Init_PopulationDensity" zone="city" value="100" />
-		<Param name="Init_PopulationDensity" zone="desert" value="10" />
+		<Param name="Init_PopulationDensity" zone="desert" value="10" /> -->
 
 		<Param name="population_smoothing" value="0.1"/>
-<!-- 	<Param name="Init_PopulationDensity" value="2" />
-		<Param name="Init_PopulationDensity-city" value="3" />
-		<Param name="Init_PopulationDensity-desert" value="1" /> -->
+
+		<Param name="Init_PopulationDensity" value="2" />
+		<Param name="Init_PopulationDensity" zone="city" value="3" />
+		<Param name="Init_PopulationDensity" zone="desert"  value="1" />
     </Model>
 
 	<Solve Iterations="500"><VTK Iterations="100"/></Solve>	<!-- Smoothing the population -->
-<!-- 	<Geometry><None mask="ADDITIONALS"><Box nx="32" ny="32"/></None></Geometry>
-	<Solve Iterations="3000"><VTK Iterations="10"/></Solve> -->
+	<Geometry><None mask="ADDITIONALS"><Box nx="128" ny="128"/></None></Geometry>
+	<Solve Iterations="3000"><VTK Iterations="10"/></Solve>
 </CLBConfig>
 

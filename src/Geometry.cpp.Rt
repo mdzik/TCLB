@@ -782,14 +782,15 @@ inline int Geometry::loadImage(lbRegion reg, pugi::xml_node n)
 						+ b_scaler*pixel_colour.blue
 					);
 
-					debug1("x,y,z, gray_intensity  %d %d %d \t %d \n", x,y,z, gray_intensity);
-
-					gray_scale[regsize+k] = gray_intensity;
+					debug1("x,y,z \t offset \t gray_intensity  %d %d %d \t %d \t %d \n", x,y,z, k, gray_intensity);
+					output("x,y,z \t offset \t gray_intensity  %d %d %d \t %d \t %d \n", x,y,z, k, gray_intensity);
+					gray_scale[k] = gray_intensity;
 					Dot(x, y, z);
 				}
 			}
 		}
 	debug1("Parsed img (height x width) =  %d x %d \n", height, width);
+	output("image loaded ...\n");
 	return 0;
 }
 

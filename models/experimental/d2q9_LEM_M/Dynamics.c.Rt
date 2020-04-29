@@ -65,7 +65,8 @@ CudaDeviceFunction void Init() {
 	populationDensity = Init_PopulationDensity;
 
 	if ((NodeType & NODE_IMAGE) == NODE_ImageReader){
-		populationDensity = gray_scale_intensity;
+		// populationDensity = (real_t)gray_scale_intensity*Init_PopulationDensity;
+		populationDensity = (real_t)gray_scale_intensity;
 	}
 	
 	Init_eq(populationDensity);
