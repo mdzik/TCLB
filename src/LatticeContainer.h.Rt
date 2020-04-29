@@ -45,6 +45,7 @@ class LatticeContainer {
 #endif
   flag_t * NodeType; ///< Table of flags/NodeTypes of all the nodes
   cut_t* Q; 
+  unsigned char* gray_scale; 
   size_t particle_data_size;
   real_t* particle_data;
   size_t balltree_data_size;
@@ -65,6 +66,7 @@ class LatticeContainer {
   void Alloc (int,int,int);
   void Free();
   void ActivateCuts();
+  void ActivateGrayScale();
   CudaDeviceFunction void fill();
 <?R for (s in c(paste("_",Stages$name,sep=""),"","_param","_noparam")) {
   ?>
@@ -132,6 +134,11 @@ class LatticeContainer {
     return Q[i];
   }
 
+  CudaDeviceFunction inline const unsigned char getGray_scale(const int & x, const int & y, const int & z) {
+    if (gray_scale == NULL) return 0;
+    size_t i = ((nz+z)*ny+y)*nx+x;
+    return gray_scale[i];
+  }
 
   CudaDeviceFunction inline vector_t getST(real_t x, real_t y, real_t z) {
 	return calc(ST, x,y,z);

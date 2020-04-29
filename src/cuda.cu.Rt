@@ -68,6 +68,11 @@ CudaDeviceFunction CudaConstantMemory real_t <?%s v$name ?> = 0.0f; <?R
 ?>
 
 #include "Particle.hpp"
+<?R
+	gray_scale = paste("ojeje")  #TODO:
+?>
+#define <?%s gray_scale ?> constContainer.getGray_scale(x_,y_,z_)
+
 
 <?R
 	P = expand.grid(x=0:2,y=0:2,z=0:2)

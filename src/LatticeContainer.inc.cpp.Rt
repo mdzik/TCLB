@@ -246,6 +246,18 @@ void LatticeContainer::ActivateCuts() {
     }
 }
 
+void LatticeContainer::ActivateGrayScale() {
+  if (gray_scale == NULL) {
+          void * tmp;
+          size_t size = (size_t) nx*ny*nz*sizeof(unsigned char);
+              ALLOCPRINT1;
+          CudaMalloc( (void**)&tmp, size );
+              ALLOCPRINT2;
+          CudaMemset( tmp, 0, size ); 
+          gray_scale = (unsigned char*)tmp;
+  }
+}
+
 /// Destroy Container
 /**
   cannot do a constructor and destructor - because this class lives on GPU

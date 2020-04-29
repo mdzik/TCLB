@@ -2,6 +2,7 @@
 #define GEOMETRY_H
 
 #include "unit.h"
+
 #include <map>
 /// STL triangle structure
 #ifdef _WIN32
@@ -26,7 +27,9 @@ enum draw_mode {
 class Geometry {
 public:
   flag_t * geom; ///< Main table of flags/NodeType's
-  cut_t * Q;
+  cut_t * Q;  //TODO: skad Q wie że jest ich 27?
+  unsigned char * gray_scale;
+  // color_t * gray_scale;  //#TODO: error: ‘color_t’ does not name a type; it is defined in types.h Oo
   lbRegion region; ///< Lattive region
   lbRegion totalregion; ///< Global Lattive region
   UnitEnv units; ///< Units object for unit calculations
@@ -47,6 +50,7 @@ private:
   int Draw(pugi::xml_node&);
   int loadZone(const char * name);
   int loadSTL( lbRegion reg, pugi::xml_node n);
+  int loadImage(lbRegion reg, pugi::xml_node n);
   int loadSweep( lbRegion reg, pugi::xml_node n);
   int transformSTL( int, STL_tri*, pugi::xml_node n);
   lbRegion getRegion(const pugi::xml_node& node);
@@ -57,6 +61,7 @@ private:
   double val_d(pugi::xml_attribute attr);
   flag_t Dot(int x, int y, int z);
   void ActivateCuts();
+  void ActivateGrayScale();
 };
 
 #endif

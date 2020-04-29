@@ -63,6 +63,11 @@ CudaDeviceFunction void PopulationDensitySmoothing(){
 
 CudaDeviceFunction void Init() { 
 	populationDensity = Init_PopulationDensity;
+
+	if ((NodeType & NODE_IMAGE) == NODE_ImageReader){
+		populationDensity = ojeje;
+	}
+	
 	Init_eq(populationDensity);
 }
 

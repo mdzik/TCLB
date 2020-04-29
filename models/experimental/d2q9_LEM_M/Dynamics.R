@@ -57,3 +57,5 @@ AddSetting(name="population_smoothing")  #  To smooth population density during 
 
 #	Boundary things:
 #AddNodeType(name="Dirichlet", group="BOUNDARY")
+
+AddNodeType("ImageReader", group="IMAGE") 

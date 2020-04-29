@@ -9,6 +9,7 @@ int acGeometry::Init () {
 			}
 			solver->lattice->FlagOverwrite(solver->geometry->geom,solver->geometry->region);
 			solver->lattice->CutsOverwrite(solver->geometry->Q,solver->geometry->region);
+			solver->lattice->GrayScaleOverwrite(solver->geometry->gray_scale,solver->geometry->region);
 			solver->lattice->zSet.zone_max(solver->geometry->SettingZones.size()-1);
 			return 0;
 	}
