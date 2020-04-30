@@ -1,12 +1,12 @@
-// Model for solving the diffusion equation:
-// phi' = c*lap(phi)
-// phi' = c * (phi_xx + phi_yy)
+// Model for solving the spatial sir equation.
+// maintainer: Grzegorz Gruszczynski @ggruszczynski
 
-<?R
+<?R  
 	source("conf.R")
-  c_header();
-  
-  s = PV(DensityAll$name[DensityAll$group=="s"])
+	c_header();
+	source("lib/boundary.R")
+
+  	s = PV(DensityAll$name[DensityAll$group=="s"])
 	i = PV(DensityAll$name[DensityAll$group=="i"])
 	r = PV(DensityAll$name[DensityAll$group=="r"])
 ?>
@@ -63,7 +63,6 @@ CudaDeviceFunction void PopulationDensitySmoothing(){
 
 CudaDeviceFunction void Init() { 
 	populationDensity = Init_PopulationDensity;
-
 	if ((NodeType & NODE_IMAGE) == NODE_ImageReader){
 		// populationDensity = (real_t)gray_scale_intensity*Init_PopulationDensity;
 		populationDensity = (real_t)gray_scale_intensity;
@@ -149,17 +148,31 @@ CudaDeviceFunction void Run() {
 	else{
 		populationDensity = populationDensity(0,0);
 		real_t omega_ade = 1.0/(3*diffusivity+0.5);
-			// if ((NodeType & NODE_BOUNDARY) != 0) omega_ade = 1.0/(3*diffusivity_buffer+0.5);
-		
-		switch (NodeType & NODE_COLLISION) {    
-			case NODE_MRT:
+		// if ((NodeType & NODE_BOUNDARY) != 0) omega_ade = 1.0/(3*diffusivity_buffer+0.5);
 
+		real_t omega_turb = 0;
+		omega_turb = 0.1* populationDensity/GRAY_MAX;
+		omega_ade += omega_turb;
+
+		if (populationDensity == GRAY_MIN)
+			BounceBack();
+		else
 			relax_and_collide_SIR_M(populationDensity, omega_ade);
-			break;
-		}
+
+		// switch (NodeType & NODE_COLLISION) {    
+		// 	case NODE_MRT:
+		// 	relax_and_collide_SIR_M(populationDensity, omega_ade);
+		// 	break;
+		// }
 	}
  }
 
+ CudaDeviceFunction void BounceBack()
+ {
+	<?R 
+		FullBounceBack()
+   	?> 
+ }
 
 
 

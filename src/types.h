@@ -10,7 +10,11 @@
   typedef struct {real_t x,y,z;} vector_t;
 
   typedef unsigned short int cut_t;
-  typedef unsigned char gray_t;
+  typedef unsigned char gray_t;  // unsigned char size is	1 byte, value range	from 0 to 255
+
+  #define GRAY_MAX 255
+  #define GRAY_MIN 0
+  #define GRAY_ONE 1
 
   #define NO_CUT 65535
   #define CUT_MAX 65000

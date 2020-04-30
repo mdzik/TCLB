@@ -135,8 +135,8 @@ class LatticeContainer {
   }
 
   CudaDeviceFunction inline const gray_t getGray_scale(const int & x, const int & y, const int & z) {
-    if (gray_scale == NULL) return 123;  //#TODO: if (gray_scale == NULL) return sth usefull?
-    size_t i = ((nz+z)*ny+y)*nx+x;
+    if (gray_scale == NULL) return 0;
+    size_t i = (z*ny+y)*nx+x;
     return gray_scale[i];
   }
 

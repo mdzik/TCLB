@@ -783,14 +783,12 @@ inline int Geometry::loadImage(lbRegion reg, pugi::xml_node n)
 					);
 
 					debug1("x,y,z \t offset \t gray_intensity  %d %d %d \t %d \t %d \n", x,y,z, k, gray_intensity);
-					output("x,y,z \t offset \t gray_intensity  %d %d %d \t %d \t %d \n", x,y,z, k, gray_intensity);
-					gray_scale[k] = gray_intensity;
+					gray_scale[k] = GRAY_MAX - gray_intensity + GRAY_ONE; // #TODO: mark bounce back nodes 
 					Dot(x, y, z);
 				}
 			}
 		}
 	debug1("Parsed img (height x width) =  %d x %d \n", height, width);
-	output("image loaded ...\n");
 	return 0;
 }
 
@@ -1112,7 +1110,7 @@ int Geometry::loadZone(const char *name)
 	error("Unknown zone (in xml): %s", name);
 	return -1;
     }
-    E(Draw(node)); //#TODO: co to jest E?
+    E(Draw(node));
     return 0;
 
 }
@@ -1194,7 +1192,6 @@ void Geometry::writeVTI(const char *name)
     vtkFile.WriteField("geom", geom);
     if (Q != NULL) {
         size_t regsize = region.sizeL();
-
 		real_t *  Qnorm = new real_t[regsize*26];
 
 		// src/types.h.Rt:19:  #define NO_CUT 65535

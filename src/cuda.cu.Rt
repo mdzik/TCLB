@@ -69,7 +69,7 @@ CudaDeviceFunction CudaConstantMemory real_t <?%s v$name ?> = 0.0f; <?R
 
 #include "Particle.hpp"
 <?R
-	gray_scale = paste("gray_scale_intensity")  #TODO:
+	gray_scale = paste("gray_scale_intensity")
 ?>
 #define <?%s gray_scale ?> constContainer.getGray_scale(x_,y_,z_)
 
