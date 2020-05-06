@@ -23,7 +23,7 @@
 		<Param name="diffusivity" value="0.1666"/>
 		<Param name="sir_beta" value="0.1"/><!-- s2i constant ->  infection rate -->
 		<Param name="sir_gamma" value="0.01"/><!-- i2r constant -> 1/gamma is the mean infective period -->
-		<Param name="stability_enhancement" value="0.1"/>
+		<Param name="stability_enhancement" value="10."/>
 
 		<Param name="Init_S_Fraction" value="1" />		
 		<Param name="Init_I_Fraction" value="0" />
@@ -34,12 +34,12 @@
 
 		<Param name="Init_PopulationDensity" value="50" />
 		<Param name="Init_PopulationDensity" zone="city" value="100" />
-		<Param name="Init_PopulationDensity" zone="desert" value="10" />
+		<Param name="Init_PopulationDensity" zone="desert" value="10" /> 
 
-		<Param name="population_smoothing" value="0.1"/>
-<!-- 	<Param name="Init_PopulationDensity" value="2" />
-		<Param name="Init_PopulationDensity-city" value="3" />
-		<Param name="Init_PopulationDensity-desert" value="1" /> -->
+		<!-- <Param name="population_smoothing" value="0.1"/>
+		<Param name="Init_PopulationDensity" value="2" />
+		<Param name="Init_PopulationDensity" zone="city" value="3" />
+		<Param name="Init_PopulationDensity" zone="desert" value="1" /> -->
     </Model>
 
 	<Solve Iterations="500"><VTK Iterations="100"/></Solve>	<!-- Smoothing the population -->

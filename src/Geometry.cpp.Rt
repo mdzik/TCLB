@@ -177,16 +177,17 @@ int Geometry::setMask(const pugi::char_t * name)
 {
     pugi::xml_node node = fg_xml.find_child_by_attribute("Mask", "name", name);
     if (!node) {
-	error("Unknown mask (in xml): %s\n", name);
-	return -1;
-    }
+		error("Unknown mask (in xml): %s\n", name);
+		return -1;
+	}
+	
     fg_mask = node.attribute("value").as_int(-1);
     return 0;
 }
 
-/// Set the forground flag mode
+/// Set the foreground flag mode
 /**
-        Set the foreground flag mode, by which the forground flag will be set
+        Set the foreground flag mode, by which the foreground flag will be set
         \param name Name of the flag mask/NodeType to set
 */
 int Geometry::setMode(const pugi::char_t * mode)
@@ -322,15 +323,17 @@ lbRegion Geometry::getRegion(const pugi::xml_node & node)
 inline flag_t Geometry::Dot(int x, int y, int z)
 {
     if (region.isIn(x, y, z)) {
-	int i = region.offset(x, y, z);
-	if (geom[i] & fg_mask) {
-		if (fg_mode == MODE_FILL) return NODE_None;
-	} else {
-		if (fg_mode == MODE_CHANGE) return NODE_None;
-	}
-	return geom[i] = (geom[i] & (~fg_mask)) | fg;
+		int i = region.offset(x, y, z);
+
+		if (geom[i] & fg_mask) { //#TODO: is it a dead code? no usage in examples/
+			if (fg_mode == MODE_FILL) return NODE_None;
+		} else {
+			if (fg_mode == MODE_CHANGE) return NODE_None;
+		}
+
+		return geom[i] = (geom[i] & (~fg_mask)) | fg;
     } else 
-    return NODE_None;
+    	return NODE_None;
 }
 
 /// Check if a point is inside a sphere
@@ -347,20 +350,20 @@ inline int inWedge(double x, double y, double z, const char *type)
 {
     if (strcmp(type, "") == 0)
 	type = "UpperLeft";
-/// Original Version
-//    if (strcmp(type, "UpperLeft") == 0) {
-//	// default
-//    } else if (strcmp(type, "UpperRight") == 0) {
-//	x = 1. - x;
-//    } else if (strcmp(type, "LowerLeft") == 0) {
-//	y = 1. - y;
-//    } else if (strcmp(type, "LowerRight") == 0) {
-//	x = 1. - x;
-//	y = 1. - y;
-//    }
-//    return (x - y) < 1e-10;
+	/// Original Version
+	//    if (strcmp(type, "UpperLeft") == 0) {
+	//	// default
+	//    } else if (strcmp(type, "UpperRight") == 0) {
+	//	x = 1. - x;
+	//    } else if (strcmp(type, "LowerLeft") == 0) {
+	//	y = 1. - y;
+	//    } else if (strcmp(type, "LowerRight") == 0) {
+	//	x = 1. - x;
+	//	y = 1. - y;
+	//    }
+	//    return (x - y) < 1e-10;
 
-//JM version to allow x-z plane wedge
+	//JM version to allow x-z plane wedge
     double delta = 0;
     if (strcmp(type, "UpperLeft") == 0) {
 	// default
@@ -766,8 +769,18 @@ inline int Geometry::loadImage(lbRegion reg, pugi::xml_node n)
 	double r_scaler = 0.299;
 	double g_scaler = 0.587;
 	double b_scaler = 0.114;
-
+	
 	gray_t gray_intensity;
+
+	double min_scale = 1;
+	double max_scale = 1;
+	if (n.attribute("min_scale")) {
+		min_scale = units.alt(n.attribute("min_scale").value());
+	}
+	if (n.attribute("max_scale")) {
+		max_scale = units.alt(n.attribute("max_scale").value());
+	}
+
 	for (int x = reg.dx; x < reg.dx + reg.nx; x++){
 		for (int y = reg.dy; y < reg.dy + reg.ny; y++){
 		    for (int z = reg.dz; z < reg.dz + reg.nz; z++) 
@@ -781,10 +794,28 @@ inline int Geometry::loadImage(lbRegion reg, pugi::xml_node n)
 						+ g_scaler*pixel_colour.green 
 						+ b_scaler*pixel_colour.blue
 					);
+					
+					debug1("x,y,z \t offset \t gray_intensity %d %d %d \t %d \t %d \n", x,y,z, k, gray_intensity);
+					gray_scale[k] = GRAY_MAX - gray_intensity; // #TODO: mark bounce back nodes 
+					// gray_scale[k] += GRAY_ONE; //#HACK: for zeros
 
-					debug1("x,y,z \t offset \t gray_intensity  %d %d %d \t %d \t %d \n", x,y,z, k, gray_intensity);
-					gray_scale[k] = GRAY_MAX - gray_intensity + GRAY_ONE; // #TODO: mark bounce back nodes 
-					Dot(x, y, z);
+
+					if (gray_scale[k] < GRAY_ONE)
+					{
+						geom[k] = NODE_Wall;
+
+						// flag_t temp_fg = fg; ///< Foreground flag used for filling
+						// flag_t temp_fg_mask = fg_mask; ///< Foreground flag mask used for filling
+						// draw_mode temp_fg_mode = fg_mode; ///< Foreground flag drawing mode
+						// fg = "Wall";
+						// fg_mask = "ALL";
+						// Dot(x, y, z);
+						// fg = temp_fg;
+						// fg_mask = temp_fg_mask;
+					}else{
+						
+						Dot(x, y, z);
+					}
 				}
 			}
 		}
@@ -1118,44 +1149,48 @@ int Geometry::loadZone(const char *name)
 /// Loades Geometry from a XML tree
 int Geometry::load(pugi::xml_node & node)
 {
+	//#TODO: zone vs Type vs Mask
 	output("loading geometry ...\n");
     pugi::xml_node geom_def = xml_def.child("Geometry");
     fg_xml = node;
     for (pugi::xml_node z = geom_def.first_child(); z; z = z.next_sibling()) {
-	pugi::xml_attribute attr = z.attribute("name");
-	if (!attr)
-	    continue;
-	if (node.find_child_by_attribute(z.name(), "name", attr.value()))
-	    continue;
-	node.prepend_copy(z);
+		pugi::xml_attribute attr = z.attribute("name");
+		if (!attr)
+			continue;
+		if (node.find_child_by_attribute(z.name(), "name", attr.value()))
+			continue;
+		node.prepend_copy(z);
     }
     for (pugi::xml_node n = node.first_child(); n; n = n.next_sibling()) {
-	if (strcmp(n.name(), "Zone") == 0)
-	    continue;
-	if (strcmp(n.name(), "Type") == 0)
-	    continue;
-	if (strcmp(n.name(), "Mask") == 0)
-	    continue;
-	E(setFlag(n.name()));
-	for (pugi::xml_attribute attr = n.first_attribute(); attr; attr = attr.next_attribute()) {
-	    if (strcmp(attr.name(), "name") == 0) {
-	        E(setZone(attr.value()));
-	    } else if (strcmp(attr.name(), "mask") == 0) {
-	        E(setMask(attr.value()));
-	    } else if (strcmp(attr.name(), "mode") == 0) {
-	        E(setMode(attr.value()));
-	    } else {
-	        
-	    }
+		if (strcmp(n.name(), "Zone") == 0)
+			continue;
+		if (strcmp(n.name(), "Type") == 0)
+			continue;
+		if (strcmp(n.name(), "Mask") == 0)
+			continue;
+
+		E(setFlag(n.name()));
+		for (pugi::xml_attribute attr = n.first_attribute(); attr; attr = attr.next_attribute()) {
+			if (strcmp(attr.name(), "name") == 0) {
+				E(setZone(attr.value()));
+			} else if (strcmp(attr.name(), "mask") == 0) {
+				E(setMask(attr.value()));
+			} else if (strcmp(attr.name(), "mode") == 0) {
+				E(setMode(attr.value()));
+			} else {
+				
+			}
+		}
+
+		{
+			pugi::xml_attribute attr = n.attribute("zone");
+			if (attr) {
+				loadZone(attr.value());
+			}
+		}
+		E(Draw(n));
 	}
-	{
-	    pugi::xml_attribute attr = n.attribute("zone");
-	    if (attr) {
-		loadZone(attr.value());
-	    }
-        }
-	E(Draw(n));
-    }
+	
     if (node.attribute("save")) {
 		writeVTI(node.attribute("save").value());
     }
@@ -1165,7 +1200,7 @@ int Geometry::load(pugi::xml_node & node)
 Geometry::~Geometry()
 {
     debug2("~Geometry()\n");
-    delete[]geom;
+    delete[] geom;
     if (Q != NULL) delete[] Q;
 	if (gray_scale != NULL) delete[] gray_scale;
 	debug2("~Geometry() Done\n");

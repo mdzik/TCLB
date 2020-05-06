@@ -26,6 +26,7 @@ AddQuantity(name="FractionRecovered")
 AddQuantity(name="PopulationDensity")
 
 # 	Outputs - debug:
+AddQuantity(name="OmegaTurb")
 AddQuantity(name="FractionSum")
 AddQuantity(name="TotalNoOfIndividuals")
 
@@ -40,10 +41,11 @@ AddQuantity(name="TotalNoOfIndividuals")
 # supposing "day" is the time unit[clarification needed]). 
 # If the duration of the infection is denoted D, then γ = 1/D, since an individual experiences one recovery in D units of time.
 
-AddSetting(name="sir_beta",              default=0.0,        comment="s2i constant ->  infection rate")
-AddSetting(name="sir_gamma",             default=0.0,        comment="i2r constant -> 1/gamma is the mean infective period")
-AddSetting(name="diffusivity",           default=0.16666666, comment='spacial diffusivity for the fraction of suspected/infected/recovered',	zonal=T)
-AddSetting(name="stability_enhancement", default=1.0,        comment='magic stability enhancement')
+AddSetting(name="sir_beta",                 default=0.0,        comment="s2i constant ->  infection rate")
+AddSetting(name="sir_gamma",                default=0.0,        comment="i2r constant -> 1/gamma is the mean infective period")
+AddSetting(name="diffusivity",              default=0.16666666, comment='spacial diffusivity for the fraction of suspected/infected/recovered',	zonal=T)
+AddSetting(name="stability_enhancement",    default=1.0,        comment='magic stability enhancement')
+AddSetting(name="omega_turb_multiplicator", default=0.0,        comment="extra diffusivity in locations with high population density")
 
 AddSetting(name="Init_PopulationDensity",    zonal=TRUE)
 AddSetting(name="Init_S_Fraction",      zonal=TRUE)
