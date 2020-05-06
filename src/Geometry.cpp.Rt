@@ -763,7 +763,7 @@ inline int Geometry::loadImage(lbRegion reg, pugi::xml_node n)
 	const unsigned int height = image.height();
 	const unsigned int width  = image.width();
 	
-	size_t regsize = region.sizeL();
+	//size_t regsize = region.sizeL();
 
 	// https://tannerhelland.com/2011/10/01/grayscale-image-algorithm-vb6.html
 	double r_scaler = 0.299;
@@ -772,13 +772,13 @@ inline int Geometry::loadImage(lbRegion reg, pugi::xml_node n)
 	
 	gray_t gray_intensity;
 
-	double min_scale = 1;
-	double max_scale = 1;
-	if (n.attribute("min_scale")) {
-		min_scale = units.alt(n.attribute("min_scale").value());
-	}
-	if (n.attribute("max_scale")) {
-		max_scale = units.alt(n.attribute("max_scale").value());
+	double min_range = 0;
+	double max_range = 1;
+	output("test is %lf \n",units.alt( n.attribute("min_range").value()));
+	if (n.attribute("min_range") && n.attribute("max_range")) {
+		min_range = units.alt(n.attribute("min_range").value());
+		max_range = units.alt(n.attribute("max_range").value());
+		output("range is %lf - %lf\n", min_range, max_range);
 	}
 
 	for (int x = reg.dx; x < reg.dx + reg.nx; x++){
@@ -796,11 +796,15 @@ inline int Geometry::loadImage(lbRegion reg, pugi::xml_node n)
 					);
 					
 					debug1("x,y,z \t offset \t gray_intensity %d %d %d \t %d \t %d \n", x,y,z, k, gray_intensity);
-					gray_scale[k] = GRAY_MAX - gray_intensity; // #TODO: mark bounce back nodes 
-					// gray_scale[k] += GRAY_ONE; //#HACK: for zeros
+					
+					gray_t rgs = GRAY_MAX - gray_intensity; //reverse color
+					gray_scale[k] = static_cast<gray_t>((rgs/GRAY_MAX)*(max_range - min_range) + min_range);
 
+					// if (k % 100 == 0)
+					// 	output("range is %lf - %lf \t %lf\n", min_range, max_range, gray_scale[k]);
 
-					if (gray_scale[k] < GRAY_ONE)
+					// #TODO: mark bounce back nodes 
+					if (rgs < GRAY_ONE)
 					{
 						geom[k] = NODE_Wall;
 
@@ -813,7 +817,6 @@ inline int Geometry::loadImage(lbRegion reg, pugi::xml_node n)
 						// fg = temp_fg;
 						// fg_mask = temp_fg_mask;
 					}else{
-						
 						Dot(x, y, z);
 					}
 				}
