@@ -774,11 +774,11 @@ inline int Geometry::loadImage(lbRegion reg, pugi::xml_node n)
 
 	double min_range = 0;
 	double max_range = 1;
-	output("test is %lf \n",units.alt( n.attribute("min_range").value()));
+
 	if (n.attribute("min_range") && n.attribute("max_range")) {
 		min_range = units.alt(n.attribute("min_range").value());
 		max_range = units.alt(n.attribute("max_range").value());
-		output("range is %lf - %lf\n", min_range, max_range);
+		output("bitmap intensity range is scaled from %lf to %lf\n", min_range, max_range);
 	}
 
 	for (int x = reg.dx; x < reg.dx + reg.nx; x++){
@@ -803,22 +803,17 @@ inline int Geometry::loadImage(lbRegion reg, pugi::xml_node n)
 					// if (k % 100 == 0)
 					// 	output("range is %lf - %lf \t %lf\n", min_range, max_range, gray_scale[k]);
 
-					// #TODO: mark bounce back nodes 
-					if (rgs < GRAY_ONE)
-					{
+					// mark bounce back nodes 
+					if (rgs < GRAY_ONE){
+						if (n.attribute("wall_value")) {
+							double wall_value = units.alt(n.attribute("wall_value").value());
+							gray_scale[k] = wall_value;
+						}
 						geom[k] = NODE_Wall;
-
-						// flag_t temp_fg = fg; ///< Foreground flag used for filling
-						// flag_t temp_fg_mask = fg_mask; ///< Foreground flag mask used for filling
-						// draw_mode temp_fg_mode = fg_mode; ///< Foreground flag drawing mode
-						// fg = "Wall";
-						// fg_mask = "ALL";
-						// Dot(x, y, z);
-						// fg = temp_fg;
-						// fg_mask = temp_fg_mask;
-					}else{
-						Dot(x, y, z);
 					}
+					// else{
+						Dot(x, y, z);
+					// }
 				}
 			}
 		}

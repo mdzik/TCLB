@@ -2,9 +2,9 @@
 <CLBConfig version="2.0" output="output/lem_image/">
 	<!-- <Geometry nx="32" ny="32"> -->
 	<!-- <Geometry nx="128" ny="128"> -->
-		<Geometry nx="256" ny="256">
+		<!-- <Geometry nx="256" ny="256"> -->
 	<!-- <Geometry nx="512" ny="512"> -->
-	<!-- <Geometry nx="1024" ny="1024"> -->
+	<Geometry nx="512" ny="512">
 		<MRT><Box/></MRT>
 		<Smoothing><Box/></Smoothing>
 
@@ -12,9 +12,9 @@
         <ImageReader> 
       		<!-- <ImageBMP file="example/experimental/smile_32x32.bmp" /> -->
       		<!-- <ImageBMP file="example/experimental/input_128x128.bmp" /> -->
-      		<ImageBMP file="example/experimental/input_256x256.bmp" min_range="1" max_range="100"/>
-      		<!-- <ImageBMP file="example/experimental/input_512x512.bmp" /> -->
-      		<!-- <ImageBMP file="example/experimental/input_1024x1024.bmp" /> -->
+      		<!-- <ImageBMP file="example/experimental/input_256x256.bmp" min_range="1" max_range="100"/> -->
+      		<ImageBMP file="example/experimental/input_512x512.bmp" min_range="1" max_range="100" />
+      		<!-- <ImageBMP file="example/experimental/input_1024x1024.bmp" min_range="1" max_range="100"/> -->
         </ImageReader> 
 
 		<None name="epicenter">
@@ -26,8 +26,8 @@
 	<Model>
 		<Param name="diffusivity" value="0.01666"/>
         <Param name="omega_turb_multiplicator" value="0.1"/>
-		<Param name="sir_beta" value="1e-3"/><!-- s2i constant ->  infection rate -->
-		<Param name="sir_gamma" value="1e-4"/><!-- i2r constant -> 1/gamma is the mean infective period -->
+		<Param name="sir_beta" value="5e-4"/><!-- s2i constant ->  infection rate -->
+		<Param name="sir_gamma" value="5e-5"/><!-- i2r constant -> 1/gamma is the mean infective period -->
 		<Param name="stability_enhancement" value="1."/>
 
 		<Param name="Init_S_Fraction" value="1" />		
@@ -41,6 +41,6 @@
     </Model>
 
 	<Solve Iterations="100"><VTK Iterations="10"/></Solve>	<!-- Smoothing the population -->
-	<Geometry><None mask="ADDITIONALS"><Box nx="256" ny="256"/></None></Geometry>
-	<Solve Iterations="5000000"><VTK Iterations="50000"/></Solve>
+	<Geometry><None mask="ADDITIONALS"><Box nx="512" ny="512"/></None></Geometry>
+	<Solve Iterations="10000000"><VTK Iterations="50000"/></Solve>
 </CLBConfig>
