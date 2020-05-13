@@ -41,7 +41,7 @@ AddQuantity(name="TotalNoOfIndividuals")
 # supposing "day" is the time unit[clarification needed]). 
 # If the duration of the infection is denoted D, then γ = 1/D, since an individual experiences one recovery in D units of time.
 
-AddSetting(name="sir_beta",                 default=0.0,        comment="s2i constant ->  infection rate")
+AddSetting(name="sir_beta",                 default=0.0,        comment="s2i constant -> infection rate")
 AddSetting(name="sir_gamma",                default=0.0,        comment="i2r constant -> 1/gamma is the mean infective period")
 AddSetting(name="diffusivity",              default=0.16666666, comment='spacial diffusivity for the fraction of suspected/infected/recovered',	zonal=T)
 AddSetting(name="stability_enhancement",    default=1.0,        comment='magic stability enhancement')
@@ -58,6 +58,5 @@ AddNodeType(name="Smoothing", group="ADDITIONALS")  #  To smooth population dens
 AddSetting(name="population_smoothing")  #  To smooth population density during initialization.
 
 #	Boundary things:
-#AddNodeType(name="Dirichlet", group="BOUNDARY")
-
-AddNodeType("ImageReader", group="IMAGE") 
+AddNodeType(name="DirichletEQ", group="BOUNDARY")
+AddNodeType(name="ImageReader", group="IMAGE") 

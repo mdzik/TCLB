@@ -19,37 +19,118 @@ CudaDeviceFunction float2 Color() {
   return ret;
 }
 
+// ------------------------ PARAVIEW OUTPUT BLOCK ------------------------
+// Use this functions is only for vtk output.
+// Nodes are created using streamed, post-collision DF.
+// RunBoundaries are called in orded to assign the desired value at the boundary.
+// It can make a difference in convergence study and nicer preview.
+
 CudaDeviceFunction real_t getNoOfSuspected() {
+	RunBoundaries();
 	return (<?R C(sum(s)) ?>);
 }
 
 CudaDeviceFunction real_t getNoOfInfected() {
-    return (<?R C(sum(i)) ?>);
+	RunBoundaries();
+	return (<?R C(sum(i)) ?>);
 }
 
 CudaDeviceFunction real_t getNoOfRecovered() {
+	RunBoundaries();
     return (<?R C(sum(r)) ?>);
 }
 
 CudaDeviceFunction real_t getFractionSuspected() {
+	RunBoundaries();
 	return  (<?R C(sum(s)) ?>)/populationDensity(0,0);
 }
 
 CudaDeviceFunction real_t getFractionInfected() {
+	RunBoundaries();
 	return  (<?R C(sum(i)) ?>)/populationDensity(0,0);
 }
 
 CudaDeviceFunction real_t getFractionRecovered() {
+	RunBoundaries();
 	return  (<?R C(sum(r)) ?>)/populationDensity(0,0);
 }
 
 CudaDeviceFunction real_t getFractionSum() {
+	RunBoundaries();
     return (getFractionSuspected() + getFractionInfected() + getFractionRecovered());
 }
 
 CudaDeviceFunction real_t getTotalNoOfIndividuals() {
+	RunBoundaries();
 	return getNoOfSuspected() + getNoOfInfected() + getNoOfRecovered();;
 }
+
+// ------------------------ END OF PARAVIEW OUTPUT BLOCK ------------------------
+
+
+// CudaDeviceFunction real_t getNoOfSuspected_() {
+// 	return (<?R C(sum(s)) ?>);
+// }
+
+// CudaDeviceFunction real_t getNoOfInfected_() {
+// 	return (<?R C(sum(i)) ?>);
+// }
+
+// CudaDeviceFunction real_t getNoOfRecovered_() {
+// 	return (<?R C(sum(r)) ?>);
+// }
+
+// CudaDeviceFunction real_t getFractionSuspected_() {
+// 	return  (<?R C(sum(s)) ?>)/populationDensity(0,0);
+// }
+
+// CudaDeviceFunction real_t getFractionInfected_() {
+// 	return  (<?R C(sum(i)) ?>)/populationDensity(0,0);
+// }
+
+// CudaDeviceFunction real_t getFractionRecovered_() {
+// 	return  (<?R C(sum(r)) ?>)/populationDensity(0,0);
+// }
+
+// CudaDeviceFunction real_t getFractionSum_() {
+// 	return (getFractionSuspected_() + getFractionInfected_() + getFractionRecovered_());
+// }
+
+// CudaDeviceFunction real_t getTotalNoOfIndividuals_() {
+// 	return getNoOfSuspected_() + getNoOfInfected_() + getNoOfRecovered_();;
+// }
+		
+// CudaDeviceFunction real_t getNoOfSuspected_() {
+// 	return (<?R C(sum(s)) ?>);
+// }
+
+// CudaDeviceFunction real_t getNoOfInfected_() {
+//     return (<?R C(sum(i)) ?>);
+// }
+
+// CudaDeviceFunction real_t getNoOfRecovered_() {
+//     return (<?R C(sum(r)) ?>);
+// }
+
+// CudaDeviceFunction real_t getFractionSuspected_() {
+// 	return  (<?R C(sum(s)) ?>)/populationDensity(0,0);
+// }
+
+// CudaDeviceFunction real_t getFractionInfected_() {
+// 	return  (<?R C(sum(i)) ?>)/populationDensity(0,0);
+// }
+
+// CudaDeviceFunction real_t getFractionRecovered_() {
+// 	return  (<?R C(sum(r)) ?>)/populationDensity(0,0);
+// }
+
+// CudaDeviceFunction real_t getFractionSum_() {
+//     return (getFractionSuspected_() + getFractionInfected_() + getFractionRecovered_());
+// }
+
+// CudaDeviceFunction real_t getTotalNoOfIndividuals_() {
+// 	return getNoOfSuspected_() + getNoOfInfected_() + getNoOfRecovered_();;
+// }
 
 CudaDeviceFunction real_t getPopulationDensity() {
   return populationDensity(0,0);
@@ -150,25 +231,36 @@ CudaDeviceFunction void Init_eq(real_t rho)
 	r220 = 1/4.*r_eq_110 - 1/4.*r_eq_120 - 1/4.*r_eq_210 + 1/4.*r_eq_220;
 }
 
+CudaDeviceFunction void RunBoundaries()
+{	
+	populationDensity = populationDensity(0,0);
+	
+	switch (NodeType & NODE_BOUNDARY) {
+		case NODE_Wall:
+			BounceBack();
+			break;
+		case NODE_DirichletEQ:  		
+			// equilibrium scheme for BC - don't care and impose rho*Teq
+			// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
+			// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+			Init_eq(populationDensity); 
+			break; 
+	}
+}
+
 CudaDeviceFunction void Run() {
 	if ((NodeType & NODE_ADDITIONALS) == NODE_Smoothing){
 		PopulationDensitySmoothing();
 		Init_eq(populationDensity);
 	}
 	else{
-		populationDensity = populationDensity(0,0);
-		real_t omega_ade = 1.0/(3*diffusivity+0.5);
+		real_t omega_ade = 1.0/(3*diffusivity/stability_enhancement+0.5);
 		// if ((NodeType & NODE_BOUNDARY) != 0) omega_ade = 1.0/(3*diffusivity_buffer+0.5);
 
 		real_t omega_turb = getOmegaTurb();
 		omega_ade += omega_turb;
 
-		switch (NodeType & NODE_BOUNDARY) {
-			case NODE_Wall:
-				BounceBack();
-				break;
-		}
-
+		RunBoundaries(); // keep in mind that populationDensity = populationDensity(0,0); needs to be called before collision
 		switch (NodeType & NODE_COLLISION) {    
 			case NODE_MRT:
 				relax_and_collide_SIR_M(populationDensity, omega_ade);
@@ -183,6 +275,9 @@ CudaDeviceFunction void Run() {
 		FullBounceBack()
    	?> 
  }
+
+
+
 
 
 CudaDeviceFunction void relax_and_collide_SIR_M(real_t rho, real_t omega_ade) 

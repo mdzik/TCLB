@@ -1,0 +1,97 @@
+<?R
+    tab = expand.grid(
+        sizer=c(2),
+        k_right=c(0.1), # conductivity
+        cp_right=c(1),
+        #R_k=c(1.),
+        #R_cp=c(1.),
+        R_k=c(4^-2, 4^-1, 4^0, 4^1, 4^2), 
+        R_cp=c(1./8., 1, 8), 
+        collision=c("MRT")
+        )
+ 
+    # dir_name <- "batch_lem_cht"
+    # dir.create(dir_name)
+    tab$dir_name = paste0("batch_cht_lem_",tab$collision)
+
+    tab$name = paste0("lem",
+        "_R_k_",  formatC(tab$R_k, digits = 2, format = "e"), 
+        "_R_cp_", formatC(tab$R_cp,digits = 2, format = "e"),
+        "_k_right_", tab$k_right,
+        "_cp_right_", tab$cp_right,
+        "_size_", 32*tab$sizer, "lu")
+
+    tab$xml = paste0(paste0(tab$dir_name,"/",tab$name),".xml")
+    tab$output = paste0(paste0("output/",tab$dir_name,"/",tab$name,"/"))
+
+    # tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name,"/"))
+
+
+    options(digits=10)
+    write.csv(tab, "lem_cht_template.csv", row.names=FALSE)
+    for (i in 1:nrow(tab)) {
+        if(!dir.exists(tab$dir_name[i]))
+        {
+          dir.create(tab$dir_name[i])
+        }
+        attach(tab[i,,drop=FALSE])
+        print(xml)
+        sink(xml) # save to a .xml file
+?>
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="<?%s output ?>">
+	<Geometry nx="<?%f 32*sizer ?>" ny="<?%f 32*sizer ?>" nz="3" >
+      <<?%s collision ?>> <Box/> </<?%s collision ?>>    
+
+        <None name="left">
+            <Box dx="<?%f 0 ?>" nx="<?%f 16*sizer ?>" dy="<?%f 0 ?>" ny="<?%f 32*sizer ?>" /> 
+        </None>   
+
+        <DirichletEQ name="BC_left" mask="ALL"> 
+            <Box nx="2"/>
+        </DirichletEQ>    
+
+        <DirichletEQ name="BC_right" mask="ALL"> 
+            <Box dx="-2"/>
+        </DirichletEQ>  
+  
+	</Geometry>
+    <Model> 
+		<!-- First everything is painted with the right value.
+        Next, the left side (half) is overwritten. -->
+
+		<Param name="sir_beta" value="0"/><!-- s2i constant ->  infection rate -->
+		<Param name="sir_gamma" value="0"/><!-- i2r constant -> 1/gamma is the mean infective period -->
+		<Param name="stability_enhancement" value="1."/>
+
+
+		<Param name="Init_S_Fraction" value="0" />		
+		<Param name="Init_I_Fraction" value="0" />
+		<Param name="Init_R_Fraction" value="0" />
+
+
+        <Param name="diffusivity"  value="<?%f k_right ?>"/>
+        <Param name="diffusivity"  value="<?%f R_k*k_right ?>" zone="left"/>
+
+        <Param name="Init_PopulationDensity" value="<?%f R_cp*cp_right ?>" zone="left"/>
+        <Param name="Init_PopulationDensity" value="<?%f cp_right ?>" /> 
+
+		<Param name="Init_S_Fraction" value="1" zone="left"/>	
+
+        <Param name="Init_S_Fraction" value="1" zone="BC_left"/>		
+		<Param name="Init_S_Fraction" value="0" zone="BC_right"/>
+    </Model> 
+
+    <Solve Iterations="1">  <VTK Iterations="1"/> </Solve >
+
+    <Failcheck Iterations="1000" nx="<?%f 32*sizer ?>" ny="<?%f 32*sizer ?>" nz="3" />
+    <Solve Iterations="10000"> <VTK Iterations="1000" what="FractionSuspected,NoOfSuspected,PopulationDensity"/> </Solve>
+</CLBConfig>
+
+
+<?R
+    sink()
+    detach()
+}
+?>
