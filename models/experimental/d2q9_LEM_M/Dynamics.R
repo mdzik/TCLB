@@ -30,6 +30,17 @@ AddQuantity(name="OmegaTurb")
 AddQuantity(name="FractionSum")
 AddQuantity(name="TotalNoOfIndividuals")
 
+#	Globals - table of global integrals that can be monitored and optimized
+AddGlobal(name="NoOfSuspected",       comment='Number of Suspected individuals', unit="")
+AddGlobal(name="NoOfInfected",        comment='Number of Infected individuals',  unit="")
+AddGlobal(name="NoOfRecovered",       comment='Number of Recovered individuals', unit="")
+
+#	Boundary things:
+AddNodeType(name="DirichletEQ", group="BOUNDARY")
+AddNodeType(name="ImageReader", group="IMAGE") 
+AddNodeType(name="CROSSMRT",	group="COLLISION")
+
+
 #   Inputs: Flow Properties
 # https://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology#The_SIR_model
 # Between S and I, the transition rate is βI/N, where β is the average number of contacts per person per time, 
@@ -47,6 +58,8 @@ AddSetting(name="diffusivity",              default=0.16666666, comment='spacial
 AddSetting(name="stability_enhancement",    default=1.0,        comment='magic stability enhancement')
 AddSetting(name="omega_turb_multiplicator", default=0.0,        comment="extra diffusivity in locations with high population density")
 
+AddSetting(name="infectious_radius", default=0.4082482,        comment="used in cross-MRT model")
+
 AddSetting(name="Init_PopulationDensity",    zonal=TRUE)
 AddSetting(name="Init_S_Fraction",      zonal=TRUE)
 AddSetting(name="Init_I_Fraction",      zonal=TRUE)
@@ -57,6 +70,3 @@ AddField(name="populationDensity", stencil2d=1)
 AddNodeType(name="Smoothing", group="ADDITIONALS")  #  To smooth population density during initialization.
 AddSetting(name="population_smoothing")  #  To smooth population density during initialization.
 
-#	Boundary things:
-AddNodeType(name="DirichletEQ", group="BOUNDARY")
-AddNodeType(name="ImageReader", group="IMAGE") 
