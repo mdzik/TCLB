@@ -254,19 +254,19 @@ CudaDeviceFunction void Run() {
 		Init_eq(populationDensity);
 	}
 	else{
-		real_t omega_ade = 1.0/(3*diffusivity/stability_enhancement+0.5);
+		// real_t omega_turb = getOmegaTurb();
+		real_t omega_s = 1.0/(3*diffusivity_s/stability_enhancement+0.5);
+		real_t omega_i = 1.0/(3*diffusivity_i/stability_enhancement+0.5);
+		real_t omega_r = 1.0/(3*diffusivity_r/stability_enhancement+0.5);
 		// if ((NodeType & NODE_BOUNDARY) != 0) omega_ade = 1.0/(3*diffusivity_buffer+0.5);
-
-		real_t omega_turb = getOmegaTurb();
-		omega_ade += omega_turb;
 
 		RunBoundaries(); // keep in mind that populationDensity = populationDensity(0,0); needs to be called before collision
 		switch (NodeType & NODE_COLLISION) {    
 			case NODE_MRT:
-				relax_and_collide_SIR_M(populationDensity, omega_ade);
+				relax_and_collide_SIR_M(populationDensity, omega_s, omega_i, omega_r);
 				break;
 			case NODE_CROSSMRT:
-				relax_and_collide_cross_SIR_M(populationDensity, omega_ade);
+				relax_and_collide_cross_SIR_M(populationDensity, omega_s, omega_i, omega_r);
 				break;
 		}
 
@@ -286,8 +286,9 @@ CudaDeviceFunction void Run() {
 
 
  
-CudaDeviceFunction void relax_and_collide_cross_SIR_M(real_t rho, real_t omega_r) 
+CudaDeviceFunction void relax_and_collide_cross_SIR_M(real_t rho, real_t omega_s, real_t omega_i, real_t omega_r) 
 {
+
 	real_t Sigma2 = 0.333333333333333*stability_enhancement/rho;
 	real_t S = s000 + s010 + s020 + s100 + s110 + s120 + s200 + s210 + s220;
 	real_t I = i000 + i010 + i020 + i100 + i110 + i120 + i200 + i210 + i220;
@@ -296,9 +297,11 @@ CudaDeviceFunction void relax_and_collide_cross_SIR_M(real_t rho, real_t omega_r
 	real_t i = I/rho;
 	real_t r = R/rho;
 
-	real_t cross_difussivity = 1/8.*S*infectious_radius*infectious_radius*sir_beta;
+	real_t cross_difussivity = s*infectious_radius*infectious_radius*sir_beta/8.;
+	// cross_difussivity = 0.1666666;
 	real_t omega_cross = 1.0/(3*cross_difussivity/stability_enhancement+0.5);
-
+	// omega_cross = 0.;
+	// omega_cross = omega_i;
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
 	real_t temp000;
 	real_t temp100;
@@ -329,25 +332,65 @@ CudaDeviceFunction void relax_and_collide_cross_SIR_M(real_t rho, real_t omega_r
 	i210 = temp110 - temp120 + temp210 - temp220;
 	i120 = temp110 + temp120 - temp210 - temp220;
 	i220 = temp110 + temp120 + temp210 + temp220;
-	//collide
-	real_t cross_star_000 = omega_cross*(I - i000);
+	//cross-collide
+
+	//SRT
+	// real_t cross_star_000 = omega_cross*(I - i000);
+	// real_t cross_star_100 = -i100*omega_cross;
+	// real_t cross_star_010 = -i010*omega_cross;
+	// real_t cross_star_200 = omega_cross*(I*Sigma2 - i200);
+	// real_t cross_star_020 = omega_cross*(I*Sigma2 - i020);
+	// real_t cross_star_110 = -i110*omega_cross;
+	// real_t cross_star_210 = -i210*omega_cross;
+	// real_t cross_star_120 = -i120*omega_cross;
+	// real_t cross_star_220 = omega_cross*(I*Sigma2*Sigma2 - i220);
+
+
+	// TRT
+	real_t cross_star_000 = I - i000;
 	real_t cross_star_100 = -i100*omega_cross;
 	real_t cross_star_010 = -i010*omega_cross;
-	real_t cross_star_200 = omega_cross*(I*Sigma2 - i200);
-	real_t cross_star_020 = omega_cross*(I*Sigma2 - i020);
-	real_t cross_star_110 = -i110*omega_cross;
+	real_t cross_star_200 = I*Sigma2 - i200;
+	real_t cross_star_020 = I*Sigma2 - i020;
+	real_t cross_star_110 = -i110;
 	real_t cross_star_210 = -i210*omega_cross;
 	real_t cross_star_120 = -i120*omega_cross;
-	real_t cross_star_220 = omega_cross*(I*Sigma2*Sigma2 - i220);
-	real_t i_star_000 = cross_star_000 - i*s*sir_beta + i000;
-	real_t i_star_100 = cross_star_100 + i100;
-	real_t i_star_010 = cross_star_010 + i010;
-	real_t i_star_200 = -Sigma2*i*s*sir_beta + cross_star_200 + i200;
-	real_t i_star_020 = -Sigma2*i*s*sir_beta + cross_star_020 + i020;
-	real_t i_star_110 = cross_star_110 + i110;
-	real_t i_star_210 = cross_star_210 + i210;
-	real_t i_star_120 = cross_star_120 + i120;
-	real_t i_star_220 = -Sigma2*Sigma2*i*s*sir_beta + cross_star_220 + i220;
+	real_t cross_star_220 = I*Sigma2*Sigma2 - i220;
+
+	// tweaked TRT
+	// real_t cross_star_000 = 0;
+	// real_t cross_star_100 = -i100*omega_cross;
+	// real_t cross_star_010 = -i010*omega_cross;
+	// real_t cross_star_200 = 0;
+	// real_t cross_star_020 = 0;
+	// real_t cross_star_110 = 0;
+	// real_t cross_star_210 = -i210*omega_cross;
+	// real_t cross_star_120 = -i120*omega_cross;
+	// real_t cross_star_220 = 0;
+
+		
+
+	//collide
+	real_t i_star_000 = I + i*s*sir_beta - i*sir_gamma;
+	real_t i_star_100 = -i100*(omega_i - 1.);
+	real_t i_star_010 = -i010*(omega_i - 1.);
+	real_t i_star_200 = Sigma2*(I + i*(s*sir_beta - sir_gamma));
+	real_t i_star_020 = Sigma2*(I + i*(s*sir_beta - sir_gamma));
+	real_t i_star_110 = 0;
+	real_t i_star_210 = -i210*(omega_i - 1.);
+	real_t i_star_120 = -i120*(omega_i - 1.);
+	real_t i_star_220 = Sigma2*Sigma2*(I + i*(s*sir_beta - sir_gamma));
+
+	i_star_000 += cross_star_000;
+	i_star_100 += cross_star_100;
+	i_star_010 += cross_star_010;
+	i_star_200 += cross_star_200;
+	i_star_020 += cross_star_020;
+	i_star_110 += cross_star_110;
+	i_star_210 += cross_star_210;
+	i_star_120 += cross_star_120;
+	i_star_220 += cross_star_220;
+
 	//back to density-probability functions
 	i000 = i_star_000 - i_star_020 - i_star_200 + i_star_220;
 	i100 = 1/2.*i_star_100 - 1/2.*i_star_120 + 1/2.*i_star_200 - 1/2.*i_star_220;
@@ -358,7 +401,8 @@ CudaDeviceFunction void relax_and_collide_cross_SIR_M(real_t rho, real_t omega_r
 	i020 = -1/2.*i_star_010 + 1/2.*i_star_020 + 1/2.*i_star_210 - 1/2.*i_star_220;
 	i120 = -1/4.*i_star_110 + 1/4.*i_star_120 - 1/4.*i_star_210 + 1/4.*i_star_220;
 	i220 = 1/4.*i_star_110 - 1/4.*i_star_120 - 1/4.*i_star_210 + 1/4.*i_star_220;
-	 //--- processing s ---
+
+	//--- processing s ---
 	temp000 = s000;
 	temp100 = s100;
 	temp010 = s010;
@@ -379,15 +423,27 @@ CudaDeviceFunction void relax_and_collide_cross_SIR_M(real_t rho, real_t omega_r
 	s120 = temp110 + temp120 - temp210 - temp220;
 	s220 = temp110 + temp120 + temp210 + temp220;
 	//collide
-	real_t s_star_000 = -cross_star_000 + i*s*sir_beta - i*sir_gamma + s000;
-	real_t s_star_100 = -cross_star_100 + s100;
-	real_t s_star_010 = -cross_star_010 + s010;
-	real_t s_star_200 = Sigma2*i*(s*sir_beta - sir_gamma) - cross_star_200 + s200;
-	real_t s_star_020 = Sigma2*i*(s*sir_beta - sir_gamma) - cross_star_020 + s020;
-	real_t s_star_110 = -cross_star_110 + s110;
-	real_t s_star_210 = -cross_star_210 + s210;
-	real_t s_star_120 = -cross_star_120 + s120;
-	real_t s_star_220 = Sigma2*Sigma2*i*(s*sir_beta - sir_gamma) - cross_star_220 + s220;
+	real_t s_star_000 = S - i*s*sir_beta;
+	real_t s_star_100 = -s100*(omega_s - 1.);
+	real_t s_star_010 = -s010*(omega_s - 1.);
+	real_t s_star_200 = Sigma2*(S - i*s*sir_beta);
+	real_t s_star_020 = Sigma2*(S - i*s*sir_beta);
+	real_t s_star_110 = 0;
+	real_t s_star_210 = -s210*(omega_s - 1.);
+	real_t s_star_120 = -s120*(omega_s - 1.);
+	real_t s_star_220 = Sigma2*Sigma2*(S - i*s*sir_beta);
+
+
+	s_star_000 -= cross_star_000;
+	s_star_100 -= cross_star_100;
+	s_star_010 -= cross_star_010;
+	s_star_200 -= cross_star_200;
+	s_star_020 -= cross_star_020;
+	s_star_110 -= cross_star_110;
+	s_star_210 -= cross_star_210;
+	s_star_120 -= cross_star_120;
+	s_star_220 -= cross_star_220;
+
 	//back to density-probability functions
 	s000 = s_star_000 - s_star_020 - s_star_200 + s_star_220;
 	s100 = 1/2.*s_star_100 - 1/2.*s_star_120 + 1/2.*s_star_200 - 1/2.*s_star_220;
@@ -398,6 +454,7 @@ CudaDeviceFunction void relax_and_collide_cross_SIR_M(real_t rho, real_t omega_r
 	s020 = -1/2.*s_star_010 + 1/2.*s_star_020 + 1/2.*s_star_210 - 1/2.*s_star_220;
 	s120 = -1/4.*s_star_110 + 1/4.*s_star_120 - 1/4.*s_star_210 + 1/4.*s_star_220;
 	s220 = 1/4.*s_star_110 - 1/4.*s_star_120 - 1/4.*s_star_210 + 1/4.*s_star_220;
+
 	 //--- processing r ---
 	temp000 = r000;
 	temp100 = r100;
@@ -438,9 +495,10 @@ CudaDeviceFunction void relax_and_collide_cross_SIR_M(real_t rho, real_t omega_r
 	r020 = -1/2.*r_star_010 + 1/2.*r_star_020 + 1/2.*r_star_210 - 1/2.*r_star_220;
 	r120 = -1/4.*r_star_110 + 1/4.*r_star_120 - 1/4.*r_star_210 + 1/4.*r_star_220;
 	r220 = 1/4.*r_star_110 - 1/4.*r_star_120 - 1/4.*r_star_210 + 1/4.*r_star_220;
+
 }
 
-CudaDeviceFunction void relax_and_collide_SIR_M(real_t rho, real_t omega_ade) 
+CudaDeviceFunction void relax_and_collide_SIR_M(real_t rho, real_t omega_s,  real_t omega_i, real_t omega_r) 
 {
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
 	real_t Sigma2 = 0.333333333333333*stability_enhancement/rho;
@@ -481,13 +539,13 @@ CudaDeviceFunction void relax_and_collide_SIR_M(real_t rho, real_t omega_ade)
 	s220 = temp110 + temp120 + temp210 + temp220;
 	//collide
 	real_t s_star_000 = S - i*s*sir_beta;
-	real_t s_star_100 = -s100*(omega_ade - 1.);
-	real_t s_star_010 = -s010*(omega_ade - 1.);
+	real_t s_star_100 = -s100*(omega_s - 1.);
+	real_t s_star_010 = -s010*(omega_s - 1.);
 	real_t s_star_200 = Sigma2*(S - i*s*sir_beta);
 	real_t s_star_020 = Sigma2*(S - i*s*sir_beta);
 	real_t s_star_110 = 0;
-	real_t s_star_210 = -s210*(omega_ade - 1.);
-	real_t s_star_120 = -s120*(omega_ade - 1.);
+	real_t s_star_210 = -s210*(omega_s - 1.);
+	real_t s_star_120 = -s120*(omega_s - 1.);
 	real_t s_star_220 = Sigma2*Sigma2*(S - i*s*sir_beta);
 	//back to density-probability functions
 	s000 = s_star_000 - s_star_020 - s_star_200 + s_star_220;
@@ -521,13 +579,13 @@ CudaDeviceFunction void relax_and_collide_SIR_M(real_t rho, real_t omega_ade)
 	i220 = temp110 + temp120 + temp210 + temp220;
 	//collide
 	real_t i_star_000 = I + i*s*sir_beta - i*sir_gamma;
-	real_t i_star_100 = -i100*(omega_ade - 1.);
-	real_t i_star_010 = -i010*(omega_ade - 1.);
+	real_t i_star_100 = -i100*(omega_i - 1.);
+	real_t i_star_010 = -i010*(omega_i - 1.);
 	real_t i_star_200 = Sigma2*(I + i*(s*sir_beta - sir_gamma));
 	real_t i_star_020 = Sigma2*(I + i*(s*sir_beta - sir_gamma));
 	real_t i_star_110 = 0;
-	real_t i_star_210 = -i210*(omega_ade - 1.);
-	real_t i_star_120 = -i120*(omega_ade - 1.);
+	real_t i_star_210 = -i210*(omega_i - 1.);
+	real_t i_star_120 = -i120*(omega_i - 1.);
 	real_t i_star_220 = Sigma2*Sigma2*(I + i*(s*sir_beta - sir_gamma));
 	//back to density-probability functions
 	i000 = i_star_000 - i_star_020 - i_star_200 + i_star_220;
@@ -561,13 +619,13 @@ CudaDeviceFunction void relax_and_collide_SIR_M(real_t rho, real_t omega_ade)
 	r220 = temp110 + temp120 + temp210 + temp220;
 	//collide
 	real_t r_star_000 = R + i*sir_gamma;
-	real_t r_star_100 = -r100*(omega_ade - 1.);
-	real_t r_star_010 = -r010*(omega_ade - 1.);
+	real_t r_star_100 = -r100*(omega_r - 1.);
+	real_t r_star_010 = -r010*(omega_r - 1.);
 	real_t r_star_200 = Sigma2*(R + i*sir_gamma);
 	real_t r_star_020 = Sigma2*(R + i*sir_gamma);
 	real_t r_star_110 = 0;
-	real_t r_star_210 = -r210*(omega_ade - 1.);
-	real_t r_star_120 = -r120*(omega_ade - 1.);
+	real_t r_star_210 = -r210*(omega_r - 1.);
+	real_t r_star_120 = -r120*(omega_r - 1.);
 	real_t r_star_220 = Sigma2*Sigma2*(R + i*sir_gamma);
 	//back to density-probability functions
 	r000 = r_star_000 - r_star_020 - r_star_200 + r_star_220;

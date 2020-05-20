@@ -54,7 +54,9 @@ AddNodeType(name="CROSSMRT",	group="COLLISION")
 
 AddSetting(name="sir_beta",                 default=0.0,        comment="s2i constant -> infection rate")
 AddSetting(name="sir_gamma",                default=0.0,        comment="i2r constant -> 1/gamma is the mean infective period")
-AddSetting(name="diffusivity",              default=0.16666666, comment='spacial diffusivity for the fraction of suspected/infected/recovered',	zonal=T)
+AddSetting(name="diffusivity_s",              default=0.16666666, comment='spacial diffusivity for the fraction of suspected',	zonal=T)
+AddSetting(name="diffusivity_i",              default=0.16666666, comment='spacial diffusivity for the fraction of infected',	zonal=T)
+AddSetting(name="diffusivity_r",              default=0.16666666, comment='spacial diffusivity for the fraction of recovered',	zonal=T)
 AddSetting(name="stability_enhancement",    default=1.0,        comment='magic stability enhancement')
 AddSetting(name="omega_turb_multiplicator", default=0.0,        comment="extra diffusivity in locations with high population density")
 
