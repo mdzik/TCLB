@@ -12,13 +12,15 @@
 
 #AddDensity( name="rho", dx=0, dy=0, group="density") # how to run it using AddField("rho", dx=c(0,0), dy=c(0,0), group="density")
 
-AddField("rho", stencil2d=1, group="r")
-AddField("Jx", stencil2d=1, group="r") 
-AddField("Jy", stencil2d=1, group="r") 
+AddField("rho", stencil2d=2);#, group="r")
+AddField("phi", stencil2d=2);#, group="r")
+
+AddField("Jx", stencil2d=1);#, group="r") 
+AddField("Jy", stencil2d=1);#, group="r") 
 
 
-AddField("psi", stencil2d=1, group="pp") # Pseudopotential field
-AddField("neighbour_type", stencil2d=1, group="neighbour_type_group")
+#AddField("psi", stencil2d=1, group="pp") # Pseudopotential field
+#AddField("neighbour_type", stencil2d=1);#, group="neighbour_type_group")
 
 # Stages and Actions
 # Initialization list
@@ -38,16 +40,22 @@ AddField("neighbour_type", stencil2d=1, group="neighbour_type_group")
 # Output Values
 AddQuantity( name="U",    unit="m/s", vector=TRUE )
 AddQuantity( name="Rho",  unit="kg/m3" )
-AddQuantity( name="Psi",  unit="1" )
+#AddQuantity( name="Psi",  unit="1" )
 
 # Model Specific Parameters
-AddSetting( name="omega", comment='inverse of relaxation time')
-AddSetting( name="viscosity", omega='1.0/(3*viscosity+0.5)', default=0.16666666, comment='kinematic viscosity')
+#AddSetting( name="omega", comment='inverse of relaxation time')
+#AddSetting( name="viscosity", omega='1.0/(3*viscosity+0.5)', default=0.16666666, comment='kinematic viscosity')
 AddSetting( name="VelocityX",default=0, comment='inlet/outlet/init velocity', zonal=TRUE)
 AddSetting( name="VelocityY",default=0, comment='inlet/outlet/init velocity', zonal=TRUE)
 AddSetting( name="GravitationX",default=0, comment='body/external acceleration', zonal=TRUE)
 AddSetting( name="GravitationY",default=0, comment='body/external acceleration', zonal=TRUE)
 AddSetting( name="Density",default=1, comment='Density',zonal=TRUE)
 
-AddSetting( name="G_ff",default=0, comment='fluid-fluid interaction strength')
-AddSetting( name="G_sf",default=0, comment='solid-fluid interaction strength')
+
+AddSetting( name="Kupershtokh_K",default=0.01, comment='Separation parameter',zonal=FALSE)
+AddSetting( name="Temperature",default=0.9, comment='SCMp Temperature',zonal=FALSE)
+AddSetting( name="Kupershtokh_A",default=-0.152, comment='Stencil parameter',zonal=FALSE)
+
+
+#AddSetting( name="G_ff",default=0, comment='fluid-fluid interaction strength')
+#AddSetting( name="G_sf",default=0, comment='solid-fluid interaction strength')

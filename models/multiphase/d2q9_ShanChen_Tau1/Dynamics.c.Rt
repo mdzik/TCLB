@@ -10,120 +10,122 @@
 	source("lib/feq.R")
     source("lib/boundary.R")
 ?>
-
-CudaDeviceFunction void Init(){
-    real_t u[2] = {VelocityX, VelocityY};
-    real_t d = Density;
-    SetEquilibrium(d,u);
-
-    rho = calcRho(); //  calculate rho from equilibrium distributions.
-    
-    neighbour_type=0;
-
-    if ((NodeType & NODE_BOUNDARY) == NODE_Wall) {
-        neighbour_type=1;
-    } 
-}
-
 CudaDeviceFunction float2 Color() {
-    // used for graphics - can usually ignore function
-    float2 ret;
-    vector_t u = getU();
-    ret.x = sqrt(u.x*u.x + u.y*u.y);
-    ret.y = 1;
-    return ret;
+  float2 ret;
+  ret.x = getRho();
+  ret.y = 1;
+  return ret;
 }
-    
-CudaDeviceFunction void SetEquilibrium(real_t d, real_t u[2]){
-    f[0] = ( 2. + ( -u[1]*u[1] - u[0]*u[0] )*3. )*d*2./9.;
-    f[1] = ( 2. + ( -u[1]*u[1] + ( 1 + u[0] )*u[0]*2. )*3. )*d/18.;
-    f[2] = ( 2. + ( -u[0]*u[0] + ( 1 + u[1] )*u[1]*2. )*3. )*d/18.;
-    f[3] = ( 2. + ( -u[1]*u[1] + ( -1 + u[0] )*u[0]*2. )*3. )*d/18.;
-    f[4] = ( 2. + ( -u[0]*u[0] + ( -1 + u[1] )*u[1]*2. )*3. )*d/18.;
-    f[5] = ( 1. + ( ( 1 + u[1] )*u[1] + ( 1 + u[0] + u[1]*3. )*u[0] )*3. )*d/36.;
-    f[6] = ( 1. + ( ( 1 + u[1] )*u[1] + ( -1 + u[0] - u[1]*3. )*u[0] )*3. )*d/36.;
-    f[7] = ( 1. + ( ( -1 + u[1] )*u[1] + ( -1 + u[0] + u[1]*3. )*u[0] )*3. )*d/36.;
-    f[8] = ( 1. + ( ( -1 + u[1] )*u[1] + ( 1 + u[0] - u[1]*3. )*u[0] )*3. )*d/36.;
-}
-
-CudaDeviceFunction real_t calcRho() {
-    // This function calculates and returns the value of macroscopic density at the current node.
-    real_t d = f[8]+f[7]+f[6]+f[5]+f[4]+f[3]+f[2]+f[1]+f[0];
-    return d;
-} 
 
 CudaDeviceFunction real_t getRho() {
-    // This function returnes the stored value of macroscopic density at the current node.
-    return rho;
+    return rho(0,0);
 }
 
-CudaDeviceFunction void Run() {
-    // This defines the dynamics that we run at each node in the domain.
-    rho = calcRho();
 
-    switch (NodeType & NODE_BOUNDARY) {
-    case NODE_Solid:
-    case NODE_Wall:
-        BounceBack();
-        break;
-    }
-    if (NodeType & NODE_MRT) 
-    {
-        CollisionBGK();
-    }
-
-    neighbour_type = neighbour_type(0,0);
+CudaDeviceFunction vector_t getU() {
+    vector_t u;
+    u.x = Jx(0,0)/rho(0,0);
+    u.y = Jy(0,0)/rho(0,0);
+    u.z = 0;
+    return u;
 }
 
-CudaDeviceFunction void CollisionBGK() {
-    /**
-    # // Here we perform a single relaxation time collision operation.
-    # // We save memory here by using a single dummy variable
-    # real_t u_eq[2], f_temp[9];
-  
-    # real_t d = getRho();
+CudaDeviceFunction void Init() {
+    Jx = VelocityX;
+    Jy = VelocityY;
+    rho = Density;
+ }
 
-    # vector_t u_eq_vect = getUeq(d);
-    # u_eq[0] = u_eq_vect.x; 
-    # u_eq[1] = u_eq_vect.y;
 
-    # f_temp[0] = f[0];
-    # f_temp[1] = f[1];
-    # f_temp[2] = f[2];
-    # f_temp[3] = f[3];
-    # f_temp[4] = f[4];
-    # f_temp[5] = f[5];
-    # f_temp[6] = f[6];
-    # f_temp[7] = f[7];
-    # f_temp[8] = f[8];
-    # SetEquilibrium(d, u_eq); //stores equilibrium distribution in f[0]-f[8]
-    # f[0] = f_temp[0] - omega*(f_temp[0]-f[0]);	
-    # f[1] = f_temp[1] - omega*(f_temp[1]-f[1]);
-    # f[2] = f_temp[2] - omega*(f_temp[2]-f[2]);
-    # f[3] = f_temp[3] - omega*(f_temp[3]-f[3]);	
-    # f[4] = f_temp[4] - omega*(f_temp[4]-f[4]);
-    # f[5] = f_temp[5] - omega*(f_temp[5]-f[5]);
-    # f[6] = f_temp[6] - omega*(f_temp[6]-f[6]);	
-    # f[7] = f_temp[7] - omega*(f_temp[7]-f[7]);
-    # f[8] = f_temp[8] - omega*(f_temp[8]-f[8]);
-    **/
-<?R 
+CudaDeviceFunction real_t getPsi(const real_t rho2){
+    #define a2 3.852462271644162
+    #define b2 0.1304438860971524 * 4.0 
+    #define c2 2.785855170470555
+    #define t Temperature
+    #define Magic Kupershtokh_K
+    real_t p;
+    
+	p =((rho2*(-pow(b2,3)*pow(rho2,3)/64.+b2*b2*rho2*rho2/16.+b2*rho2/4.+1)*t*c2)/pow(1-b2*rho2/4.,3)-a2*rho2*rho2);
+	p = Magic*p;
+	return sqrt( -p + rho2/(3.) );
 
-    rho = PV('rho')
-    J = PV(c('Jx','Jy'))
+}
+CudaDeviceFunction void Run() { 
+
+
+vector_t F[9];
+real_t R[9];
+
+
+real_t Jx_i[9];
+real_t Jy_i[9];
+real_t rho_i[9];
+
+real_t Phi[5][5];
+<?R
 
     x = c(0,1,-1);
     U = as.matrix(expand.grid(x,x))
 
-    feq = PV(paste("tmp[",1:9-1,"]",sep="")) #null creation
+
+    GravitationX = PV("GravitationX")
+    GravitationY = PV("GravitationY")
+    
+    feq = PV(paste("tmp[",1:9-1,"]",sep=""))
+    # for (k in seq(-2,2))
+    # {
+    #     for (q in seq(-2,2))
+    #     {
+    #        C(PV(paste("Phi[",k+2,"][",q+2,"]",sep="")) , PV(paste("getPsi(rho(",k,",",q,"))")));
+    #     }
+    # }
+
+    for (k in seq(-2,2))
+    {
+        for (q in seq(-2,2))
+        {
+           C(PV(paste("Phi[",k+2,"][",q+2,"]",sep="")) , PV(paste("phi(",k,",",q,")")));
+        }
+    }   
+
     for (i in seq(1,9))
     {
         
-        rho_i = PV(paste("rho(",-U[i,1],",",-U[i,2],")"))
-        Jx = PV(paste("Jx(",-U[i,1],",",-U[i,2],")"))
-        Jy = PV(paste("Jy(",-U[i,1],",",-U[i,2],")"))
-        J_i = c(Jx,Jy)
-        EQi = MRT_eq(U, rho_i, J_i, order=12, ortogonal=FALSE);
+
+        R = PV(c(paste("R[",1:9-1,"]",sep="")))
+        Rt = PV(c(paste("//R[",1:9-1,"]",sep="")))
+        C(Rt , PV(paste("getPsi(rho(",-U[i,1]-U[,1],",",-U[i,2]-U[,2],"))")));
+     
+        C(R , PV(paste("Phi[",-U[i,1]-U[,1]+2,"][",-U[i,2]-U[,2]+2,"]",sep="")) );
+
+        Force = PV(c(paste("F[",i-1,"].x",sep=""),paste("F[",i-1,"].y",sep="")));
+        
+        #gs = c(0,1,1,1,1,1/4,1/4,1/4,1/4);
+        gs = U[,1]
+        sel = U[,1]^2 + U[,2]^2
+        
+        gs[] = 1
+        gs[sel > 1] = 1/4
+        gs[sel == 0] = 0
+        
+        A = PV("Kupershtokh_A")
+        C(R[-1] , (R * R * A + R * R[1] * (A*(-2)+1))[-1],float=F)
+        C(Force , 0 -(0.666666666666666666)*(R*gs) %*% U)
+
+
+        #rho_i = PV(paste("rho(",-U[i,1],",",-U[i,2],")"))
+        Jx = (PV(paste("Jx(",-U[i,1],",",-U[i,2],")")) + Force[1] ) 
+        Jy = (PV(paste("Jy(",-U[i,1],",",-U[i,2],")")) + Force[2] )
+        
+        C(PV(paste("Jx_i[",i-1,"]")), Jx + GravitationX)
+        C(PV(paste("Jy_i[",i-1,"]")), Jy + GravitationY)
+        C(PV(paste("rho_i[",i-1,"]")), PV(paste("rho(",-U[i,1],",",-U[i,2],")")))
+
+        J_i = c(PV(paste("Jx_i[",i-1,"]")),PV(paste("Jy_i[",i-1,"]")))
+        rho_i = PV(paste("rho_i[",i-1,"]"))
+        #J_i = c(Jx + GravitationX,Jy + GravitationY)
+        
+        EQi = MRT_eq(U, rho_i, J_i, order=3, ortogonal=TRUE);
 
         feq[i] = EQi$feq[i]
     }
@@ -133,113 +135,17 @@ CudaDeviceFunction void CollisionBGK() {
     C(PV('rho'), mpost[1])
     C(PV('Jx'), mpost[2])
     C(PV('Jy'), mpost[3])
+    C(PV('phi'), PV("getPsi(rho)"))
+
+
+
 
 ?>
-}
-
-CudaDeviceFunction void BounceBack() {
-    // Method to reverse distribution functions along the bounding nodes.
-    real_t uf;
-    uf = f[3];
-    f[3] = f[1];
-    f[1] = uf;
-    uf = f[4];
-    f[4] = f[2];
-    f[2] = uf;
-    uf = f[7];
-    f[7] = f[5];
-    f[5] = uf;
-    uf = f[8];
-    f[8] = f[6];
-    f[6] = uf;
-}
-
-CudaDeviceFunction vector_t getU() {
-    // This function defines the macroscopic velocity at the current node.
-    real_t d = getRho();
-    vector_t u;
-
-    vector_t F_ff = getF_ff();
-    vector_t F_sf = getF_sf();
-
-    u.x = ( f[8]-f[7]-f[6]+f[5]-f[3]+f[1] )/d + (GravitationX + F_ff.x + F_sf.x )*0.5 ;
-    u.y = (-f[8]-f[7]+f[6]+f[5]-f[4]+f[2] )/d + (GravitationY + F_ff.y + F_sf.y )*0.5 ;
-    u.z = 0;
-    return u;
-}
-
-CudaDeviceFunction vector_t getUeq(real_t d) {
-    // This function defines the equilibrium velocity at the current node.
-    vector_t F_ff = getF_ff();
-    vector_t F_sf = getF_sf();
-    vector_t u_eq;
-
-    u_eq.x = ( f[8]-f[7]-f[6]+f[5]-f[3]+f[1] )/d;
-    u_eq.y = (-f[8]-f[7]+f[6]+f[5]-f[4]+f[2] )/d;
-
-    u_eq.x += (GravitationX + (F_ff.x + F_sf.x)/d) / omega;
-    u_eq.y += (GravitationY + (F_ff.y + F_sf.y)/d) / omega;
-    u_eq.z = 0;
-
-    return u_eq;
-}
 
 
-// ------------------------------ pseudo-potential related code --------------------------------------------- //
-
-CudaDeviceFunction void calcPsi() {
-    // Calculate psi at each point so that pseudopotential force can be found.
-    
-    real_t d = calcRho();
-    psi = 1 - exp(-d);
-}
-
-CudaDeviceFunction real_t getPsi(){
-	return psi(0,0);
-}
-CudaDeviceFunction real_t getNeighbour_type()
-{
-    return neighbour_type(0,0);
-}
-
-CudaDeviceFunction vector_t getF_ff() {
-    // fluid - fluid interaction force 
-
-    vector_t F_ff;
-    F_ff.x = 0;
-    F_ff.y = 0;
-    F_ff.z = 0;
-    
-    F_ff.x =  ( psi(1,-1)-psi(-1,-1)+psi(1,1)-psi(-1,1))/9. + (psi(1,0)-psi(-1,0))/36.;
-    F_ff.y =  (-psi(1,-1)-psi(-1,-1)+psi(1,1)+psi(-1,1))/9. + (psi(0,1)-psi(0,-1))/36.;
-    
-    F_ff.x *= -G_ff*psi(0,0); 
-    F_ff.y *= -G_ff*psi(0,0);
-
-    // alternative version with dynamic access to the 'psi' field.
-    // for (int i=0; i< 9; i++){
-    //     F_ff.x += wf[i] * psi_dyn(d2q9_ex[i], d2q9_ey[i])*d2q9_ex[i];
-    //     F_ff.y += wf[i] * psi_dyn(d2q9_ex[i], d2q9_ey[i])*d2q9_ey[i];
-    // }
-   
-    return F_ff;
-}
-
-CudaDeviceFunction vector_t getF_sf() {
-    // solid - fluid interaction force 
-
-    vector_t F_sf;
-    F_sf.x = 0;
-    F_sf.y = 0;
-    F_sf.z = 0;
-
-    for (int i=0; i< 9; i++){
-        F_sf.x += wf[i] *d2q9_ex[i] * neighbour_type_dyn(d2q9_ex[i], d2q9_ey[i]);
-        F_sf.y += wf[i] *d2q9_ey[i] * neighbour_type_dyn(d2q9_ex[i], d2q9_ey[i]);
-    }
-
-    F_sf.x *= -G_sf*psi(0,0); 
-    F_sf.y *= -G_sf*psi(0,0); 
-    
-    return F_sf;
+  if (IamWall)  {
+    Jx = 0;
+    Jy = 0;
+    rho = 1;
+  }
 }
