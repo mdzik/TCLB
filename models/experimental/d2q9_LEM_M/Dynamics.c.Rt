@@ -157,6 +157,13 @@ CudaDeviceFunction void Init() {
 	Init_eq(populationDensity);
 }
 
+CudaDeviceFunction real_t getSigma2(real_t rho)
+{
+	real_t Sigma2 = 0.333333333333333*sigma2_tweaker/rho;
+	return Sigma2;
+}
+
+
 CudaDeviceFunction void Init_eq(real_t rho)
 {	
 	real_t Init_S = Init_S_Fraction * rho;
@@ -164,7 +171,7 @@ CudaDeviceFunction void Init_eq(real_t rho)
 	real_t Init_R = Init_R_Fraction * rho;
 	
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
-	real_t Sigma2 = 0.333333333333333*stability_enhancement/rho;
+	real_t Sigma2 = getSigma2(rho);
 	//--- processing s ---
 	
 	//equilibrium
@@ -255,9 +262,9 @@ CudaDeviceFunction void Run() {
 	}
 	else{
 		// real_t omega_turb = getOmegaTurb();
-		real_t omega_s = 1.0/(3*diffusivity_s/stability_enhancement+0.5);
-		real_t omega_i = 1.0/(3*diffusivity_i/stability_enhancement+0.5);
-		real_t omega_r = 1.0/(3*diffusivity_r/stability_enhancement+0.5);
+		real_t omega_s = 1.0/(3*diffusivity_s/sigma2_tweaker+0.5);
+		real_t omega_i = 1.0/(3*diffusivity_i/sigma2_tweaker+0.5);
+		real_t omega_r = 1.0/(3*diffusivity_r/sigma2_tweaker+0.5);
 		// if ((NodeType & NODE_BOUNDARY) != 0) omega_ade = 1.0/(3*diffusivity_buffer+0.5);
 
 		RunBoundaries(); // keep in mind that populationDensity = populationDensity(0,0); needs to be called before collision
@@ -267,6 +274,9 @@ CudaDeviceFunction void Run() {
 				break;
 			case NODE_CROSSMRT:
 				relax_and_collide_cross_SIR_M(populationDensity, omega_s, omega_i, omega_r);
+				break;
+			case NODE_CROSSMRT_FOI:
+				relax_and_collide_cross_SIR_M_FOI(populationDensity);
 				break;
 		}
 
@@ -284,12 +294,234 @@ CudaDeviceFunction void Run() {
  }
 
 
+ 
+ CudaDeviceFunction void relax_and_collide_cross_SIR_M_FOI(real_t rho) 
+ {
+ 
+	real_t Sigma2 = getSigma2(rho);
+
+	 real_t S = s000 + s010 + s020 + s100 + s110 + s120 + s200 + s210 + s220;
+	 real_t I = i000 + i010 + i020 + i100 + i110 + i120 + i200 + i210 + i220;
+	 real_t R = r000 + r010 + r020 + r100 + r110 + r120 + r200 + r210 + r220;
+	 real_t s = S/rho;
+	 real_t i = I/rho;
+	 real_t r = R/rho;
+ 
+	 real_t omega_s = 1.0/(3*diffusivity_s/sigma2_tweaker);
+	 real_t omega_i = 1.0/(3*diffusivity_i/sigma2_tweaker);
+	 real_t omega_r = 1.0/(3*diffusivity_r/sigma2_tweaker);
+
+	// real_t cross_difussivity = s*infectious_radius*infectious_radius*sir_beta/8.;
+	real_t cross_difussivity = s/3.; // HACK:
+	real_t omega_cross = 1.0/(3*cross_difussivity/sigma2_tweaker);
+
+	if (omega_cross < cross_omega_limiter_low)
+		omega_cross = cross_omega_limiter_low;
+
+	if (omega_cross > cross_omega_limiter_high)
+		omega_cross = cross_omega_limiter_high;
+
+	 //=== THIS IS AUTOMATICALLY GENERATED CODE ===
+	 real_t temp000;
+	 real_t temp100;
+	 real_t temp010;
+	 real_t temp200;
+	 real_t temp020;
+	 real_t temp110;
+	 real_t temp210;
+	 real_t temp120;
+	 real_t temp220;
+	  //--- processing i ---
+	 temp000 = i000;
+	 temp100 = i100;
+	 temp010 = i010;
+	 temp200 = i200;
+	 temp020 = i020;
+	 temp110 = i110;
+	 temp210 = i210;
+	 temp120 = i120;
+	 temp220 = i220;
+	 //raw moments from density-probability functions
+	 i000 = temp000 + temp010 + temp020 + temp100 + temp110 + temp120 + temp200 + temp210 + temp220;
+	 i100 = temp100 + temp110 + temp120 - temp200 - temp210 - temp220;
+	 i010 = temp010 - temp020 + temp110 - temp120 + temp210 - temp220;
+	 i200 = temp100 + temp110 + temp120 + temp200 + temp210 + temp220;
+	 i020 = temp010 + temp020 + temp110 + temp120 + temp210 + temp220;
+	 i110 = temp110 - temp120 - temp210 + temp220;
+	 i210 = temp110 - temp120 + temp210 - temp220;
+	 i120 = temp110 + temp120 - temp210 - temp220;
+	 i220 = temp110 + temp120 + temp210 + temp220;
+	 //cross-collide
+ 
+	//SRT
+	 real_t cross_star_000 = omega_cross*(I - i000);
+	 real_t cross_star_100 = -i100*omega_cross;
+	 real_t cross_star_010 = -i010*omega_cross;
+	 real_t cross_star_200 = omega_cross*(I*Sigma2 - i200);
+	 real_t cross_star_020 = omega_cross*(I*Sigma2 - i020);
+	 real_t cross_star_110 = -i110*omega_cross;
+	 real_t cross_star_210 = -i210*omega_cross;
+	 real_t cross_star_120 = -i120*omega_cross;
+	 real_t cross_star_220 = omega_cross*(I*Sigma2*Sigma2 - i220);
+ 
+ 
+	// TRT
+	//  real_t cross_star_000 = I - i000;
+	//  real_t cross_star_100 = -i100*omega_cross;
+	//  real_t cross_star_010 = -i010*omega_cross;
+	//  real_t cross_star_200 = I*Sigma2 - i200;
+	//  real_t cross_star_020 = I*Sigma2 - i020;
+	//  real_t cross_star_110 = -i110;
+	//  real_t cross_star_210 = -i210*omega_cross;
+	//  real_t cross_star_120 = -i120*omega_cross;
+	//  real_t cross_star_220 = I*Sigma2*Sigma2 - i220;
+ 
+	// tweaked TRT
+	//  real_t cross_star_000 = 0;
+	//  real_t cross_star_100 = -i100*omega_cross;
+	//  real_t cross_star_010 = -i010*omega_cross;
+	//  real_t cross_star_200 = 0;
+	//  real_t cross_star_020 = 0;
+	//  real_t cross_star_110 = 0;
+	//  real_t cross_star_210 = -i210*omega_cross;
+	//  real_t cross_star_120 = -i120*omega_cross;
+	//  real_t cross_star_220 = 0;
+ 
+		 
+ 
+	 //collide
+	 real_t i_star_000 = I + i*s*sir_beta - i*sir_gamma;
+	 real_t i_star_100 = -i100*(omega_i - 1.);
+	 real_t i_star_010 = -i010*(omega_i - 1.);
+	 real_t i_star_200 = Sigma2*(I + i*(s*sir_beta - sir_gamma));
+	 real_t i_star_020 = Sigma2*(I + i*(s*sir_beta - sir_gamma));
+	 real_t i_star_110 = 0;
+	 real_t i_star_210 = -i210*(omega_i - 1.);
+	 real_t i_star_120 = -i120*(omega_i - 1.);
+	 real_t i_star_220 = Sigma2*Sigma2*(I + i*(s*sir_beta - sir_gamma));
+ 
+	 i_star_000 += cross_star_000;
+	 i_star_100 += cross_star_100;
+	 i_star_010 += cross_star_010;
+	 i_star_200 += cross_star_200;
+	 i_star_020 += cross_star_020;
+	 i_star_110 += cross_star_110;
+	 i_star_210 += cross_star_210;
+	 i_star_120 += cross_star_120;
+	 i_star_220 += cross_star_220;
+ 
+	 //back to density-probability functions
+	 i000 = i_star_000 - i_star_020 - i_star_200 + i_star_220;
+	 i100 = 1/2.*i_star_100 - 1/2.*i_star_120 + 1/2.*i_star_200 - 1/2.*i_star_220;
+	 i200 = -1/2.*i_star_100 + 1/2.*i_star_120 + 1/2.*i_star_200 - 1/2.*i_star_220;
+	 i010 = 1/2.*i_star_010 + 1/2.*i_star_020 - 1/2.*i_star_210 - 1/2.*i_star_220;
+	 i110 = 1/4.*i_star_110 + 1/4.*i_star_120 + 1/4.*i_star_210 + 1/4.*i_star_220;
+	 i210 = -1/4.*i_star_110 - 1/4.*i_star_120 + 1/4.*i_star_210 + 1/4.*i_star_220;
+	 i020 = -1/2.*i_star_010 + 1/2.*i_star_020 + 1/2.*i_star_210 - 1/2.*i_star_220;
+	 i120 = -1/4.*i_star_110 + 1/4.*i_star_120 - 1/4.*i_star_210 + 1/4.*i_star_220;
+	 i220 = 1/4.*i_star_110 - 1/4.*i_star_120 - 1/4.*i_star_210 + 1/4.*i_star_220;
+ 
+	 //--- processing s ---
+	 temp000 = s000;
+	 temp100 = s100;
+	 temp010 = s010;
+	 temp200 = s200;
+	 temp020 = s020;
+	 temp110 = s110;
+	 temp210 = s210;
+	 temp120 = s120;
+	 temp220 = s220;
+	 //raw moments from density-probability functions
+	 s000 = temp000 + temp010 + temp020 + temp100 + temp110 + temp120 + temp200 + temp210 + temp220;
+	 s100 = temp100 + temp110 + temp120 - temp200 - temp210 - temp220;
+	 s010 = temp010 - temp020 + temp110 - temp120 + temp210 - temp220;
+	 s200 = temp100 + temp110 + temp120 + temp200 + temp210 + temp220;
+	 s020 = temp010 + temp020 + temp110 + temp120 + temp210 + temp220;
+	 s110 = temp110 - temp120 - temp210 + temp220;
+	 s210 = temp110 - temp120 + temp210 - temp220;
+	 s120 = temp110 + temp120 - temp210 - temp220;
+	 s220 = temp110 + temp120 + temp210 + temp220;
+	 //collide
+	 real_t s_star_000 = S - i*s*sir_beta;
+	 real_t s_star_100 = -s100*(omega_s - 1.);
+	 real_t s_star_010 = -s010*(omega_s - 1.);
+	 real_t s_star_200 = Sigma2*(S - i*s*sir_beta);
+	 real_t s_star_020 = Sigma2*(S - i*s*sir_beta);
+	 real_t s_star_110 = 0;
+	 real_t s_star_210 = -s210*(omega_s - 1.);
+	 real_t s_star_120 = -s120*(omega_s - 1.);
+	 real_t s_star_220 = Sigma2*Sigma2*(S - i*s*sir_beta);
+ 
+ 
+	 s_star_000 -= cross_star_000;
+	 s_star_100 -= cross_star_100;
+	 s_star_010 -= cross_star_010;
+	 s_star_200 -= cross_star_200;
+	 s_star_020 -= cross_star_020;
+	 s_star_110 -= cross_star_110;
+	 s_star_210 -= cross_star_210;
+	 s_star_120 -= cross_star_120;
+	 s_star_220 -= cross_star_220;
+ 
+	 //back to density-probability functions
+	 s000 = s_star_000 - s_star_020 - s_star_200 + s_star_220;
+	 s100 = 1/2.*s_star_100 - 1/2.*s_star_120 + 1/2.*s_star_200 - 1/2.*s_star_220;
+	 s200 = -1/2.*s_star_100 + 1/2.*s_star_120 + 1/2.*s_star_200 - 1/2.*s_star_220;
+	 s010 = 1/2.*s_star_010 + 1/2.*s_star_020 - 1/2.*s_star_210 - 1/2.*s_star_220;
+	 s110 = 1/4.*s_star_110 + 1/4.*s_star_120 + 1/4.*s_star_210 + 1/4.*s_star_220;
+	 s210 = -1/4.*s_star_110 - 1/4.*s_star_120 + 1/4.*s_star_210 + 1/4.*s_star_220;
+	 s020 = -1/2.*s_star_010 + 1/2.*s_star_020 + 1/2.*s_star_210 - 1/2.*s_star_220;
+	 s120 = -1/4.*s_star_110 + 1/4.*s_star_120 - 1/4.*s_star_210 + 1/4.*s_star_220;
+	 s220 = 1/4.*s_star_110 - 1/4.*s_star_120 - 1/4.*s_star_210 + 1/4.*s_star_220;
+ 
+	  //--- processing r ---
+	 temp000 = r000;
+	 temp100 = r100;
+	 temp010 = r010;
+	 temp200 = r200;
+	 temp020 = r020;
+	 temp110 = r110;
+	 temp210 = r210;
+	 temp120 = r120;
+	 temp220 = r220;
+	 //raw moments from density-probability functions
+	 r000 = temp000 + temp010 + temp020 + temp100 + temp110 + temp120 + temp200 + temp210 + temp220;
+	 r100 = temp100 + temp110 + temp120 - temp200 - temp210 - temp220;
+	 r010 = temp010 - temp020 + temp110 - temp120 + temp210 - temp220;
+	 r200 = temp100 + temp110 + temp120 + temp200 + temp210 + temp220;
+	 r020 = temp010 + temp020 + temp110 + temp120 + temp210 + temp220;
+	 r110 = temp110 - temp120 - temp210 + temp220;
+	 r210 = temp110 - temp120 + temp210 - temp220;
+	 r120 = temp110 + temp120 - temp210 - temp220;
+	 r220 = temp110 + temp120 + temp210 + temp220;
+	 //collide
+	 real_t r_star_000 = R + i*sir_gamma;
+	 real_t r_star_100 = -r100*(omega_r - 1.);
+	 real_t r_star_010 = -r010*(omega_r - 1.);
+	 real_t r_star_200 = Sigma2*(R + i*sir_gamma);
+	 real_t r_star_020 = Sigma2*(R + i*sir_gamma);
+	 real_t r_star_110 = 0;
+	 real_t r_star_210 = -r210*(omega_r - 1.);
+	 real_t r_star_120 = -r120*(omega_r - 1.);
+	 real_t r_star_220 = Sigma2*Sigma2*(R + i*sir_gamma);
+	 //back to density-probability functions
+	 r000 = r_star_000 - r_star_020 - r_star_200 + r_star_220;
+	 r100 = 1/2.*r_star_100 - 1/2.*r_star_120 + 1/2.*r_star_200 - 1/2.*r_star_220;
+	 r200 = -1/2.*r_star_100 + 1/2.*r_star_120 + 1/2.*r_star_200 - 1/2.*r_star_220;
+	 r010 = 1/2.*r_star_010 + 1/2.*r_star_020 - 1/2.*r_star_210 - 1/2.*r_star_220;
+	 r110 = 1/4.*r_star_110 + 1/4.*r_star_120 + 1/4.*r_star_210 + 1/4.*r_star_220;
+	 r210 = -1/4.*r_star_110 - 1/4.*r_star_120 + 1/4.*r_star_210 + 1/4.*r_star_220;
+	 r020 = -1/2.*r_star_010 + 1/2.*r_star_020 + 1/2.*r_star_210 - 1/2.*r_star_220;
+	 r120 = -1/4.*r_star_110 + 1/4.*r_star_120 - 1/4.*r_star_210 + 1/4.*r_star_220;
+	 r220 = 1/4.*r_star_110 - 1/4.*r_star_120 - 1/4.*r_star_210 + 1/4.*r_star_220;
+ 
+ }
 
  
 CudaDeviceFunction void relax_and_collide_cross_SIR_M(real_t rho, real_t omega_s, real_t omega_i, real_t omega_r) 
 {
 
-	real_t Sigma2 = 0.333333333333333*stability_enhancement/rho;
+	real_t Sigma2 = getSigma2(rho);
 	real_t S = s000 + s010 + s020 + s100 + s110 + s120 + s200 + s210 + s220;
 	real_t I = i000 + i010 + i020 + i100 + i110 + i120 + i200 + i210 + i220;
 	real_t R = r000 + r010 + r020 + r100 + r110 + r120 + r200 + r210 + r220;
@@ -297,11 +529,16 @@ CudaDeviceFunction void relax_and_collide_cross_SIR_M(real_t rho, real_t omega_s
 	real_t i = I/rho;
 	real_t r = R/rho;
 
-	real_t cross_difussivity = s*infectious_radius*infectious_radius*sir_beta/8.;
-	// cross_difussivity = 0.1666666;
-	real_t omega_cross = 1.0/(3*cross_difussivity/stability_enhancement+0.5);
-	// omega_cross = 0.;
-	// omega_cross = omega_i;
+	// real_t cross_difussivity = s*infectious_radius*infectious_radius*sir_beta/8.;
+	real_t cross_difussivity = s/6.; // HACK:
+	real_t omega_cross = 1.0/(3*cross_difussivity/sigma2_tweaker+0.5);
+
+	if (omega_cross < cross_omega_limiter_low)
+		omega_cross = cross_omega_limiter_low;
+
+	if (omega_cross > cross_omega_limiter_high)
+		omega_cross = cross_omega_limiter_high;
+
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
 	real_t temp000;
 	real_t temp100;
@@ -335,27 +572,27 @@ CudaDeviceFunction void relax_and_collide_cross_SIR_M(real_t rho, real_t omega_s
 	//cross-collide
 
 	//SRT
-	// real_t cross_star_000 = omega_cross*(I - i000);
-	// real_t cross_star_100 = -i100*omega_cross;
-	// real_t cross_star_010 = -i010*omega_cross;
-	// real_t cross_star_200 = omega_cross*(I*Sigma2 - i200);
-	// real_t cross_star_020 = omega_cross*(I*Sigma2 - i020);
-	// real_t cross_star_110 = -i110*omega_cross;
-	// real_t cross_star_210 = -i210*omega_cross;
-	// real_t cross_star_120 = -i120*omega_cross;
-	// real_t cross_star_220 = omega_cross*(I*Sigma2*Sigma2 - i220);
+	real_t cross_star_000 = omega_cross*(I - i000);
+	real_t cross_star_100 = -i100*omega_cross;
+	real_t cross_star_010 = -i010*omega_cross;
+	real_t cross_star_200 = omega_cross*(I*Sigma2 - i200);
+	real_t cross_star_020 = omega_cross*(I*Sigma2 - i020);
+	real_t cross_star_110 = -i110*omega_cross;
+	real_t cross_star_210 = -i210*omega_cross;
+	real_t cross_star_120 = -i120*omega_cross;
+	real_t cross_star_220 = omega_cross*(I*Sigma2*Sigma2 - i220);
 
 
 	// TRT
-	real_t cross_star_000 = I - i000;
-	real_t cross_star_100 = -i100*omega_cross;
-	real_t cross_star_010 = -i010*omega_cross;
-	real_t cross_star_200 = I*Sigma2 - i200;
-	real_t cross_star_020 = I*Sigma2 - i020;
-	real_t cross_star_110 = -i110;
-	real_t cross_star_210 = -i210*omega_cross;
-	real_t cross_star_120 = -i120*omega_cross;
-	real_t cross_star_220 = I*Sigma2*Sigma2 - i220;
+	// real_t cross_star_000 = I - i000;
+	// real_t cross_star_100 = -i100*omega_cross;
+	// real_t cross_star_010 = -i010*omega_cross;
+	// real_t cross_star_200 = I*Sigma2 - i200;
+	// real_t cross_star_020 = I*Sigma2 - i020;
+	// real_t cross_star_110 = -i110;
+	// real_t cross_star_210 = -i210*omega_cross;
+	// real_t cross_star_120 = -i120*omega_cross;
+	// real_t cross_star_220 = I*Sigma2*Sigma2 - i220;
 
 	// tweaked TRT
 	// real_t cross_star_000 = 0;
@@ -500,8 +737,8 @@ CudaDeviceFunction void relax_and_collide_cross_SIR_M(real_t rho, real_t omega_s
 
 CudaDeviceFunction void relax_and_collide_SIR_M(real_t rho, real_t omega_s,  real_t omega_i, real_t omega_r) 
 {
+	real_t Sigma2 = getSigma2(rho);
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
-	real_t Sigma2 = 0.333333333333333*stability_enhancement/rho;
 	real_t S = s000 + s010 + s020 + s100 + s110 + s120 + s200 + s210 + s220;
 	real_t I = i000 + i010 + i020 + i100 + i110 + i120 + i200 + i210 + i220;
 	real_t R = r000 + r010 + r020 + r100 + r110 + r120 + r200 + r210 + r220;
