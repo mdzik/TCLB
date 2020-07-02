@@ -10,15 +10,15 @@
 	source("lib/feq.R")
     source("lib/boundary.R")
 
-
-    ## D3Q19
-    D=3
-    Q=19
-
-    # D2Q9
-    #D=2
-    #Q=9
-
+    if (Options$d3q19){
+        ## D3Q19
+        D=3
+        Q=19
+    } else {
+        # D2Q9
+        D=2
+        Q=9
+    }
     xyz = c('x','y','z')
     xyz = xyz[1:D]
     XYZ = c('X','Y','Z')
@@ -163,7 +163,7 @@ real_t Phi<?%s paste(list("[5]")[rep(1,D)],collapse="") ?>;
         JinR = JinR + Force + Gravitation
         #xyz = c('x','y','z')
         
-        JinC = PV(paste("J",xyz,"_i[ ",i-1," ]", sep=""))
+        J_i = PV(paste("J",xyz,"_i[ ",i-1," ]", sep=""))
         #J_i = JinC[1:D]
 
         C(J_i, JinR[1:D] )

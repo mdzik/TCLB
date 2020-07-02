@@ -1,3 +1,3 @@
 ADJOINT=0
 TEST=FALSE
-OPT="(d2q9+d3q19)-d2q9-d3q19-1"
+OPT="(d2q9+d3q19)-1"

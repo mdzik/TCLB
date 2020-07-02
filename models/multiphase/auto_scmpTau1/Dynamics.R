@@ -12,14 +12,14 @@
 
 #AddDensity( name="rho", dx=0, dy=0, group="density") # how to run it using AddField("rho", dx=c(0,0), dy=c(0,0), group="density")
 
-if (TRUE){
+if (Options$d3q19){
     AddField("rho", stencil3d=1);#, group="r")
     AddField("phi", stencil3d=2);#, group="r")
     AddField("Jx", stencil3d=1);#, group="r") 
     AddField("Jy", stencil3d=1);#, group="r") 
     AddField("Jz", stencil3d=1);#, group="r") 
 } else {
-    AddField("rho", stencil3d=1);#, group="r")
+    AddField("rho", stencil2d=1);#, group="r")
     AddField("phi", stencil2d=2);#, group="r")
     AddField("Jx", stencil2d=1);#, group="r") 
     AddField("Jy", stencil2d=1);#, group="r") 
