@@ -119,6 +119,14 @@ switch context
 \end_inset
 
 
+\begin_inset Formula 
+\[
+\mathbf{M}f_{j}^{eq}(\newmoon)=\mathbf{m}_{eq}(\newmoon)
+\]
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
