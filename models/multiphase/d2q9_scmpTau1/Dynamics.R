@@ -12,12 +12,18 @@
 
 #AddDensity( name="rho", dx=0, dy=0, group="density") # how to run it using AddField("rho", dx=c(0,0), dy=c(0,0), group="density")
 
-AddField("rho", stencil2d=2);#, group="r")
-AddField("phi", stencil2d=2);#, group="r")
-
-AddField("Jx", stencil2d=1);#, group="r") 
-AddField("Jy", stencil2d=1);#, group="r") 
-
+if (TRUE){
+    AddField("rho", stencil3d=1);#, group="r")
+    AddField("phi", stencil3d=2);#, group="r")
+    AddField("Jx", stencil3d=1);#, group="r") 
+    AddField("Jy", stencil3d=1);#, group="r") 
+    AddField("Jz", stencil3d=1);#, group="r") 
+} else {
+    AddField("rho", stencil3d=1);#, group="r")
+    AddField("phi", stencil2d=2);#, group="r")
+    AddField("Jx", stencil2d=1);#, group="r") 
+    AddField("Jy", stencil2d=1);#, group="r") 
+}
 
 #AddField("psi", stencil2d=1, group="pp") # Pseudopotential field
 #AddField("neighbour_type", stencil2d=1);#, group="neighbour_type_group")
@@ -47,11 +53,13 @@ AddQuantity( name="Rho",  unit="kg/m3" )
 #AddSetting( name="viscosity", omega='1.0/(3*viscosity+0.5)', default=0.16666666, comment='kinematic viscosity')
 AddSetting( name="VelocityX",default=0, comment='inlet/outlet/init velocity', zonal=TRUE)
 AddSetting( name="VelocityY",default=0, comment='inlet/outlet/init velocity', zonal=TRUE)
+AddSetting( name="VelocityZ",default=0, comment='inlet/outlet/init velocity', zonal=TRUE)
+
 AddSetting( name="GravitationX",default=0, comment='body/external acceleration', zonal=TRUE)
 AddSetting( name="GravitationY",default=0, comment='body/external acceleration', zonal=TRUE)
+AddSetting( name="GravitationZ",default=0, comment='body/external acceleration', zonal=TRUE)
+
 AddSetting( name="Density",default=1, comment='Density',zonal=TRUE)
-
-
 AddSetting( name="Kupershtokh_K",default=0.01, comment='Separation parameter',zonal=FALSE)
 AddSetting( name="Temperature",default=0.9, comment='SCMp Temperature',zonal=FALSE)
 AddSetting( name="Kupershtokh_A",default=-0.152, comment='Stencil parameter',zonal=FALSE)

@@ -12,12 +12,19 @@
 
 
     ## D3Q19
-    #D=3
-    #Q=19
+    D=3
+    Q=19
 
     # D2Q9
-    D=2
-    Q=9
+    #D=2
+    #Q=9
+
+    xyz = c('x','y','z')
+    xyz = xyz[1:D]
+    XYZ = c('X','Y','Z')
+    XYZ = XYZ[1:D]
+
+    
 ?>
 CudaDeviceFunction float2 Color() {
   float2 ret;
@@ -33,15 +40,17 @@ CudaDeviceFunction real_t getRho() {
 
 CudaDeviceFunction vector_t getU() {
     vector_t u;
-    u.x = Jx(0,0)/rho(0,0);
-    u.y = Jy(0,0)/rho(0,0);
     u.z = 0;
+    <?R 
+        C(PV(paste("u.",xyz,sep="")), PV(paste("J",xyz,"(0,0)/rho(0,0)",sep="")))
+    ?>
     return u;
 }
 
 CudaDeviceFunction void Init() {
-    Jx = VelocityX;
-    Jy = VelocityY;
+    <?R 
+        C(PV(paste("J",xyz,sep="")), PV(paste("Velocity",XYZ,"*Density",sep="")))
+    ?>
     rho = Density;
  }
 
@@ -62,15 +71,16 @@ CudaDeviceFunction real_t getPsi(const real_t rho2){
 CudaDeviceFunction void Run() { 
 
 
-vector_t F[9];
-real_t R[9];
+vector_t F[<?%s Q ?>];
+real_t R[<?%s Q ?>];
 
 
-real_t Jx_i[9];
-real_t Jy_i[9];
-real_t rho_i[9];
+<?%s paste("real_t J",xyz,"_i[",Q,"];",sep="") ?>
+real_t rho_i[<?%s Q ?>];
 
-real_t Phi[5][5];
+
+
+real_t Phi<?%s paste(list("[5]")[rep(1,D)],collapse="") ?>;
 
 <?R
     x = c(0,1,-1);
@@ -100,15 +110,15 @@ real_t Phi[5][5];
         return(apply( what, 1, paste , collapse = sep))
     }
 
-    #C(PV(paste("Phi[",collapse(kk+2, ']['),"]",sep="")) , PV(paste("phi(",collapse(kk, ','),")")));
+    C(PV(paste("Phi[",collapse(kk+2, ']['),"]",sep="")) , PV(paste("phi(",collapse(kk, ','),")")));
 
-    for (k in seq(-2,2))
-    {
-        for (q in seq(-2,2))
-        {
-           C(PV(paste("Phi[",k+2,"][",q+2,"]",sep="")) , PV(paste("phi(",k,",",q,")")));
-        }
-    }   
+    # for (k in seq(-2,2))
+    # {
+    #     for (q in seq(-2,2))
+    #     {
+    #        C(PV(paste("Phi[",k+2,"][",q+2,"]",sep="")) , PV(paste("phi(",k,",",q,")")));
+    #     }
+    # }   
     for (i in seq(1,Q))
     {
         
@@ -151,10 +161,10 @@ real_t Phi[5][5];
                      paste("Jz(",paste(-U[i,],collapse=' , '),")")))
 
         JinR = JinR + Force + Gravitation
-        xyz = c('x','y','z')
+        #xyz = c('x','y','z')
         
         JinC = PV(paste("J",xyz,"_i[ ",i-1," ]", sep=""))
-        J_i = JinC[1:D]
+        #J_i = JinC[1:D]
 
         C(J_i, JinR[1:D] )
         
@@ -162,7 +172,7 @@ real_t Phi[5][5];
         C(rho_i, PV(paste("rho(",paste(-U[i,],collapse=' , '),")")))
 
         
-        EQi = MRT_eq(U, rho_i, J_i, order=3, ortogonal=TRUE);
+        EQi = MRT_eq(U, rho_i, J_i, order=3, ortogonal=FALSE);
 
         feq[i] = EQi$feq[i]
     }
@@ -182,8 +192,9 @@ real_t Phi[5][5];
 
 
   if (IamWall)  {
-    Jx = 0;
-    Jy = 0;
+    <?R
+        C(J[1:D], 0)
+    ?>
     rho = 1;
   }
 }
