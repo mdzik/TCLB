@@ -1,0 +1,455 @@
+<?R
+# #############
+# based on "Conservative phase-field lattice Boltzmann model for interface tracking equation"
+# implemented by M. Dzikowski 2016
+# #############
+
+	source("conf.R") 
+	c_header();
+	
+	source("lib/feq.R")
+	source("lib/boundary.R")
+
+    U = t(as.matrix(   rbind( Density$dx[Density$group=='f'], Density$dy[Density$group=='f'] ) ))
+	EQ = MRT_eq(U, ortogonal=FALSE)
+        wi = subst(EQ$Req, Jx=0, Jy=0, Jz=0)
+        wi = subst(wi, rho=1)
+        wi = gapply(wi,function(x) x$.M, simplify=TRUE)
+        wi = wi %*% solve(EQ$mat)
+	wi = as.vector(wi)
+
+	W0 = solve(EQ$mat) %*% diag(1/wi) %*% solve(t(EQ$mat))
+	i = rev(1:nrow(W0))
+	H = chol(W0[i,i])[i,i]
+	H = H * c(1,sqrt(3)/3,sqrt(3)/3,sqrt(2),sqrt(2),1,sqrt(6)/3,sqrt(6)/3,2)
+	B = EQ$mat %*% t(H)
+
+	EQ = MRT_eq(U, mat=B)
+
+	
+
+	f = PV(Density$name[Density$group=='f'])
+	rho = PV("rho")
+	J = PV("J",c("x","y"))
+    u = PV(c("u.x","u.y"))
+
+
+    BC_Velocity=PV(c('VelocityX', 'VelocityY'))
+# things related to h
+    h  = PV(Density$name[Density$group=='h'])
+    pf = PV("pf")
+    n = PV(c("n.x","n.y"))
+    W = PV("IntWidth")	
+    n = c(PV('n.x'),PV('n.y'))
+    
+    # EQ_h = MRT_eq(U,mat=B)
+    # EQ_h$feq = ( subst( subst(EQ_h$feq, Jx = rho*PV('u.x'), Jy = rho*PV('u.y')), rho=pf ) )
+     
+    Mobility = PV("Mobility")
+    # Bh = 3*Mobility * (1.-4.*pf*pf)*W 
+
+    # EQ_h$feq = EQ_h$feq +  Bh * wi * n %*% t(U)
+    # EQ_h$Req = EQ_h$feq %*% EQ_h$mat  
+    UN = t(U[1:9,])
+    phis = PV(paste('phi(',UN[1,],',',UN[2,],')'))   
+    
+    
+    k01 = PV("k01")
+    k10 = PV("k10")
+
+##########################################################################
+# Calculating equlibrium density set
+
+	EQ_NO = MRT_eq(U, rho, J, ortogonal=FALSE, order=12);
+	
+	get.M.matrix = function(a) {
+	  an = lapply(a@vec,names)
+	  an = unique(do.call(c,an))
+	  an = setdiff(an,".M")
+	  ret = lapply(a@vec,function(p) { nan = setdiff(an,names(p)); p[,nan] = 0; p})
+	  n = length(ret)
+	  for (i in seq_len(n)) names(ret[[i]])[names(ret[[i]]) == ".M"] = paste0(".M",i)
+	  m=ret[[1]]
+	  for (i in seq_len(n-1)+1) m = merge(x=m,y=ret[[i]],all=TRUE,suffixes = c("a","b"))
+	  m[is.na(m)] = 0
+	  as.matrix(m[,paste0(".M",1:n)])
+	}
+	
+
+
+	M = EQ_NO$mat
+	  if (Options$TRT) {
+	  } else if (Options$BGK) {
+	  	M = diag(nrow(M))
+	  } else if (Options$WMRT) {
+		A = get.M.matrix(EQ_NO$Req)
+		R = diag(nrow = ncol(A))
+		R[1:nrow(A),] = qr.R(qr(A))
+		R = R / diag(R)
+		M = EQ_NO$mat %*% solve(R)
+	  } else {
+	  }
+
+	
+	if (Options$HiOrd) {
+		EQ = MRT_eq(U, rho, J, ortogonal=FALSE, order=12,mat=M);
+		EQ_H = MRT_eq(U, pf, u*pf, ortogonal=FALSE, order=12,mat=M);
+	} else {
+		EQ = MRT_eq(U, rho, J, ortogonal=FALSE, mat=M);
+		EQ_H = MRT_eq(U, pf, u*pf, ortogonal=FALSE, mat=M);
+	}
+
+
+#############################################
+### END CONFIG
+#############################################
+
+?>
+//################################################################################################
+//Helper functions 
+//################################################################################################
+
+CudaDeviceFunction real_t evalOmega(const real_t _pf){
+    <?R if (!Options$ViscositySmooth) { ?>
+        real_t omega = _pf > 0 ? omega_plus : omega_minus;
+    <?R } else { ?>
+
+        const real_t mu_minus = nu_minus * (-0.5);
+        const real_t mu_plus = nu_plus * 0.5;
+        const real_t mu =  ( mu_l +  (_pf - 0.5) * (mu_minus - mu_plus) / (-0.5 - 0.5  + 1E-16) );
+        real_t omega = 1.0/( 3. * mu / 1. + 0.5);
+    <?R } ?>
+    return omega;
+}
+
+CudaDeviceFunction vector_t realGetF() {
+    vector_t F;
+    F.x = 0;
+    F.y = 0;
+    F.z = 0;
+    return F;
+}
+
+//################################################################################################
+// Export-only functions
+//################################################################################################
+
+#define pi 3.141592653589793116
+
+CudaDeviceFunction real_t getRho(){
+	return <?R C(sum(f)) ?> ;
+}
+    
+CudaDeviceFunction real_t getPhaseField(){
+	return <?R C(sum(h)) ?> ;
+}
+<?R if (TRUE) { ?>
+CudaDeviceFunction void CalcPhi(){
+    phi = getPhaseField();
+}
+<?R } ?>
+
+//only for paraview: do not use, inefficient!!
+CudaDeviceFunction vector_t getDEBUG(){
+    return getNormal();
+
+}
+
+
+
+CudaDeviceFunction vector_t getU(){
+	real_t d = <?R C(sum(f)) ?>;
+	vector_t u;
+<?R C( PV(c("u.x","u.y")), f %*% U ) ?>
+<?R C( PV(c("const real_t pf")), sum(h) ) ?>
+	u.x /= d;
+	u.y /= d;
+	u.z = 0.0;
+
+    real_t GravitationX = pf > 0 ? GravitationX_plus : GravitationX_minus;
+    real_t GravitationY = pf > 0 ? GravitationY_plus : GravitationY_minus;
+
+    u.x += GravitationX * 0.5;
+    u.y += GravitationY * 0.5;
+
+	return u;
+}
+
+CudaDeviceFunction vector_t getNormal(){
+    real_t k01, k10;
+    vector_t n;
+    n.z = 0;
+    <?R
+    if (TRUE){
+        ee_x = U[,1] * wi  
+        ee_y = U[,2] * wi
+    
+        C(k10, 3*sum(phis%*%ee_x) )
+        C(k01, 3*sum(phis%*%ee_y) )
+    } else {
+
+        ?> 
+        
+        vector_t u = getU();
+        if ( PF_Advection_Switch == 0 ){
+            u.x = 0;
+            u.y = 0;
+        }       
+        
+        <?R
+        ee_x = u[1] - U[,1]
+        ee_y = u[2] - U[,2]
+    
+        C(k10, sum(h%*%ee_x) )
+        C(k01, sum(h%*%ee_y) )
+    }
+    ?>
+    real_t ln = sqrt(k10*k10 + k01*k01);    
+    if (ln == 0.){
+        n.x = 0.;
+        n.y = 0.;
+    } else {
+        n.x = k10 / ln;
+        n.y = k01 / ln;
+    }
+    return n;
+
+}
+
+
+
+CudaDeviceFunction float2 Color() {
+        float2 ret;
+        vector_t u = getU();
+        ret.x = sqrt(u.x*u.x + u.y*u.y);
+        if (NodeType == NODE_Solid){
+                ret.y = 0;
+        } else {
+                ret.y = 1;
+        }
+        return ret;
+}
+
+
+//################################################################################################
+// Init functions
+//################################################################################################
+
+
+
+CudaDeviceFunction void Init() {
+	real_t rho, Jx, Jy, C;
+	rho = (1+Pressure*3);
+	Jy = rho*VelocityY;
+	Jx = rho*VelocityX;
+    C = PhaseField; 
+
+
+<?R
+#	feq = EQ$Req %*% solve(EQ$mat)
+	C( f, EQ$feq)
+    C( h,  PV('PhaseField') * wi  )
+
+?>
+    vector_t u,n;
+    n.x = 0;
+    n.y = 0;
+}
+
+
+//################################################################################################
+// BC handling functions
+//################################################################################################
+
+<?R 
+# define standard ZueHe BC's
+bc_node_names = c("EVelocity" , "WVelocity", "EPressure", "WPressure", "NPressure", "SPressure")
+bc_node_directions = rbind(c(1,0), c(-1,0), c(1,0), c(-1,0), c(0,1), c(0,-1))
+bc_node_utype = c("velocity","velocity", "pressure", "pressure", "pressure", "pressure")
+
+?>
+
+
+CudaDeviceFunction void Run() {
+    switch (NodeType & NODE_BOUNDARY) {
+	case NODE_Solid:
+	case NODE_Wall:
+		BounceBack();
+		break;
+/// START AUTOGENERATED BC
+<?R
+for (i in seq(1,length(bc_node_names))){
+?>
+	case NODE_<?%s bc_node_names[i] ?>:
+		<?%s bc_node_names[i] ?>();
+		break;
+<?R
+    }
+?>
+    }
+/// END AUTOGENERATED BC
+    if (NodeType & NODE_MRT)
+    {
+		CollisionMRT();
+    }
+}
+
+CudaDeviceFunction void BounceBack()
+{
+<?R FullBounceBack() ?>
+}
+
+<?R
+
+for (i in seq(1,length(bc_node_names))){
+    ?>
+        CudaDeviceFunction void <?%s bc_node_names[i] ?>()
+        {
+            {
+        <?R 
+            if (bc_node_utype[i] == 'velocity'){
+                ZouHeRewrite(EQ,   f, bc_node_directions[i,], type=bc_node_utype[i], BC_Velocity)
+            } else {
+                ZouHeRewrite(EQ,   f, bc_node_directions[i,], type=bc_node_utype[i])
+            }
+        ?>
+            }
+            {
+        <?R
+            ZouHeRewrite(EQ_H, h, c(1,0), type="pressure", rhs=PV('PhaseField'))
+        ?>
+            }
+        }
+    <?R
+}
+?>
+
+
+//################################################################################################
+// Collision handling functions
+//################################################################################################
+
+
+CudaDeviceFunction void CollisionMRT()
+{	
+<?R
+	
+  Omega = PV(rep("omega",nrow(U)))
+  if (Options$TRT) {
+	Omega[EQ$order %% 2 == 1] = PV("omega2")
+  } else if (Options$BGK) {
+  
+  } else if (Options$WMRT) {
+
+  } else {
+  	Omega[EQ$order > 2] = PV(1)
+  }
+
+  if (any(EQ$order < 2)) Omega[EQ$order < 2] = PV(1)
+  
+
+  meq = EQ$Req
+  
+  if (Options$FMT) {
+	I = do.call(expand.grid,list(0:2,0:2))
+	M = do.call(PV,c("f",unclass(I)))
+	sel = ToC(M) %in% ToC(f)
+	FMT(I, M, sel)
+	m = M[sel]
+	m = m[EQ_NO$canonical]
+	C(m, m %*% solve(EQ_NO$mat) %*% EQ$mat)
+  } else {
+  	m = PV("m",1:ncol(EQ$mat)-1)
+  	cat("real_t",paste(ToC(m),collapse=","),";\n")
+  	C(m, f %*% EQ$mat)
+  }
+
+?>
+	real_t rho, Jx, Jy, pf;
+<?R
+  C(PV(c("rho","Jx","Jy")), m %*% solve(EQ$mat) %*% cbind(1,U))
+  C(PV(c("pf")), sum(h))
+?>
+    vector_t u;
+    u.x = Jx /rho;
+    u.y = Jy /rho;
+    u.z = 0;
+	real_t omega = evalOmega(pf);
+	real_t omega2 = (2.0 - omega)/(1 + 2*(Magic-0.25)*omega);
+<?R
+
+  C(m, m - meq)
+  C(m, m*(1-Omega))
+
+
+?>  
+  vector_t F = realGetF();
+  real_t GravitationX = pf > 0 ? GravitationX_plus : GravitationX_minus;
+  real_t GravitationY = pf > 0 ? GravitationY_plus : GravitationY_minus;
+
+  Jx = Jx + F.x + (GravitationX*rho);
+  Jy = Jy + F.y + (GravitationY*rho); 
+// This is equall to  EDM (but faster): C(m, (m - meq)*(1-Omega) + meg + meq_du - meq )
+<?R 
+  C(m, m + meq)
+
+  if (Options$FMT) {
+	C(m, m %*% solve(EQ$mat) %*% EQ_NO$mat)
+	FMT(I, M, sel, inverse = TRUE)
+  } else {
+  	C(f, m %*% solve(EQ$mat))
+  }
+?>
+//////////////////////////////////////////////////////
+// COLLIDE H
+//////////////////////////////////////////////////////
+real_t omega_ph =  1./( 3 * Mobility + 0.5); 
+real_t omega_ph2 = (2.0 - omega_ph)/(1 + 2*(Magic-0.25)*omega_ph);
+vector_t n = getNormal(); // #TODO
+<?R
+    
+    Omega = PV(rep("omega_ph",nrow(U)))
+    if (Options$TRT) {
+    Omega[EQ_H$order %% 2 == 1] = PV("omega_ph2")
+    } else if (Options$BGK) {
+
+    } else if (Options$WMRT) {
+
+    } else {
+    Omega[EQ_H$order > 2] = PV(1)
+    }
+
+    if (any(EQ_H$order < 2)) Omega[EQ_H$order < 2] = PV(1)
+
+    Omega = PV(rep("omega_ph",nrow(U)))
+    
+    #EQ_H = MRT_eq(U, pf, u*pf, ortogonal=FALSE,mat=M);
+    pvzero = PV('a') - PV('a')
+    pvone = 1 + pvzero 
+    #CounterDiffusiveSourceTerm
+    wi = MRT_eq(U, pvone, c(pvzero, pvzero), ortogonal=FALSE,mat=M)$feq;
+    CDST = 3*Mobility * (1.-4.*pf*pf)* W  * wi * n %*% t(U)
+    #EQ_H$feq = EQ_H$feq + CDST 
+    EQ_H$Req =  EQ_H$Req + CDST %*% EQ_H$mat
+    meq = EQ_H$Req
+
+    #C(tmp,CDST %*% EQ_H$mat) gives:
+    #tmp[1] = ( 1 - pf*pf*4. )*n.x*IntWidth*Mobility;
+    #tmp[2] = ( 1 - pf*pf*4. )*n.y*IntWidth*Mobility;
+    #tmp[i] = 0
+
+    C(m, h %*% EQ_H$mat)
+    C(m, m - meq)
+    C(m, m*(1-Omega))
+
+ #TODO   #if (Options$EDM_H == TRUE){
+    if(FALSE){
+    } else {
+        dH = CDST %*% EQ_H$mat
+    }
+
+  C(m, m + meq )
+  C(h, m %*% solve(EQ_H$mat))
+
+?>
+}
