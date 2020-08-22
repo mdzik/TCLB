@@ -409,28 +409,46 @@ vector_t n = getNormal(); // #TODO
 <?R
     
     Omega = PV(rep("omega_ph",nrow(U)))
-    if (Options$TRT) {
-    Omega[EQ_H$order %% 2 == 1] = PV("omega_ph2")
-    } else if (Options$BGK) {
+    # if (Options$TRT) {
+    #     Omega[EQ_H$order %% 2 == 1] = PV("omega_ph2")
+    # } else if (Options$BGK) {
 
-    } else if (Options$WMRT) {
+    # } else if (Options$WMRT) {
 
-    } else {
-    Omega[EQ_H$order > 2] = PV(1)
-    }
+    # } else {
+    #     Omega[EQ_H$order > 2] = PV(1)
+    # }
 
-    if (any(EQ_H$order < 2)) Omega[EQ_H$order < 2] = PV(1)
+    if (any(EQ_H$order < 1)) Omega[EQ_H$order < 1] = PV(1)
+    if (any(EQ_H$order > 1)) Omega[EQ_H$order > 1] = PV(1)
 
-    Omega = PV(rep("omega_ph",nrow(U)))
     
     #EQ_H = MRT_eq(U, pf, u*pf, ortogonal=FALSE,mat=M);
     pvzero = PV('a') - PV('a')
     pvone = 1 + pvzero 
     #CounterDiffusiveSourceTerm
     wi = MRT_eq(U, pvone, c(pvzero, pvzero), ortogonal=FALSE,mat=M)$feq;
-    CDST = 3*Mobility * (1.-4.*pf*pf)* W  * wi * n %*% t(U)
-    #EQ_H$feq = EQ_H$feq + CDST 
-    EQ_H$Req =  EQ_H$Req + CDST %*% EQ_H$mat
+    CDST0 = 3*Mobility * (1.-4.*pf*pf)* W  * wi * n %*% t(U)
+
+    # CDST_HO = MRT_eq(U, pvone, n, order=4, ortogonal=FALSE)  
+    # CDST_HO_Zero = MRT_eq(U, pvone, c(pvzero, pvzero), order=4, ortogonal=FALSE)  
+
+    # CDST_HO$Req = CDST_HO$Req - CDST_HO_Zero$Req
+    # CDST_HO$feq = CDST_HO$Req %*% solve(CDST_HO$mat)
+
+    # CDST_HO =  Mobility * (1.-4.*pf*pf)* W  * CDST_HO$feq
+    #CDST = CDST_HO
+    
+    #dU = c(PV("F.x"),PV("F.x")) #TODO
+    #C(dU, CDST0 %*% U)
+    #EQ_H = MRT_eq(U, pf, u*pf+dU, ortogonal=FALSE, mat=M);
+   
+    #C(tmp,CDST-CDST_HO)
+     
+    EQ_H$feq = EQ_H$feq + CDST0 
+    EQ_H$Req =  EQ_H$Req + CDST0 %*% EQ_H$mat
+    
+    
     meq = EQ_H$Req
 
     #C(tmp,CDST %*% EQ_H$mat) gives:
@@ -443,10 +461,10 @@ vector_t n = getNormal(); // #TODO
     C(m, m*(1-Omega))
 
  #TODO   #if (Options$EDM_H == TRUE){
-    if(FALSE){
-    } else {
-        dH = CDST %*% EQ_H$mat
-    }
+ #   if(FALSE){
+ #   } else {
+ #       dH = CDST0%*% EQ_H$mat
+ #   }
 
   C(m, m + meq )
   C(h, m %*% solve(EQ_H$mat))

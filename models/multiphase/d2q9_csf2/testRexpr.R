@@ -18,8 +18,29 @@ wi = MRT_eq(U, pvone, c(pvzero, pvzero), ortogonal=FALSE)$feq;
 
 #wi = as.vector(wi)
 #CounterDiffusiveSourceTerm
-CDST = 3*mob * (1.-4.*pf*pf)* W  * wi * n %*% t(U)
-C(tmp,CDST %*% EQ_H$mat)
+CDST0 = 3*Mobility * (1.-4.*pf*pf)* W  * wi * n %*% t(U)
+
+CDST_HO = MRT_eq(U, pvone, n, order=3, ortogonal=FALSE)  
+CDST_HO_Zero = MRT_eq(U, pvone, c(pvzero, pvzero), order=3, ortogonal=FALSE)  
+
+CDST_HO$Req = CDST_HO$Req - CDST_HO_Zero$Req
+CDST_HO$feq = CDST_HO$Req %*% solve(CDST_HO$mat)
+C(tmp,CDST_HO$Req)
+
+EQ_H_int = MRT_eq(U, pf, u*pf + , ortogonal=FALSE);
+
+
+#EDM: C(m, (m - meq)*(1-Omega) + meg + meq_du - meq )
+
+EQ_H_dU = MRT_eq(U, pf, dU, ortogonal=FALSE);
+
+C(tmp, EQ_H$Req - EQ_H_dU$Req)
+
+
+EQ_H$feq = EQ_H$feq + CDST 
+EQ_H$Req =  EQ_H$feq * EQ_H$mat
+
+C(tmp,CDST %*% U)
 
 C(tmp,EQ_H$Req)
 
