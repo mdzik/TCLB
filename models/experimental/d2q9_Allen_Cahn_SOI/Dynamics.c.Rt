@@ -1,0 +1,212 @@
+// Model for solving the spatial Allen Cahn equation.
+// This model is to compare first (Euler) and second (Trapezoidal) integration scheme for the source term, Q=lambda*phi*(1-phi^2)
+// phi' =  M*lap(phi) + lambda*phi*(1-phi^2)
+// phi' =  M *(phi_xx + phi_yy) + lambda*phi*(1-phi^2)
+// maintainer: Grzegorz Gruszczynski @ggruszczynski
+
+<?R  
+	source("conf.R")
+	c_header();
+	source("lib/boundary.R")
+
+  	f = PV(DensityAll$name[DensityAll$group=="f"])
+
+?>
+
+
+CudaDeviceFunction float2 Color() {
+  float2 ret;
+  ret.x = <?R C(sum(f)) ?>;
+  ret.y = 0;
+  return ret;
+}
+
+// ------------------------ PARAVIEW OUTPUT BLOCK ------------------------
+// Use this functions is only for vtk output.
+// Nodes are created using streamed, post-collision DF.
+// RunBoundaries are called in orded to assign the desired value at the boundary.
+// It can make a difference in convergence study and nicer preview.
+
+CudaDeviceFunction real_t getPhaseField() {
+	RunBoundaries();
+	return (<?R C(sum(f)) ?>);
+}
+
+
+// ------------------------ END OF PARAVIEW OUTPUT BLOCK ------------------------
+
+
+
+CudaDeviceFunction void PhaseFieldSmoothing(){
+	// real_t lap_pf = phaseField(-1,0) + phaseField(1,0) + phaseField(0,-1) + phaseField(0,1) - 4*phaseField(0,0);
+	// real_t temp = phase_field_smoothing_coeff * phase_field_smoothing_coeff * lap_pf;
+	// phaseField = phaseField(0,0) + temp;
+}
+
+CudaDeviceFunction void Init() { 
+	// phaseField = Init_PhaseField;
+	
+	// if ((NodeType & NODE_IMAGE) == NODE_ImageReader){
+	// 	// phaseField = (real_t)gray_scale_intensity*Init_PhaseField;
+	// 	phaseField = (real_t)gray_scale_intensity;
+	// }
+	
+	// Init_eq(phaseField);
+
+
+	real_t pf = Init_PhaseField;
+	Init_eq(0.123); // TODO: HACK
+}
+
+
+
+CudaDeviceFunction void RunBoundaries()
+{	
+	// phaseField = phaseField(0,0);
+
+	// switch (NodeType & NODE_BOUNDARY) {
+	// 	case NODE_Wall:
+	// 		BounceBack();
+	// 		break;
+	// 	case NODE_DirichletEQ:  		
+	// 		// equilibrium scheme for BC - don't care and impose rho*Teq
+	// 		// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
+	// 		// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+	// 		Init_eq(phaseField); 
+	// 		break; 
+	// }
+}
+
+CudaDeviceFunction void Run() {
+	real_t omega_phi_soi=1.0/(3*diffusivity_phi+0.5);
+	relax_and_collide_MRT_SOI(omega_phi_soi);
+
+	// if ((NodeType & NODE_ADDITIONALS) == NODE_Smoothing){
+	// 	PhaseFieldSmoothing();
+	// 	Init_eq(phaseField);
+	// }
+	// else{
+	// 	//RunBoundaries(); // keep in mind that populationDensity = populationDensity(0,0); needs to be called before collision
+	// 	switch (NodeType & NODE_COLLISION) {    
+	// 		case NODE_MRT_FOI:
+	// 			real_t omega_phi_foi=1.0/(3*diffusivity_phi+0.5);
+	// 			relax_and_collide_MRT_FOI(omega_phi_foi);
+	// 			break;
+	// 		case NODE_MRT_SOI:
+	// 			real_t omega_phi_soi=1.0/(3*diffusivity_phi+0.5);
+	// 			relax_and_collide_MRT_SOI(omega_phi_soi);
+	// 			break;
+	// 	}
+
+	// 	AddToPhaseFieldIntegral(<?R C(sum(f)) ?>);   
+	// }
+ }
+
+ CudaDeviceFunction void BounceBack()
+ {
+	<?R 
+		FullBounceBack()
+   	?> 
+ }
+
+ CudaDeviceFunction void Init_eq(real_t Init_Phi) 
+ {
+	 //=== THIS IS AUTOMATICALLY GENERATED CODE ===
+	 real_t Sigma2 = 0.1111111111111111111111111111111111113333333333333333;  // TODO: HACK
+	 //equilibrium in raw moment space
+	 real_t f_eq_000 = Init_Phi;
+	 real_t f_eq_100 = 0;
+	 real_t f_eq_010 = 0;
+	 real_t f_eq_200 = Init_Phi*Sigma2;
+	 real_t f_eq_020 = Init_Phi*Sigma2;
+	 real_t f_eq_110 = 0;
+	 real_t f_eq_210 = 0;
+	 real_t f_eq_120 = 0;
+	 real_t f_eq_220 = Init_Phi*Sigma2*Sigma2;
+	 //back to density-probability functions
+	 f000 = f_eq_000 - f_eq_020 - f_eq_200 + f_eq_220;
+	 f100 = 1/2.*f_eq_100 - 1/2.*f_eq_120 + 1/2.*f_eq_200 - 1/2.*f_eq_220;
+	 f200 = -1/2.*f_eq_100 + 1/2.*f_eq_120 + 1/2.*f_eq_200 - 1/2.*f_eq_220;
+	 f010 = 1/2.*f_eq_010 + 1/2.*f_eq_020 - 1/2.*f_eq_210 - 1/2.*f_eq_220;
+	 f110 = 1/4.*f_eq_110 + 1/4.*f_eq_120 + 1/4.*f_eq_210 + 1/4.*f_eq_220;
+	 f210 = -1/4.*f_eq_110 - 1/4.*f_eq_120 + 1/4.*f_eq_210 + 1/4.*f_eq_220;
+	 f020 = -1/2.*f_eq_010 + 1/2.*f_eq_020 + 1/2.*f_eq_210 - 1/2.*f_eq_220;
+	 f120 = -1/4.*f_eq_110 + 1/4.*f_eq_120 - 1/4.*f_eq_210 + 1/4.*f_eq_220;
+	 f220 = 1/4.*f_eq_110 - 1/4.*f_eq_120 - 1/4.*f_eq_210 + 1/4.*f_eq_220;
+ }
+ 
+// CudaDeviceFunction void relax_and_collide_MRT_FOI(real_t omega_ade) 
+// {
+
+// }
+
+ 
+CudaDeviceFunction void relax_and_collide_MRT_SOI(real_t omega_ade) 
+{
+	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
+	real_t Sigma2 = 0.3333333333333333;
+	real_t tilde_phi = f000 + f010 + f020 + f100 + f110 + f120 + f200 + f210 + f220;
+	
+	const real_t dt = 1.;
+	real_t phi;
+	const real_t  x0 = cbrt(3.) ; // 2
+	const real_t  x1 = 1/(dt*lambda) ; // 2
+	const real_t  x2 = dt*lambda - 2 ; // 2
+	const real_t  x3 = cbrt(-9*tilde_phi*x1 + sqrt(3.)*sqrt((27*pow(tilde_phi, 2) - x1*pow(x2, 3))/(pow(dt, 2)*pow(lambda, 2)))) ; // 19
+	phi = -1.0/3.0*x0*(x0*x1*x2 + pow(x3, 2))/x3 ; // 8
+	real_t Q;
+	Q = lambda*phi*(1 - pow(phi, 2)) ; // 4
+	Q = 0;  // TODO: HACK
+	real_t temp000;
+	real_t temp100;
+	real_t temp010;
+	real_t temp200;
+	real_t temp020;
+	real_t temp110;
+	real_t temp210;
+	real_t temp120;
+	real_t temp220;
+	 //--- processing f ---
+	temp000 = f000;
+	temp100 = f100;
+	temp010 = f010;
+	temp200 = f200;
+	temp020 = f020;
+	temp110 = f110;
+	temp210 = f210;
+	temp120 = f120;
+	temp220 = f220;
+	//raw moments from density-probability functions
+	f000 = temp000 + temp010 + temp020 + temp100 + temp110 + temp120 + temp200 + temp210 + temp220;
+	f100 = temp100 + temp110 + temp120 - temp200 - temp210 - temp220;
+	f010 = temp010 - temp020 + temp110 - temp120 + temp210 - temp220;
+	f200 = temp100 + temp110 + temp120 + temp200 + temp210 + temp220;
+	f020 = temp010 + temp020 + temp110 + temp120 + temp210 + temp220;
+	f110 = temp110 - temp120 - temp210 + temp220;
+	f210 = temp110 - temp120 + temp210 - temp220;
+	f120 = temp110 + temp120 - temp210 - temp220;
+	f220 = temp110 + temp120 + temp210 + temp220;
+	//collide
+	//collide-SOI
+	real_t f_star_000 = Q + tilde_phi;
+	real_t f_star_100 = -f100*(omega_ade - 1.);
+	real_t f_star_010 = -f010*(omega_ade - 1.);
+	real_t f_star_200 = Sigma2*(Q + tilde_phi);
+	real_t f_star_020 = Sigma2*(Q + tilde_phi);
+	real_t f_star_110 = 0;
+	real_t f_star_210 = -f210*(omega_ade - 1.);
+	real_t f_star_120 = -f120*(omega_ade - 1.);
+	real_t f_star_220 = Sigma2*Sigma2*(Q + tilde_phi);
+	//back to density-probability functions
+	f000 = f_star_000 - f_star_020 - f_star_200 + f_star_220;
+	f100 = 1/2.*f_star_100 - 1/2.*f_star_120 + 1/2.*f_star_200 - 1/2.*f_star_220;
+	f200 = -1/2.*f_star_100 + 1/2.*f_star_120 + 1/2.*f_star_200 - 1/2.*f_star_220;
+	f010 = 1/2.*f_star_010 + 1/2.*f_star_020 - 1/2.*f_star_210 - 1/2.*f_star_220;
+	f110 = 1/4.*f_star_110 + 1/4.*f_star_120 + 1/4.*f_star_210 + 1/4.*f_star_220;
+	f210 = -1/4.*f_star_110 - 1/4.*f_star_120 + 1/4.*f_star_210 + 1/4.*f_star_220;
+	f020 = -1/2.*f_star_010 + 1/2.*f_star_020 + 1/2.*f_star_210 - 1/2.*f_star_220;
+	f120 = -1/4.*f_star_110 + 1/4.*f_star_120 - 1/4.*f_star_210 + 1/4.*f_star_220;
+	f220 = 1/4.*f_star_110 - 1/4.*f_star_120 - 1/4.*f_star_210 + 1/4.*f_star_220;
+
+}
+

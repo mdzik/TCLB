@@ -24,11 +24,14 @@
 
 	</Geometry>
 	<Model>
-		<Param name="diffusivity" value="0.01666"/>
+		<Param name="diffusivity_s" value="0.01666"/>
+		<Param name="diffusivity_i" value="0.01666"/>
+		<Param name="diffusivity_r" value="0.01666"/>
+
         <Param name="omega_turb_multiplicator" value="0.1"/>
 		<Param name="sir_beta" value="5e-4"/><!-- s2i constant ->  infection rate -->
 		<Param name="sir_gamma" value="5e-5"/><!-- i2r constant -> 1/gamma is the mean infective period -->
-		<Param name="stability_enhancement" value="1."/>
+		<Param name="sigma2_tweaker" value="1."/>
 
 		<Param name="Init_S_Fraction" value="1" />		
 		<Param name="Init_I_Fraction" value="0" />
