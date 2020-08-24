@@ -263,9 +263,9 @@ CudaDeviceFunction void Init() {
 
 <?R 
 # define standard ZueHe BC's
-bc_node_names = c("EVelocity" , "WVelocity", "EPressure", "WPressure", "NPressure", "SPressure")
-bc_node_directions = rbind(c(1,0), c(-1,0), c(1,0), c(-1,0), c(0,1), c(0,-1))
-bc_node_utype = c("velocity","velocity", "pressure", "pressure", "pressure", "pressure")
+bc_node_names = c("EVelocity" , "WVelocity","SVelocity", "EPressure", "WPressure", "NPressure", "SPressure")
+bc_node_directions = rbind(c(1,0), c(-1,0),c(0,-1), c(1,0), c(-1,0), c(0,1), c(0,-1))
+bc_node_utype = c("velocity","velocity", "velocity", "pressure", "pressure", "pressure", "pressure")
 
 ?>
 
@@ -409,45 +409,25 @@ vector_t n = getNormal(); // #TODO
 <?R
     
     Omega = PV(rep("omega_ph",nrow(U)))
-    # if (Options$TRT) {
-    #     Omega[EQ_H$order %% 2 == 1] = PV("omega_ph2")
-    # } else if (Options$BGK) {
+    if (Options$TRT) {
+        Omega[EQ_H$order %% 2 == 0] = 1
+    } else if (Options$BGK) {
 
-    # } else if (Options$WMRT) {
+    } else if (Options$WMRT) {
 
-    # } else {
-    #     Omega[EQ_H$order > 2] = PV(1)
-    # }
+    } else {
+        Omega[EQ_H$order > 2] = PV(1)
+    }
 
-    if (any(EQ_H$order < 1)) Omega[EQ_H$order < 1] = PV(1)
-    if (any(EQ_H$order > 1)) Omega[EQ_H$order > 1] = PV(1)
+    if (any(EQ_H$order < 1)) Omega[EQ_H$order < 2] = PV(1)
+    Omega[EQ_H$order == 1] = PV("omega_ph")
 
-    
-    #EQ_H = MRT_eq(U, pf, u*pf, ortogonal=FALSE,mat=M);
     pvzero = PV('a') - PV('a')
     pvone = 1 + pvzero 
     #CounterDiffusiveSourceTerm
     wi = MRT_eq(U, pvone, c(pvzero, pvzero), ortogonal=FALSE,mat=M)$feq;
     CDST0 = 3*Mobility * (1.-4.*pf*pf)* W  * wi * n %*% t(U)
 
-    # CDST_HO = MRT_eq(U, pvone, n, order=4, ortogonal=FALSE)  
-    # CDST_HO_Zero = MRT_eq(U, pvone, c(pvzero, pvzero), order=4, ortogonal=FALSE)  
-
-    # CDST_HO$Req = CDST_HO$Req - CDST_HO_Zero$Req
-    # CDST_HO$feq = CDST_HO$Req %*% solve(CDST_HO$mat)
-
-    # CDST_HO =  Mobility * (1.-4.*pf*pf)* W  * CDST_HO$feq
-    #CDST = CDST_HO
-    
-    #dU = c(PV("F.x"),PV("F.x")) #TODO
-    #C(dU, CDST0 %*% U)
-    #EQ_H = MRT_eq(U, pf, u*pf+dU, ortogonal=FALSE, mat=M);
-   
-    #C(tmp,CDST-CDST_HO)
-     
-    EQ_H$feq = EQ_H$feq + CDST0 
-    EQ_H$Req =  EQ_H$Req + CDST0 %*% EQ_H$mat
-    
     
     meq = EQ_H$Req
 
@@ -460,14 +440,14 @@ vector_t n = getNormal(); // #TODO
     C(m, m - meq)
     C(m, m*(1-Omega))
 
- #TODO   #if (Options$EDM_H == TRUE){
- #   if(FALSE){
- #   } else {
- #       dH = CDST0%*% EQ_H$mat
- #   }
+    Omega[EQ_H$order < 1] = PV(1)
+    Omega[EQ_H$order > 1] = PV(1)
+    Omega[EQ_H$order == 1] = PV("omega_ph")
 
-  C(m, m + meq )
-  C(h, m %*% solve(EQ_H$mat))
+    C(m, m + Omega*(CDST0 %*% EQ_H$mat))
+
+    C(m, m + meq)
+    C(h, m %*% solve(EQ_H$mat))
 
 ?>
 }
