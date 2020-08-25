@@ -31,9 +31,9 @@ AddQuantity(name="FractionSum")
 AddQuantity(name="TotalNoOfIndividuals")
 
 #	Globals - table of global integrals that can be monitored and optimized
-AddGlobal(name="NoOfSuspected",       comment='Number of Suspected individuals', unit="")
-AddGlobal(name="NoOfInfected",        comment='Number of Infected individuals',  unit="")
-AddGlobal(name="NoOfRecovered",       comment='Number of Recovered individuals', unit="")
+AddGlobal(name="NoOfSuspected",       comment='Number of Suspected individuals', unit="1.")
+AddGlobal(name="NoOfInfected",        comment='Number of Infected individuals',  unit="1.")
+AddGlobal(name="NoOfRecovered",       comment='Number of Recovered individuals', unit="1.")
 
 #	Boundary things:
 AddNodeType(name="DirichletEQ",     group="BOUNDARY")
@@ -62,7 +62,7 @@ AddSetting(name="diffusivity_r",            default=0.16666666, comment='spacial
 AddSetting(name="sigma2_tweaker",           default=1.0,        comment='to modify the variance')
 AddSetting(name="omega_turb_multiplicator", default=0.0,        comment="extra diffusivity in locations with high population density")
 
-AddSetting(name="infectious_radius",        default=1,         comment="used in cross-MRT model")
+AddSetting(name="infectious_radius",        default=1.,         comment="used in cross-MRT model")
 AddSetting(name="cross_omega_limiter_low",  default=1.,        comment="used in cross-MRT model")
 AddSetting(name="cross_omega_limiter_high", default=2.,        comment="used in cross-MRT model")
 

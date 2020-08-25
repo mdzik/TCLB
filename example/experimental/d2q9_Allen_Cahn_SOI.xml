@@ -2,11 +2,11 @@
 <CLBConfig version="2.0" output="output/allen_cahn/">
 	<Geometry nx="512" ny="512">
 		<MRT_SOI><Box/></MRT_SOI>
-		<!-- <Smoothing><Box/></Smoothing> -->
+		<Smoothing><Box/></Smoothing>
 
 		<None name="city">
 			<!-- <Sphere dx="40" dy="40" nx="50" ny="50"/> -->
-			<Box dx="40" dy="40" nx="50" ny="50"/>
+			<Box dx="40" dy="40" nx="150" ny="150"/>
 		</None>
 
 
@@ -22,6 +22,6 @@
     </Model>
     <Solve Iterations="10"><VTK Iterations="1"/></Solve>
 	<!-- <Solve Iterations="100"><VTK Iterations="10"/></Solve> -->	<!-- Smoothing the population -->
-	<!-- <Geometry><None mask="ADDITIONALS"><Box nx="512" ny="512"/></None></Geometry> -->
+	<Geometry><None mask="ADDITIONALS"><Box nx="512" ny="512"/></None></Geometry>
 	<Solve Iterations="2000"><VTK Iterations="100"/></Solve>
 </CLBConfig>

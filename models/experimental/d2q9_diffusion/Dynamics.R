@@ -15,11 +15,11 @@ AddDensity(
 )
 
 # 	Outputs:
-AddQuantity(name="PhaseField", unit="")
+AddQuantity(name="PhaseField", unit="1.")
 
 #	Boundary things:
 AddNodeType(name="SRT",	        group="COLLISION")
 
 # Inputs: Flow Properties
-AddSetting(name="diffusivity_phi",      default=0.02, comment='Mobility')
-AddSetting(name="Init_PhaseField",   zonal=TRUE)
+AddSetting(name="diffusivity_phi",	default=0.02, comment='Mobility')
+AddSetting(name="Init_PhaseField",		zonal=TRUE)

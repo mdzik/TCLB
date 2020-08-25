@@ -16,8 +16,8 @@
 
 CudaDeviceFunction float2 Color() {
   float2 ret;
-  ret.x = <?R C(sum(f)) ?>;
-  ret.y = 0;
+  ret.x = 0;
+  ret.y = <?R C(sum(f)) ?>;
   return ret;
 }
 
@@ -28,29 +28,20 @@ CudaDeviceFunction float2 Color() {
 // It can make a difference in convergence study and nicer preview.
 
 CudaDeviceFunction real_t getPhaseField() {
-	// return <?R C(sum(f)) ?>;
-	return Init_PhaseField;
+	return <?R C(sum(f)) ?>;
 }
 
-
 // ------------------------ END OF PARAVIEW OUTPUT BLOCK ------------------------
-
-
-
-
 
 CudaDeviceFunction void Init() { 
 	real_t pf = Init_PhaseField;
 	Init_eq(pf);
 }
 
-
-
 CudaDeviceFunction void Run() {
 	real_t omega_phi_soi=1.0/(3*diffusivity_phi+0.5);
 	SRT(omega_phi_soi);
  }
-
 
  CudaDeviceFunction void Init_eq(real_t Init_Phi) 
  {
@@ -88,6 +79,4 @@ CudaDeviceFunction void SRT(real_t omega_ade)
 	f210 = f210 + omega_ade*(feq210-f210);
 	f120 = f120 + omega_ade*(feq120-f120);
 	f220 = f220 + omega_ade*(feq220-f220);
-
 }
-

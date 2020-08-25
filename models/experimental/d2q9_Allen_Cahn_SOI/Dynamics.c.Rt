@@ -13,11 +13,10 @@
 
 ?>
 
-
 CudaDeviceFunction float2 Color() {
   float2 ret;
-  ret.x = <?R C(sum(f)) ?>;
-  ret.y = 0;
+  ret.x = 0;
+  ret.y = <?R C(sum(f)) ?>;
   return ret;
 }
 
@@ -32,74 +31,61 @@ CudaDeviceFunction real_t getPhaseField() {
 	return (<?R C(sum(f)) ?>);
 }
 
-
 // ------------------------ END OF PARAVIEW OUTPUT BLOCK ------------------------
 
-
-
 CudaDeviceFunction void PhaseFieldSmoothing(){
-	// real_t lap_pf = phaseField(-1,0) + phaseField(1,0) + phaseField(0,-1) + phaseField(0,1) - 4*phaseField(0,0);
-	// real_t temp = phase_field_smoothing_coeff * phase_field_smoothing_coeff * lap_pf;
-	// phaseField = phaseField(0,0) + temp;
+	real_t lap_pf = phaseField(-1,0) + phaseField(1,0) + phaseField(0,-1) + phaseField(0,1) - 4*phaseField(0,0);
+	real_t temp = phase_field_smoothing_coeff * phase_field_smoothing_coeff * lap_pf;
+	phaseField = phaseField(0,0) + temp;
 }
 
 CudaDeviceFunction void Init() { 
-	// phaseField = Init_PhaseField;
+	phaseField = Init_PhaseField;
 	
-	// if ((NodeType & NODE_IMAGE) == NODE_ImageReader){
-	// 	// phaseField = (real_t)gray_scale_intensity*Init_PhaseField;
-	// 	phaseField = (real_t)gray_scale_intensity;
-	// }
+	if ((NodeType & NODE_IMAGE) == NODE_ImageReader){
+		// phaseField = (real_t)gray_scale_intensity*Init_PhaseField;
+		phaseField = (real_t)gray_scale_intensity;
+	}
 	
-	// Init_eq(phaseField);
-
-
-	real_t pf = Init_PhaseField;
-	Init_eq(0.123); // TODO: HACK
+	Init_eq(phaseField);
 }
-
-
 
 CudaDeviceFunction void RunBoundaries()
 {	
-	// phaseField = phaseField(0,0);
+	phaseField = phaseField(0,0);
 
-	// switch (NodeType & NODE_BOUNDARY) {
-	// 	case NODE_Wall:
-	// 		BounceBack();
-	// 		break;
-	// 	case NODE_DirichletEQ:  		
-	// 		// equilibrium scheme for BC - don't care and impose rho*Teq
-	// 		// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
-	// 		// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
-	// 		Init_eq(phaseField); 
-	// 		break; 
-	// }
+	switch (NodeType & NODE_BOUNDARY) {
+		case NODE_Wall:
+			BounceBack();
+			break;
+		case NODE_DirichletEQ:  		
+			// equilibrium scheme for BC - don't care and impose rho*Teq
+			// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
+			// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
+			Init_eq(phaseField); 
+			break; 
+	}
 }
 
 CudaDeviceFunction void Run() {
-	real_t omega_phi_soi=1.0/(3*diffusivity_phi+0.5);
-	relax_and_collide_MRT_SOI(omega_phi_soi);
+	if ((NodeType & NODE_ADDITIONALS) == NODE_Smoothing){
+		PhaseFieldSmoothing();
+		Init_eq(phaseField);
+	}
+	else{
+		switch (NodeType & NODE_COLLISION) {    
+			case NODE_MRT_FOI:
+				real_t omega_phi_foi=1.0/(3*diffusivity_phi+0.5);
+				relax_and_collide_MRT_FOI(omega_phi_foi);
+				break;
+			case NODE_MRT_SOI:
+				real_t omega_phi_soi=1.0/(3*diffusivity_phi+0.5);
+				relax_and_collide_MRT_SOI(omega_phi_soi);
+				break;
+		}
 
-	// if ((NodeType & NODE_ADDITIONALS) == NODE_Smoothing){
-	// 	PhaseFieldSmoothing();
-	// 	Init_eq(phaseField);
-	// }
-	// else{
-	// 	//RunBoundaries(); // keep in mind that populationDensity = populationDensity(0,0); needs to be called before collision
-	// 	switch (NodeType & NODE_COLLISION) {    
-	// 		case NODE_MRT_FOI:
-	// 			real_t omega_phi_foi=1.0/(3*diffusivity_phi+0.5);
-	// 			relax_and_collide_MRT_FOI(omega_phi_foi);
-	// 			break;
-	// 		case NODE_MRT_SOI:
-	// 			real_t omega_phi_soi=1.0/(3*diffusivity_phi+0.5);
-	// 			relax_and_collide_MRT_SOI(omega_phi_soi);
-	// 			break;
-	// 	}
-
-	// 	AddToPhaseFieldIntegral(<?R C(sum(f)) ?>);   
-	// }
+		AddToPhaseFieldIntegral(<?R C(sum(f)) ?>);   
+	}
  }
 
  CudaDeviceFunction void BounceBack()
@@ -112,7 +98,7 @@ CudaDeviceFunction void Run() {
  CudaDeviceFunction void Init_eq(real_t Init_Phi) 
  {
 	 //=== THIS IS AUTOMATICALLY GENERATED CODE ===
-	 real_t Sigma2 = 0.1111111111111111111111111111111111113333333333333333;  // TODO: HACK
+	 real_t Sigma2 = 0.3333333333333333;
 	 //equilibrium in raw moment space
 	 real_t f_eq_000 = Init_Phi;
 	 real_t f_eq_100 = 0;
@@ -135,10 +121,10 @@ CudaDeviceFunction void Run() {
 	 f220 = 1/4.*f_eq_110 - 1/4.*f_eq_120 - 1/4.*f_eq_210 + 1/4.*f_eq_220;
  }
  
-// CudaDeviceFunction void relax_and_collide_MRT_FOI(real_t omega_ade) 
-// {
+CudaDeviceFunction void relax_and_collide_MRT_FOI(real_t omega_ade) 
+{
 
-// }
+}
 
  
 CudaDeviceFunction void relax_and_collide_MRT_SOI(real_t omega_ade) 
@@ -207,6 +193,5 @@ CudaDeviceFunction void relax_and_collide_MRT_SOI(real_t omega_ade)
 	f020 = -1/2.*f_star_010 + 1/2.*f_star_020 + 1/2.*f_star_210 - 1/2.*f_star_220;
 	f120 = -1/4.*f_star_110 + 1/4.*f_star_120 - 1/4.*f_star_210 + 1/4.*f_star_220;
 	f220 = 1/4.*f_star_110 - 1/4.*f_star_120 - 1/4.*f_star_210 + 1/4.*f_star_220;
-
 }
 

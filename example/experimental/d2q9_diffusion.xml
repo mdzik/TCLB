@@ -2,16 +2,13 @@
 <CLBConfig version="2.0" output="output/diffusion/">
 	<Geometry nx="512" ny="512">
 		<SRT><Box/></SRT>
-
-		<None name="city">
+		<None name="special">
 			<Box dx="40" dy="40" nx="150" ny="150"/>
 		</None>
-
-
 	</Geometry>
 	<Model>
         <Param name="Init_PhaseField" value="0.1"/>
-		<Param name="Init_PhaseField" zone="city" value="0.7" />
+		<Param name="Init_PhaseField" zone="special" value="1.0" />
 		<Param name="diffusivity_phi" value="0.1666"/>
     </Model>
     <Solve Iterations="10"><VTK Iterations="1"/></Solve>
