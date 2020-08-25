@@ -34,12 +34,18 @@ if (Options$ExternalU != FALSE) {
     AddDensity( name="ExternalU[1]", group="ExternalU", parameter=TRUE)
 }
 
+AddField( name="nw_x", stencil2d=1, group="nw")
+AddField( name="nw_y", stencil2d=1, group="nw")
+
+
+
 AddField("phi"      ,stencil2d=1 );
 
 AddStage("BaseIteration", "Run", 
-            load=DensityAll$group == "h" | DensityAll$group == "f" | DensityAll$group == "BC",
-            save=Fields$group=="h" | Fields$group=="f"  
-        ) 
+         load=DensityAll$group == "f" | DensityAll$group == "h"| DensityAll$group == "HZ" | DensityAll$group == "BC",  
+         save=Fields$group=="f" | Fields$group=="h" | Fields$group=="nw" | Fields$group == "HZ" 
+) 
+
 AddStage("CalcPhi", 
             save=Fields$name=="phi" ,  
             load=DensityAll$group == "h"
@@ -52,6 +58,10 @@ AddStage("BaseInit", "Init",
 AddAction("Iteration", c("BaseIteration","CalcPhi"))
 AddAction("Init", c("BaseInit","CalcPhi"))
 
+AddStage("CalcWallNormall", "CalcNormal",   
+         save=Fields$group=="nw",
+         fixedPoint=TRUE
+) 
 
 # Quantities - table of fields that can be exported from the LB lattice (like density, velocity etc)
 #  name - name of the field
@@ -66,6 +76,10 @@ AddQuantity(name="U",unit="m/s",vector=T)
 AddQuantity(name="DEBUG",vector=T)
 
 AddQuantity(name="Normal",unit="1/m",vector=T)
+AddQuantity(name="Curvature",unit="1")
+AddQuantity(name="InterfaceForce", unit="1", vector=T)
+
+
 AddQuantity(name="PhaseField",unit="1")
 
 AddSetting(name="IntWidth", default=0.33333, comment='Interface width')
@@ -80,7 +94,11 @@ AddSetting(name="PhaseField",
 
 AddSetting(name="OverwriteVelocityField", default="0")
 AddSetting(name="PF_Advection_Switch", default=1., comment='Parameter to turn on/off advection of phase field - usefull for initialisation')
+AddSetting(name="SurfaceTensionDecay", default=0.248)
+AddSetting(name="SurfaceTensionRate", default=0.1)
 
+AddSetting(name="WettingAngle", default=0, zonal=T)
+AddSetting(name="WallAdhesionDecay", default=0, zonal=T)
 #########################################################
 
 
