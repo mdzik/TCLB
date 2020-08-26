@@ -16,15 +16,17 @@ AddDensity(
 
 # 	Outputs:
 AddQuantity(name="PhaseField", unit="1.")
+AddQuantity(name="Q", unit="1.")
 
 #	Globals - table of global integrals that can be monitored and optimized
 AddGlobal(name="PhaseFieldIntegral", comment='Total amount of phasefield', unit="1.")
 
 #	Boundary things:
 AddNodeType(name="DirichletEQ",     group="BOUNDARY")
-AddNodeType(name="ImageReader",     group="IMAGE") 
-AddNodeType(name="MRT_FOI",	        group="COLLISION")
-AddNodeType(name="MRT_SOI",	        group="COLLISION")
+AddNodeType(name="ImageReader",     group="IMAGE")
+AddNodeType(name="SRT_SOI_DF",	    group="COLLISION")
+AddNodeType(name="SRT_SOI",	        group="COLLISION")
+AddNodeType(name="TRT_SOI",	        group="COLLISION")
 
 # 	Inputs: Flow Properties
 AddSetting(name="diffusivity_phi",      default=0.02, comment='Mobility')
@@ -35,4 +37,4 @@ AddSetting(name="Init_PhaseField",   zonal=TRUE)
 #	CFD enhancements ;)
 AddField(name="phaseField",                 stencil2d=1)
 AddNodeType(name="Smoothing",               group="ADDITIONALS")  #  To smooth population density during initialization.
-AddSetting(name="phase_field_smoothing_coeff")     #  To smooth population density during initialization.
+AddSetting(name="phase_field_smoothing_coeff", default=0.)     #  To smooth population density during initialization.

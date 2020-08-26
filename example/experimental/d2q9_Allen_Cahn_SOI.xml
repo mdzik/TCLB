@@ -1,27 +1,34 @@
 <?xml version="1.0"?>
 <CLBConfig version="2.0" output="output/allen_cahn/">
 	<Geometry nx="512" ny="512">
-		<MRT_SOI><Box/></MRT_SOI>
+		<!-- <SRT_SOI_DF><Box/></SRT_SOI_DF> -->
+		<!-- <SRT_SOI><Box/></SRT_SOI>	 -->
+		<TRT_SOI><Box/></TRT_SOI>
 		<Smoothing><Box/></Smoothing>
 
 		<None name="city">
-			<!-- <Sphere dx="40" dy="40" nx="50" ny="50"/> -->
+			<!-- <Sphere dx="40" dy="40" nx="150" ny="150"/> -->
 			<Box dx="40" dy="40" nx="150" ny="150"/>
 		</None>
 
+		<None name="desert">
+			<!-- <Sphere dx="300" dy="340" nx="100" ny="100"/> -->
+			<Box dx="300" dy="340" nx="100" ny="100"/>
+		</None>
 
 	</Geometry>
 	<Model>
-		<Param name="diffusivity_phi" value="0.1666"/>
-		<Param name="lambda" value="0.4"/>
+		<Param name="diffusivity_phi" value="0.01666"/>
+		<Param name="lambda" value="0.1"/>
 
-		<Param name="Init_PhaseField" value="0.1" />	
-		<Param name="Init_PhaseField" zone="city" value="0.7" />
+		<Param name="Init_PhaseField" value="0.0" />	
+		<Param name="Init_PhaseField" zone="city" value="5.7" />
+		<Param name="Init_PhaseField" zone="desert" value="-0.7" />
 
-		<!-- <Param name="phase_field_smoothing_coeff" value="0.1"/> -->
+		<Param name="phase_field_smoothing_coeff" value="0.1"/>
     </Model>
-    <Solve Iterations="10"><VTK Iterations="1"/></Solve>
-	<!-- <Solve Iterations="100"><VTK Iterations="10"/></Solve> -->	<!-- Smoothing the population -->
+	<!-- Smoothing the population -->
+	<Solve Iterations="100"><VTK Iterations="10"/></Solve> 	
 	<Geometry><None mask="ADDITIONALS"><Box nx="512" ny="512"/></None></Geometry>
-	<Solve Iterations="2000"><VTK Iterations="100"/></Solve>
+	<Solve Iterations="1000"><VTK Iterations="100"/></Solve>
 </CLBConfig>

@@ -31,24 +31,26 @@ CudaDeviceFunction real_t getPhaseField() {
 	return (<?R C(sum(f)) ?>);
 }
 
+
+CudaDeviceFunction real_t getQ() 
+{	
+	RunBoundaries();
+	real_t tilde_phi = f000 + f010 + f020 + f100 + f110 + f120 + f200 + f210 + f220;
+
+	const real_t dt = 1.;
+	real_t phi;
+	const real_t  x0 = cbrt(3.) ; 
+	const real_t  x1 = 1/(dt*lambda) ; 
+	const real_t  x2 = dt*lambda - 2 ; 
+	const real_t  x3 = cbrt(-9*tilde_phi*x1 + sqrt(3.)*sqrt((27*pow(tilde_phi, 2) - x1*pow(x2, 3))/(pow(dt, 2)*pow(lambda, 2)))) ; 
+	phi = -1.0/3.0*x0*(x0*x1*x2 + pow(x3, 2))/x3 ;  
+	real_t Q;
+	Q = lambda*phi*(1 - pow(phi, 2)) ;
+
+	return Q;
+}
+
 // ------------------------ END OF PARAVIEW OUTPUT BLOCK ------------------------
-
-CudaDeviceFunction void PhaseFieldSmoothing(){
-	real_t lap_pf = phaseField(-1,0) + phaseField(1,0) + phaseField(0,-1) + phaseField(0,1) - 4*phaseField(0,0);
-	real_t temp = phase_field_smoothing_coeff * phase_field_smoothing_coeff * lap_pf;
-	phaseField = phaseField(0,0) + temp;
-}
-
-CudaDeviceFunction void Init() { 
-	phaseField = Init_PhaseField;
-	
-	if ((NodeType & NODE_IMAGE) == NODE_ImageReader){
-		// phaseField = (real_t)gray_scale_intensity*Init_PhaseField;
-		phaseField = (real_t)gray_scale_intensity;
-	}
-	
-	Init_eq(phaseField);
-}
 
 CudaDeviceFunction void RunBoundaries()
 {	
@@ -67,20 +69,40 @@ CudaDeviceFunction void RunBoundaries()
 	}
 }
 
+CudaDeviceFunction void PhaseFieldSmoothing(){
+	// this function is to smooth the boundaries after initialization.
+	real_t lap_pf = phaseField(-1,0) + phaseField(1,0) + phaseField(0,-1) + phaseField(0,1) - 4*phaseField(0,0);
+	real_t temp = phase_field_smoothing_coeff * phase_field_smoothing_coeff * lap_pf;
+	phaseField = phaseField(0,0) + temp;
+}
+
+CudaDeviceFunction void Init() { 
+	phaseField = Init_PhaseField;
+	
+	if ((NodeType & NODE_IMAGE) == NODE_ImageReader){
+		// phaseField = (real_t)gray_scale_intensity*Init_PhaseField;
+		phaseField = (real_t)gray_scale_intensity;
+	}
+	
+	Init_eq(phaseField);
+}
+
 CudaDeviceFunction void Run() {
 	if ((NodeType & NODE_ADDITIONALS) == NODE_Smoothing){
 		PhaseFieldSmoothing();
 		Init_eq(phaseField);
 	}
 	else{
-		switch (NodeType & NODE_COLLISION) {    
-			case NODE_MRT_FOI:
-				real_t omega_phi_foi=1.0/(3*diffusivity_phi+0.5);
-				relax_and_collide_MRT_FOI(omega_phi_foi);
+		real_t omega_phi_soi=1.0/(3*diffusivity_phi+0.5);
+		switch (NodeType & NODE_COLLISION) {
+			case NODE_SRT_SOI_DF:
+				relax_and_collide_SRT_DF_SOI(omega_phi_soi);
+				break;    
+			case NODE_SRT_SOI:
+				relax_and_collide_SRT_SOI(omega_phi_soi);
 				break;
-			case NODE_MRT_SOI:
-				real_t omega_phi_soi=1.0/(3*diffusivity_phi+0.5);
-				relax_and_collide_MRT_SOI(omega_phi_soi);
+			case NODE_TRT_SOI:
+				relax_and_collide_TRT_SOI(omega_phi_soi);
 				break;
 		}
 
@@ -120,29 +142,149 @@ CudaDeviceFunction void Run() {
 	 f120 = -1/4.*f_eq_110 + 1/4.*f_eq_120 - 1/4.*f_eq_210 + 1/4.*f_eq_220;
 	 f220 = 1/4.*f_eq_110 - 1/4.*f_eq_120 - 1/4.*f_eq_210 + 1/4.*f_eq_220;
  }
- 
-CudaDeviceFunction void relax_and_collide_MRT_FOI(real_t omega_ade) 
-{
 
+
+CudaDeviceFunction void relax_and_collide_SRT_DF_SOI(real_t omega_ade) 
+{
+	real_t tilde_phi = f000 + f010 + f020 + f100 + f110 + f120 + f200 + f210 + f220;
+
+	real_t Q = getQ();
+
+	real_t q000 = Q*4./9.;
+	real_t q100 = Q*1./9.;
+	real_t q200 = Q*1./9.;
+	real_t q010 = Q*1./9.;
+	real_t q110 = Q*1./36.;
+	real_t q210 = Q*1./36.;
+	real_t q020 = Q*1./9.;
+	real_t q120 = Q*1./36.;
+	real_t q220 = Q*1./36.;
+
+	real_t feq000 = tilde_phi*4./9.;
+	real_t feq100 = tilde_phi*1./9.;
+	real_t feq200 = tilde_phi*1./9.;
+	real_t feq010 = tilde_phi*1./9.;
+	real_t feq110 = tilde_phi*1./36.;
+	real_t feq210 = tilde_phi*1./36.;
+	real_t feq020 = tilde_phi*1./9.;
+	real_t feq120 = tilde_phi*1./36.;
+	real_t feq220 = tilde_phi*1./36.;
+
+	// alternatively_A
+	feq000 += q000/2.;
+	feq100 += q100/2.;
+	feq200 += q200/2.;
+	feq010 += q010/2.;
+	feq110 += q110/2.;
+	feq210 += q210/2.;
+	feq020 += q020/2.;
+	feq120 += q120/2.;
+	feq220 += q220/2.;
+
+	f000 = f000 + omega_ade*(feq000-f000);
+	f100 = f100 + omega_ade*(feq100-f100);
+	f010 = f010 + omega_ade*(feq010-f010);
+	f200 = f200 + omega_ade*(feq200-f200);
+	f020 = f020 + omega_ade*(feq020-f020);
+	f110 = f110 + omega_ade*(feq110-f110);
+	f210 = f210 + omega_ade*(feq210-f210);
+	f120 = f120 + omega_ade*(feq120-f120);
+	f220 = f220 + omega_ade*(feq220-f220);
+
+	// alternatively_B
+	// f000 += q000;
+	// f100 += q100;
+	// f010 += q010;
+	// f200 += q200;
+	// f020 += q020;
+	// f110 += q110;
+	// f210 += q210;
+	// f120 += q120;
+	// f220 += q220;
+
+	// alternatively_A
+	f000 += (1-omega_ade/2.)*q000;
+	f100 += (1-omega_ade/2.)*q100;
+	f010 += (1-omega_ade/2.)*q010;
+	f200 += (1-omega_ade/2.)*q200;
+	f020 += (1-omega_ade/2.)*q020;
+	f110 += (1-omega_ade/2.)*q110;
+	f210 += (1-omega_ade/2.)*q210;
+	f120 += (1-omega_ade/2.)*q120;
+	f220 += (1-omega_ade/2.)*q220;
+}
+
+CudaDeviceFunction void relax_and_collide_SRT_SOI(real_t omega_ade) 
+{
+		//=== THIS IS AUTOMATICALLY GENERATED CODE ===
+		real_t Sigma2 = 0.3333333333333333;
+		real_t tilde_phi = f000 + f010 + f020 + f100 + f110 + f120 + f200 + f210 + f220;
+		 
+		real_t Q = getQ();
+		// Q = 0;  
+	
+		real_t temp000;
+		real_t temp100;
+		real_t temp010;
+		real_t temp200;
+		real_t temp020;
+		real_t temp110;
+		real_t temp210;
+		real_t temp120;
+		real_t temp220;
+		 //--- processing f ---
+		temp000 = f000;
+		temp100 = f100;
+		temp010 = f010;
+		temp200 = f200;
+		temp020 = f020;
+		temp110 = f110;
+		temp210 = f210;
+		temp120 = f120;
+		temp220 = f220;
+		//raw moments from density-probability functions
+		f000 = temp000 + temp010 + temp020 + temp100 + temp110 + temp120 + temp200 + temp210 + temp220;
+		f100 = temp100 + temp110 + temp120 - temp200 - temp210 - temp220;
+		f010 = temp010 - temp020 + temp110 - temp120 + temp210 - temp220;
+		f200 = temp100 + temp110 + temp120 + temp200 + temp210 + temp220;
+		f020 = temp010 + temp020 + temp110 + temp120 + temp210 + temp220;
+		f110 = temp110 - temp120 - temp210 + temp220;
+		f210 = temp110 - temp120 + temp210 - temp220;
+		f120 = temp110 + temp120 - temp210 - temp220;
+		f220 = temp110 + temp120 + temp210 + temp220;
+		//collide
+		//collide-SOI
+		real_t f_star_000 = Q - f000*omega_ade + f000 + omega_ade*tilde_phi;
+		real_t f_star_100 = -f100*(omega_ade - 1.);
+		real_t f_star_010 = -f010*(omega_ade - 1.);
+		real_t f_star_200 = Q*Sigma2 + Sigma2*omega_ade*tilde_phi - f200*omega_ade + f200;
+		real_t f_star_020 = Q*Sigma2 + Sigma2*omega_ade*tilde_phi - f020*omega_ade + f020;
+		real_t f_star_110 = -f110*(omega_ade - 1.);
+		real_t f_star_210 = -f210*(omega_ade - 1.);
+		real_t f_star_120 = -f120*(omega_ade - 1.);
+		real_t f_star_220 = Q*Sigma2*Sigma2 + Sigma2*Sigma2*omega_ade*tilde_phi - f220*omega_ade + f220;
+
+		//back to density-probability functions
+		f000 = f_star_000 - f_star_020 - f_star_200 + f_star_220;
+		f100 = 1/2.*f_star_100 - 1/2.*f_star_120 + 1/2.*f_star_200 - 1/2.*f_star_220;
+		f200 = -1/2.*f_star_100 + 1/2.*f_star_120 + 1/2.*f_star_200 - 1/2.*f_star_220;
+		f010 = 1/2.*f_star_010 + 1/2.*f_star_020 - 1/2.*f_star_210 - 1/2.*f_star_220;
+		f110 = 1/4.*f_star_110 + 1/4.*f_star_120 + 1/4.*f_star_210 + 1/4.*f_star_220;
+		f210 = -1/4.*f_star_110 - 1/4.*f_star_120 + 1/4.*f_star_210 + 1/4.*f_star_220;
+		f020 = -1/2.*f_star_010 + 1/2.*f_star_020 + 1/2.*f_star_210 - 1/2.*f_star_220;
+		f120 = -1/4.*f_star_110 + 1/4.*f_star_120 - 1/4.*f_star_210 + 1/4.*f_star_220;
+		f220 = 1/4.*f_star_110 - 1/4.*f_star_120 - 1/4.*f_star_210 + 1/4.*f_star_220;
 }
 
  
-CudaDeviceFunction void relax_and_collide_MRT_SOI(real_t omega_ade) 
+CudaDeviceFunction void relax_and_collide_TRT_SOI(real_t omega_ade) 
 {
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
 	real_t Sigma2 = 0.3333333333333333;
 	real_t tilde_phi = f000 + f010 + f020 + f100 + f110 + f120 + f200 + f210 + f220;
 	
-	const real_t dt = 1.;
-	real_t phi;
-	const real_t  x0 = cbrt(3.) ; // 2
-	const real_t  x1 = 1/(dt*lambda) ; // 2
-	const real_t  x2 = dt*lambda - 2 ; // 2
-	const real_t  x3 = cbrt(-9*tilde_phi*x1 + sqrt(3.)*sqrt((27*pow(tilde_phi, 2) - x1*pow(x2, 3))/(pow(dt, 2)*pow(lambda, 2)))) ; // 19
-	phi = -1.0/3.0*x0*(x0*x1*x2 + pow(x3, 2))/x3 ; // 8
-	real_t Q;
-	Q = lambda*phi*(1 - pow(phi, 2)) ; // 4
-	Q = 0;  // TODO: HACK
+	real_t Q = getQ();
+
 	real_t temp000;
 	real_t temp100;
 	real_t temp010;
