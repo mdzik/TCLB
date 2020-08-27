@@ -226,373 +226,55 @@ CudaDeviceFunction void  InitPhisStencil(){
     debug.x = 0;
     debug.y = 0;
     debug.z = 0;
-
-    CalcPhi();
-
-    return;
-    
     if(IamWall){
 	    gradient.x = 0;
     	gradient.y = 0;
 	    curvature = 0;
     } else {
+        CalcPhi();
 
-    debug.x = 0;
-    debug.y = 0;
-    debug.z = 0;
+        vector_t lgradient[9];
+        real_t tmp[9];   
+        <?R
+        ee_x = U[,1] * wi  
+        ee_y = U[,2] * wi
 
-    CalcPhi();
-    
-    vector_t n, nw;
-    n.x = 0;
-    n.y = 0;
-    nw.x = 0;
-    nw.y = 0;
-    int inwall = 0;
-
-    real_t ctg_alpha = 0;
-    unsigned int wall_pattern = 0x0;
-
-    switch (NodeType & NODE_BOUNDARY) {
-    case NODE_SSymmetry:
-            <?R j = 2 ?>     
-            n.x = n.x + <?R C(phis[j]*wi[j]*U[j,1]) ?>;
-
-            <?R j = 4 ?>     
-            n.x = n.x + <?R C(phis[j]*wi[j]*U[j,1]) ?>;
-                 
-            <?R j = 6 ?>
-            n.x = n.x + <?R C(2*phis[j]*wi[j]*U[j,1]) ?>;
-
-            <?R j = 7 ?>
-            n.x = n.x + <?R C(2*phis[j]*wi[j]*U[j,1]) ?>;
-
-            <?R j = 3 ?>
-            n.x = n.x + <?R C(2*phis[j]*wi[j]*U[j,1]) ?>;
-
-        break;
-    case NODE_NSymmetry:
-            <?R j = 2 ?>     
-            n.x = n.x + <?R C(phis[j]*wi[j]*U[j,1]) ?>;
-
-            <?R j = 4 ?>     
-            n.x = n.x + <?R C(phis[j]*wi[j]*U[j,1]) ?>;
-                 
-            <?R j = 9 ?>
-            n.x = n.x + <?R C(2*phis[j]*wi[j]*U[j,1]) ?>;
-
-            <?R j = 8 ?>
-            n.x = n.x + <?R C(2*phis[j]*wi[j]*U[j,1]) ?>;
-
-            <?R j = 5 ?>
-            n.x = n.x + <?R C(2*phis[j]*wi[j]*U[j,1]) ?>;
-        break;
-    default:
-       <?R
-        for (j in 1:9) {
-        ?> 
-            if (<?R C(phis[j]) ?>  != -999) {
-                n.x = n.x + <?R C(phis[j]*U[j,1]*wi[j]) ?>;
-                n.y = n.y + <?R C( phis[j]*U[j,2]*wi[j]) ?>;
-            } else {
-                wall_pattern = wall_pattern + w<?%s j-1 ?>;
-            }
-        <?R } ?>
-        break;
-    }
-
-    real_t ln = sqrt(n.x*n.x + n.y*n.y);    
-    if(ln == 0.){
-        n.x = 0.;
-        n.y = 0.;
-    } else {
-        n.x /= ln;
-        n.y /= ln;
-    }
-
-    near_wall = !(wall_pattern == 0);
-
-    real_t t1,t2;
-    real_t my = 0;
-    real_t mx = 0;
-    real_t mxy = 0;
-    
-    if (near_wall && (wall_pattern != 255)){
-
-        nw.x = nw_x(0,0);
-        nw.y = nw_y(0,0);
-        nw_x = nw_x(0,0);
-        nw_y = nw_y(0,0);
-        
-        real_t ln = sqrt(nw.x*nw.x + nw.y*nw.y);    
-        if(ln == 0.){
-            nw.x = 0.;
-            nw.y = 0.;
-        } else {
-            nw.x /= -ln;
-            nw.y /= -ln;
-        }
-
-        vector_t temp, temp1;
-        real_t ca = cos(WettingAngle);
-        real_t sa = sin(WettingAngle);
-        temp.x = ca * nw.x + sa * nw.y - n.x;
-        temp.y = -sa * nw.x + ca * nw.y - n.y;
-        real_t l1 = sqrt(temp.x * temp.x + temp.y * temp.y);
-
-        
-        sa = -sa; //oposite rotation
-        temp1.x = ca * nw.x + sa * nw.y - n.x;
-        temp1.y = -sa * nw.x + ca * nw.y - n.y;
-        real_t l2 = sqrt(temp1.x * temp1.x + temp1.y * temp1.y);
-    
-        real_t wa = 0;
-        if ( l2 < l1 ) {
-            wa = -WettingAngle;
-        } else {
-            wa = WettingAngle;
-        }
-          
-        ctg_alpha = tan(wa+pi/2.);
-        unsigned btype = 0x0;
-
- 
-    }
-
-    const int aj = buffSize;
-    int ajj = 0;
-    const int ai = buffSize;
-    real_t A[buffSize][buffSize];
-    real_t B[buffSize][buffSize];
-    real_t y[buffSize];
-    int iwrite = 0;  
-    real_t wx,wy,wc;
-    real_t temp[buffSize];
-    gradient.x = 0;
-    gradient.y = 0;
-    gradient.z = 0;
-    curvature = 0;
-    wx = 0;
-    wy = 0;
-    wc = 0;
-
-
-	const real_t A0_BC[4] = {
-            0,
-            ctg_alpha*nw.y - nw.x,
-            -ctg_alpha*nw.x - nw.y,
-            0  
-	};
-    bool pid_cond;
-
-	const real_t A0[16] = {
-		 1, 1, 1, 1,
-		-1, 1, 1,-1,
-		-1,-1, 1, 1,
-		 1,-1, 1,-1
-	};
-
- <?R 
-    boxes = array(c(
-        c(0,1,5,2),
-        c(3,0,2,6),
-        c(7,4,0,3),
-        c(4,8,1,0)
-    ), dim=c(4,4))   
-
-    boxes_SS = array(c(
-                  c(0,1,5,2),
-                  c(3,0,2,6),
-                  c(6,2,0,3),
-                  c(2,5,1,0)
-               ), dim=c(4,4))    
-
-    boxes_NS =  array(c(
-                  c(0,1,8,4),
-                  c(3,0,4,7),
-                  c(7,4,0,3),
-                  c(4,8,1,0)
-               ), dim=c(4,4))   
-    
-    signs = array(c(
-        c(1,1),
-        c(1,-1),
-        c(-1,-1),
-        c(-1,1)
-    ), dim=c(2,4))
-
-
-    A0 = array(c(
-                c(1,1,1,1),
-                c(-1,1,1,-1),
-                c(-1,-1,1,1),
-                c(1,-1,1,-1)
-        ),dim=c(4,4))
-
-    for (box_i in c(1:4)){
+        C(PV("gradient.x"), 3*sum(phis%*%ee_x) )
+        C(PV("gradient.y"), 3*sum(phis%*%ee_y) )
         ?>
-        ajj = 0;
-        for(int i = 0; i < buffSize; i++){
-           for(int j = 0; j < buffSize; j++){
-              A[i][j] = 0;  
-              B[i][j] = 0;
-           }
-           y[i] = 0;
-           temp[i] = 0;
+
+        <?R
+        for (i in seq(9)){
+            ee_x = U[,1] * wi  
+            ee_y = U[,2] * wi
+            lphis = PV(paste('phi(',UN[1,i]+UN[1,],',',UN[2,i]+UN[2,],')'))   
+
+            C(PV(paste("lgradient[",i-1,"].x",sep="")), 3*sum(lphis%*%ee_x) )
+            C(PV(paste("lgradient[",i-1,"].y",sep="")), 3*sum(lphis%*%ee_y) )
         }
 
+        lgradients_x = PV(paste("lgradient[",seq(9)-1,"].x",sep=""))
+        lgradients_y = PV(paste("lgradient[",seq(9)-1,"].y",sep=""))
+
+        lnormal_y = PV(paste("lgradient[",seq(9)-1,"].y",sep=""))
+
+        glen = lgradients_x*lgradients_x + lgradients_y*lgradients_y
+        tmp = PV(paste("tmp[",1:9-1,"]",sep=""))
+        C(tmp,glen)
+        glen = tmp
+        C(tmp,PV(paste("1./(sqrt(tmp[",1:9-1,"])+1E-10)",sep="")))
+        C(lgradients_x, lgradients_x * glen)
+        C(lgradients_y, lgradients_y * glen)
+
+        curvature = PV("curvature")
+        C(curvature, 3*sum(lgradients_x%*%ee_x) )
+        C(curvature, curvature + 3*sum(lgradients_y%*%ee_y) )
+        C(curvature, -1*curvature)
 
 
-        switch (NodeType & NODE_BOUNDARY) {
-            case NODE_SSymmetry:
-            <?R
-            box = boxes_SS[,box_i]
-            box_phis = phis[box+1]     
-            ?>
-            <?R for (pid in c(1:4)){ ?>
-                pid_cond =  (wall_pattern >> s<?%s box[pid]?> & 0x1 ) ; 
-                <?R for (fid in c(1:4)){  ?>
-                    A[<?%s fid-1 ?>][<?%s pid-1 ?>] = pid_cond ? A0_BC[<?%s fid-1 ?>] : <?%s A0[pid,fid] ?>;
-                <?R } ?>
-                y[<?%s pid-1 ?>] = pid_cond ? 0 : <?R C(box_phis[pid]) ?> ;
-                ajj += pid_cond ? 0 : 1;
+        ?>
 
-            <?R } ?>
-                break;
-            case NODE_NSymmetry:
-            <?R
-            box = boxes_NS[,box_i]
-            box_phis = phis[box+1]     
-            ?>
-            <?R for (pid in c(1:4)){ ?>
-                pid_cond =  (wall_pattern >> s<?%s box[pid]?> & 0x1 ) ; 
-                <?R for (fid in c(1:4)){  ?>
-                    A[<?%s fid-1 ?>][<?%s pid-1 ?>] = pid_cond ? A0_BC[<?%s fid-1 ?>] : <?%s A0[pid,fid] ?>;
-                <?R } ?>
-                y[<?%s pid-1 ?>] = pid_cond ? 0 : <?R C(box_phis[pid]) ?> ;
-                ajj += pid_cond ? 0 : 1;
-
-            <?R } ?>
-
-                break;
-                
-            default:
-            <?R
-            box = boxes[,box_i]
-            box_phis = phis[box+1]     
-            ?>
-            <?R for (pid in c(1:4)){ ?>
-                pid_cond =  (wall_pattern >> s<?%s box[pid]?> & 0x1 ) ; 
-                <?R for (fid in c(1:4)){  ?>
-                    A[<?%s fid-1 ?>][<?%s pid-1 ?>] = pid_cond ? A0_BC[<?%s fid-1 ?>] : <?%s A0[pid,fid] ?>;
-                <?R } ?>
-                y[<?%s pid-1 ?>] = pid_cond ? 0 : <?R C(box_phis[pid]) ?> ;
-                ajj += pid_cond ? 0 : 1;
-
-            <?R } ?>
-        }
-        // orthogonalize
-        
-        iwrite = 0;
-        for (int iread=0; iread<buffSize; iread++){
-            
-            for(int j = 0; j < aj; j++){
-                temp[j] = A[iread][j];   
-            }
-            
-            for (int i=0; i<iread; i++){
-                t1 = 0;
-                for(int j = 0; j < aj; j++){
-                    t1 = t1 + A[i][j]*temp[j];   
-                }          
-                
-                for(int j = 0; j < aj; j++){
-                    temp[j] = temp[j] - t1*A[i][j];   
-                }                                     
-                B[iwrite][i] = t1;
-            }
-           
-            t1 = 0;
-            for(int i = 0; i < ai; i++){
-                t1 = t1 + temp[i]*temp[i];
-            }     
-            
-
-            if (t1*t1 > 1E-16){
-                t1 = sqrt(t1);
-            
-                for(int i = 0; i < ai; i++){
-                    temp[i] /= t1;
-                }         
-
-                t1 = 0;
-                
-                for(int j = 0; j < aj; j++){
-                    t1 = t1 + A[iread][j]*temp[j];   
-                }          
-                
-                B[iwrite][iwrite] = t1;
-                
-                for(int j = 0; j < aj; j++){
-                    A[iwrite][j] = temp[j];   
-                }
-
-            } else {
-                for(int j = 0; j < buffSize; j++){
-                    A[iwrite][j] = 0;   
-                }
-                B[iwrite][iwrite] = 1;
-           
-            } 
-
-            iwrite++;
-        }
-
-        
-
-
-        //////////////////////////////
-        // Solve the system
-
-        for (int i=0; i < buffSize; i++){
-            temp[i] = 0;
-            for (int j = 0; j< buffSize; j++){
-                temp[i] = temp[i] + y[j] * A[i][j];
-            }        
-        }
-
-        for (int i=ai-1; i >= 0; i--){
-            y[i] = temp[i]; 
-            for (int j = i+1; j < aj ; ++j){
-                y[i] = y[i] - y[j] * B[j][i];
-            }        
-            y[i] = y[i] / B[i][i];
-        }
-
-
-        mx = y[1] / 2.;
-        my = y[2] / 2.;
-        t1 = sqrt(mx*mx + my*my) + 1E-18;
-        curvature +=  ( ( <?%s signs[2,box_i]  ?> )*mx + ( <?%s signs[1,box_i]  ?> )*my ) / t1;
-
-        gradient.y = gradient.y + y[2] / 2.;
-        gradient.x = gradient.x + y[1] / 2.;
-
-<?R }  ?>
-
-
-gradient.z = 0;
-
-curvature = -0.5 * curvature;
-
-normal.x = nw.x;
-normal.y = nw.y;
-normal.z = 0;
-
-debug.x = gradient.x;
-debug.y = gradient.y;
     } //end IaAmWall-Else
-////END
 }
 
 
@@ -903,13 +585,17 @@ CudaDeviceFunction void CollisionMRT()
     real_t GravitationY = pf > 0 ? GravitationY_plus : GravitationY_minus;
 
     vector_t u; //velocity for advection
-    u.x = Jx /rho;
-    u.y = Jy /rho;
-
-    u.x += (GravitationX + F.x/rho) * 0.5;
-    u.y += (GravitationY + F.y/rho) * 0.5;
-
+    if (PF_Advection_Switch == 1){
+        u.x = Jx /rho;
+        u.y = Jy /rho;
+        u.x += (GravitationX + F.x/rho) * 0.5;
+        u.y += (GravitationY + F.y/rho) * 0.5;
+    } else {
+        u.x = 0;
+        u.y = 0;
+    }
     u.z = 0;
+
 	real_t omega = evalOmega(pf);
 	real_t omega2 = (2.0 - omega)/(1 + 2*(Magic-0.25)*omega);
 <?R
