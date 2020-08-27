@@ -1,7 +1,7 @@
 
 # # Fluid Density Populations
-# AddDensity( name="f[0]", dx= 0, dy= 0, group="f")
-# AddDensity( name="f[1]", dx= 1, dy= 0, group="f")
+AddDensity( name="f[0]", dx= 0, dy= 0, group="f")
+#AddDensity( name="f[1]", dx= 1, dy= 0, group="f")
 # AddDensity( name="f[2]", dx= 0, dy= 1, group="f")
 # AddDensity( name="f[3]", dx=-1, dy= 0, group="f")
 # AddDensity( name="f[4]", dx= 0, dy=-1, group="f")
@@ -67,3 +67,8 @@ AddSetting( name="Kupershtokh_A",default=-0.152, comment='Stencil parameter',zon
 
 #AddSetting( name="G_ff",default=0, comment='fluid-fluid interaction strength')
 #AddSetting( name="G_sf",default=0, comment='solid-fluid interaction strength')
+
+AddNodeType(name="Solid", group="BOUNDARY")
+AddNodeType(name="Wall", group="BOUNDARY")
+AddNodeType(name="MRT", group="COLLISION")
+
