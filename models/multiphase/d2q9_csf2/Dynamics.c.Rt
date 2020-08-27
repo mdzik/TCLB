@@ -469,8 +469,8 @@ CudaDeviceFunction void CalcNormal(){
 
 <?R 
 # define standard ZueHe BC's
-bc_node_names = c("EVelocity" , "WVelocity","SVelocity", "EPressure", "WPressure", "NPressure", "SPressure")
-bc_node_directions = rbind(c(1,0), c(-1,0),c(0,-1), c(1,0), c(-1,0), c(0,1), c(0,-1))
+bc_node_names = c("EVelocity" , "WVelocity","SVelocity","NVelocity", "EPressure", "WPressure", "NPressure", "SPressure")
+bc_node_directions = rbind(c(1,0), c(-1,0),c(0,-1),c(0,1), c(1,0), c(-1,0), c(0,1), c(0,-1))
 bc_node_utype = c("velocity","velocity", "velocity", "pressure", "pressure", "pressure", "pressure")
 
 ?>
