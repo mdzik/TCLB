@@ -61,8 +61,8 @@ CudaDeviceFunction void RunBoundaries()
 			BounceBack();
 			break;
 		case NODE_DirichletEQ:  		
-			// equilibrium scheme for BC - don't care and impose rho*Teq
-			// see chapter 5.3.4.2, eq 5.34, p191 from 'The Lattice Boltzmann Method: Principles and Practice'
+			// equilibrium scheme for BC - don`t care and impose rho*Teq
+			// see chapter 5.3.4.2, eq 5.34, p191 from The Lattice Boltzmann Method: Principles and Practice
 			// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
 			Init_eq(phaseField); 
 			break; 

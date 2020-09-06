@@ -8,7 +8,13 @@
 
 		<None name="city">
 			<!-- <Sphere dx="40" dy="40" nx="150" ny="150"/> -->
-			<Box dx="40" dy="40" nx="150" ny="150"/>
+			<Box dx="0" dy="0" nx="50" ny="50"/>
+			<Box dx="0" dy="60" nx="50" ny="50"/>
+			<Box dx="60" dy="0" nx="50" ny="50"/>
+			<Box dx="120" dy="0" nx="50" ny="50"/>
+			<Box dx="0" dy="120" nx="50" ny="50"/>
+			<Box dx="200" dy="200" nx="50" ny="50"/>
+
 		</None>
 
 		<None name="desert">
@@ -22,13 +28,13 @@
 		<Param name="lambda" value="0.1"/>
 
 		<Param name="Init_PhaseField" value="0.0" />	
-		<Param name="Init_PhaseField" zone="city" value="5.7" />
-		<Param name="Init_PhaseField" zone="desert" value="-0.7" />
+		<Param name="Init_PhaseField" zone="city" value="1" />
+		<Param name="Init_PhaseField" zone="desert" value="-1" />
 
 		<Param name="phase_field_smoothing_coeff" value="0.1"/>
     </Model>
 	<!-- Smoothing the population -->
-	<Solve Iterations="100"><VTK Iterations="10"/></Solve> 	
+	<Solve Iterations="100" />
 	<Geometry><None mask="ADDITIONALS"><Box nx="512" ny="512"/></None></Geometry>
-	<Solve Iterations="1000"><VTK Iterations="100"/></Solve>
+	<Solve Iterations="1000"><VTK Iterations="10"/></Solve>
 </CLBConfig>
