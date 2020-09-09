@@ -4,6 +4,7 @@
 // phi' =  M *(phi_xx + phi_yy) + lambda*phi*(1-phi^2)
 // maintainer: Grzegorz Gruszczynski @ggruszczynski
 
+
 <?R  
 	source("conf.R")
 	c_header();
@@ -46,10 +47,34 @@ CudaDeviceFunction real_t getQ()
 	phi = -1.0/3.0*x0*(x0*x1*x2 + pow(x3, 2))/x3 ;  
 	real_t Q;
 	Q = lambda*phi*(1 - pow(phi, 2)) ;
-
-	return Q;
+	
+	//return 0; // HACK:
+	return Q; 
 }
 
+// CudaDeviceFunction real_t getRandomCPU() {
+// 	real_t x = real_t(rand()) / real_t(RAND_MAX);  // x is from 0 to 1
+// 	x = 2.*x -1.;  // x is from -1 to 1
+// 	return x;
+// }
+
+// https://gist.github.com/NicholasShatokhin/3769635
+// CudaDeviceFunction real_t getRandom() {
+//   /* CUDA's random number library uses curandState_t to keep track of the seed value
+//      we will store a random state for every thread  */
+// 	 curandState_t state;
+
+// 	 /* we have to initialize the state */
+// 	 curand_init(0, /* the seed controls the sequence of random values that are produced */
+// 				 0, /* the sequence number is only important with multiple cores */
+// 				 0, /* the offset is how much extra we advance in the sequence for each call, can be 0 */
+// 				 &state);
+   
+// 	 /* curand works like rand - except that it takes a state as a parameter */
+// 	 real_t result = curand(&state) % MAX;
+
+// 	 return result;
+// }
 // ------------------------ END OF PARAVIEW OUTPUT BLOCK ------------------------
 
 CudaDeviceFunction void RunBoundaries()
@@ -83,7 +108,8 @@ CudaDeviceFunction void Init() {
 		// phaseField = (real_t)gray_scale_intensity*Init_PhaseField;
 		phaseField = (real_t)gray_scale_intensity;
 	}
-	
+
+	//phaseField = getRandom();
 	Init_eq(phaseField);
 }
 
@@ -282,7 +308,9 @@ CudaDeviceFunction void relax_and_collide_TRT_SOI(real_t omega_ade)
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
 	real_t Sigma2 = 0.3333333333333333;
 	real_t tilde_phi = f000 + f010 + f020 + f100 + f110 + f120 + f200 + f210 + f220;
-	
+	real_t omega_even = (-1.0 + 2.0/omega_ade)/(2.0*magic_parameter + 1.0);
+	// real_t omega_even = 2.- omega_ade;
+
 	real_t Q = getQ();
 
 	real_t temp000;
@@ -316,15 +344,26 @@ CudaDeviceFunction void relax_and_collide_TRT_SOI(real_t omega_ade)
 	f220 = temp110 + temp120 + temp210 + temp220;
 	//collide
 	//collide-SOI
-	real_t f_star_000 = Q + tilde_phi;
+	// real_t f_star_000 = Q + tilde_phi;
+	// real_t f_star_100 = -f100*(omega_ade - 1.);
+	// real_t f_star_010 = -f010*(omega_ade - 1.);
+	// real_t f_star_200 = Sigma2*(Q + tilde_phi);
+	// real_t f_star_020 = Sigma2*(Q + tilde_phi);
+	// real_t f_star_110 = 0;
+	// real_t f_star_210 = -f210*(omega_ade - 1.);
+	// real_t f_star_120 = -f120*(omega_ade - 1.);
+	// real_t f_star_220 = Sigma2*Sigma2*(Q + tilde_phi);
+	//collide-SOI - magic TRT
+	real_t f_star_000 = Q - f000*omega_even + f000 + omega_even*tilde_phi;
 	real_t f_star_100 = -f100*(omega_ade - 1.);
 	real_t f_star_010 = -f010*(omega_ade - 1.);
-	real_t f_star_200 = Sigma2*(Q + tilde_phi);
-	real_t f_star_020 = Sigma2*(Q + tilde_phi);
-	real_t f_star_110 = 0;
+	real_t f_star_200 = Q*Sigma2 + Sigma2*omega_even*tilde_phi - f200*omega_even + f200;
+	real_t f_star_020 = Q*Sigma2 + Sigma2*omega_even*tilde_phi - f020*omega_even + f020;
+	real_t f_star_110 = -f110*(omega_even - 1.);
 	real_t f_star_210 = -f210*(omega_ade - 1.);
 	real_t f_star_120 = -f120*(omega_ade - 1.);
-	real_t f_star_220 = Sigma2*Sigma2*(Q + tilde_phi);
+	real_t f_star_220 = Q*Sigma2*Sigma2 + Sigma2*Sigma2*omega_even*tilde_phi - f220*omega_even + f220;
+
 	//back to density-probability functions
 	f000 = f_star_000 - f_star_020 - f_star_200 + f_star_220;
 	f100 = 1/2.*f_star_100 - 1/2.*f_star_120 + 1/2.*f_star_200 - 1/2.*f_star_220;
