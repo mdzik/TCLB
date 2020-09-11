@@ -37,6 +37,11 @@ AddSetting(name="lambda", default=1.0, comment="to control intensity of the sour
 
 AddSetting(name="Init_PhaseField",   zonal=TRUE)
 
+#	Benchmark things
+AddSetting(name="CylinderCenterX_GH",	default="0", comment='X coord of Gaussian Hill')
+AddSetting(name="CylinderCenterY_GH",	default="0", comment='Y coord of Gaussian Hill')
+AddSetting(name="Sigma_GH", 		 	default="1", comment='Initial width of the Gaussian Hill', zonal=T)
+
 #	CFD enhancements ;)
 AddField(name="phaseField",                 stencil2d=1)
 AddNodeType(name="Smoothing",               group="ADDITIONALS")  #  To smooth population density during initialization.
