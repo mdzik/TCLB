@@ -21,15 +21,16 @@
 			<!-- <Sphere dx="300" dy="340" nx="100" ny="100"/> -->
 			<Box dx="300" dy="340" nx="100" ny="100"/>
 		</None>
-
 	</Geometry>
 	<Model>
-		<Param name="diffusivity_phi" value="0.01666"/>
-		<Param name="lambda" value="0.1"/>
+		<Param name="diffusivity_phi" value="0.1666"/>
+		<Param name="magic_parameter" value="0.1666"/>
+		
+		<Param name="lambda" value="1."/>
 
 		<Param name="Init_PhaseField" value="0.0" />	
-		<Param name="Init_PhaseField" zone="city" value="1" />
-		<Param name="Init_PhaseField" zone="desert" value="-1" />
+		<Param name="Init_PhaseField" zone="city" value="1." />
+		<Param name="Init_PhaseField" zone="desert" value="-1." />
 
 		<Param name="phase_field_smoothing_coeff" value="0.1"/>
     </Model>
