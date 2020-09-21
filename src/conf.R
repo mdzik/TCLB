@@ -284,31 +284,6 @@ AddDescription = function(short, long) {
 	)
 }
 
-AddNodeType("BGK","COLLISION")
-AddNodeType("MRT","COLLISION")
-# AddNodeType("MR","COLLISION")
-# AddNodeType("Entropic","COLLISION")
-AddNodeType("Wall","BOUNDARY")
-AddNodeType("Solid","BOUNDARY")
-AddNodeType("WVelocity","BOUNDARY")
-AddNodeType("WPressure","BOUNDARY")
-AddNodeType("WPressureL","BOUNDARY")
-AddNodeType("EPressure","BOUNDARY")
-AddNodeType("EVelocity","BOUNDARY")
-# AddNodeType("MovingWall","BOUNDARY")
-# AddNodeType("Heater","ADDITIONALS")
-# AddNodeType("HeatSource","ADDITIONALS")
-# AddNodeType("Wet","ADDITIONALS")
-# AddNodeType("Dry","ADDITIONALS")
-# AddNodeType("Propagate","ADDITIONALS")
-#AddNodeType("Inlet","OBJECTIVE")
-#AddNodeType("Outlet","OBJECTIVE")
-# AddNodeType("Obj1","OBJECTIVE")
-# AddNodeType("Obj2","OBJECTIVE")
-# AddNodeType("Obj3","OBJECTIVE")
-# AddNodeType("Thermometer","OBJECTIVE")
-AddNodeType("DesignSpace","DESIGNSPACE")
-
 Stages=NULL
 
 AddStage = function(name, main=name, load.densities=FALSE, save.fields=FALSE, no.overwrite=FALSE, fixedPoint=FALSE, particle=FALSE) {
@@ -514,16 +489,6 @@ NodeShift = 2^NodeShiftNum
 
 if (any(NodeTypes$value >= 2^FlagTBits)) stop("NodeTypes exceeds short int")
 
-NodeTypes = rbind(NodeTypes, data.frame(
-	name="None",
-	group="NONE",
-	index=1,
-	Index="None",
-	value=0,
-	mask=0,
-	shift=0
-))
-
 Node=NodeTypes$value
 names(Node) = NodeTypes$name
 
@@ -697,6 +662,9 @@ Consts = rbind(Consts, data.frame(name="ZONE_MAX",value=ZoneMax))
 Consts = rbind(Consts, data.frame(name="DT_OFFSET",value=ZoneMax*nrow(ZoneSettings)))
 Consts = rbind(Consts, data.frame(name="GRAD_OFFSET",value=2*ZoneMax*nrow(ZoneSettings)))
 Consts = rbind(Consts, data.frame(name="TIME_SEG",value=4*ZoneMax*nrow(ZoneSettings)))
+
+Consts = rbind(Consts, data.frame(name="ACTIONS", value=length(Actions)))
+Consts = rbind(Consts, data.frame(name=paste0(" ACTION_", names(Actions), " "),value=seq_len(length(Actions))-1))
 
 offsets = function(d2=FALSE, cpu=FALSE) {
   def.cpu = cpu
