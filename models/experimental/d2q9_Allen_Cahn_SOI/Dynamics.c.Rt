@@ -28,14 +28,12 @@ CudaDeviceFunction float2 Color() {
 // It can make a difference in convergence study and nicer preview.
 
 CudaDeviceFunction real_t getPhaseField() {
-	RunBoundaries();
-	return (<?R C(sum(f)) ?>);
+	return (<?R C(sum(f)) ?>) - getQ() / 2.;
 }
 
 
 CudaDeviceFunction real_t getQ() 
 {	
-	RunBoundaries();
 	real_t tilde_phi = f000 + f010 + f020 + f100 + f110 + f120 + f200 + f210 + f220;
 
 	const real_t dt = 1.;
@@ -61,7 +59,7 @@ CudaDeviceFunction real_t getQ()
 
 // https://gist.github.com/NicholasShatokhin/3769635
 // CudaDeviceFunction real_t getRandom() {
-//   /* CUDA's random number library uses curandState_t to keep track of the seed value
+//   /* CUDAs random number library uses curandState_t to keep track of the seed value
 //      we will store a random state for every thread  */
 // 	 curandState_t state;
 
@@ -102,6 +100,11 @@ CudaDeviceFunction void PhaseFieldSmoothing(){
 	phaseField = phaseField(0,0) + temp;
 }
 
+
+CudaDeviceFunction void InitFromFieldsStage() { 
+	Init_eq(Init_PhaseField_External);
+}
+
 CudaDeviceFunction void Init() { 
 	phaseField = Init_PhaseField;
 	
@@ -123,6 +126,8 @@ CudaDeviceFunction void Init() {
 }
 
 CudaDeviceFunction void Run() {
+	//RunBoundaries();
+
 	if ((NodeType & NODE_ADDITIONALS) == NODE_Smoothing){
 		PhaseFieldSmoothing();
 		Init_eq(phaseField);

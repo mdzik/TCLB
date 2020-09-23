@@ -29,13 +29,20 @@
 		<Param name="lambda" value="1."/>
 
 		<Param name="Init_PhaseField" value="0.0" />	
-		<Param name="Init_PhaseField" zone="city" value="1." />
-		<Param name="Init_PhaseField" zone="desert" value="-1." />
+		<!-- <Param name="Init_PhaseField" zone="city" value="1." />
+		<Param name="Init_PhaseField" zone="desert" value="-1." /> -->
+		<Param name="Init_From_PhaseField_External" value="1" />
 
 		<Param name="phase_field_smoothing_coeff" value="0.1"/>
     </Model>
+	<RunR>
+		x = Solver$Geometry$X
+		x = x / max(max(x)) * 2 * pi
+		y = Solver$Geometry$Y		
+		Solver$Fields$Init_PhaseField_External[] = sin(x)	
+		Solver$Actions$InitFromFields() 
+	</RunR>
 	<!-- Smoothing the population -->
-	<Solve Iterations="100" />
-	<Geometry><None mask="ADDITIONALS"><Box nx="512" ny="512"/></None></Geometry>
-	<Solve Iterations="1000"><VTK Iterations="10"/></Solve>
+	<VTK/>
+
 </CLBConfig>

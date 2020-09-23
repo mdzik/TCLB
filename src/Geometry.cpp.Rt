@@ -823,7 +823,7 @@ inline int Geometry::loadImage(lbRegion reg, pugi::xml_node n)
 							double wall_value = units.alt(n.attribute("wall_value").value());
 							gray_scale[k] = wall_value;
 						}
-						geom[k] = NODE_Wall;
+						geom[k] = Dot(x,y,z); //mask as parent
 					}
 					// else{
 						Dot(x, y, z);
