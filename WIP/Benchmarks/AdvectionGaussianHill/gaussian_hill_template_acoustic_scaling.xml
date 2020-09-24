@@ -21,7 +21,7 @@
     tab$name = paste0(
         tab$collision, 
         "_ux_", formatC(tab$ux, digits = 2, format = "e"),
-        "_k_", gsub("/","o", fractions(tab$k)),
+        "_k_", gsub("/","o", fractions(tab$k, max.denom=1000000)),
         "_iterations_", formatC(tab$iterations, format = "d"),
         "_sigma_", tab$sigma, 
         "_size_",tab$lattice_size, "lu")
