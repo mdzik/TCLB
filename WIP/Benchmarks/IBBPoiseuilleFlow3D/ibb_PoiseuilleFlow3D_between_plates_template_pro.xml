@@ -1,0 +1,84 @@
+
+<?R
+    tab = expand.grid(
+        # nu=c(1e-02, 1e-03, 1e-04), 
+        nu=c(1e-01), 
+        y=c(0.75, 1, 1.25), 
+        diam=c(15,31,63),
+        bb_type=c("bb","ibb"),
+        collision=c("CM_HIGHER") # "Cumulants","CM_HIGHER"
+        )
+
+    dir_name <- "batch_IBB_Poiseuille_between_plates"
+    dir.create(dir_name)
+    tab$name = paste0(tab$bb_type, "_Poiseuille_between_plates_", tab$collision, "_nu_",tab$nu, "_effdiam_", tab$diam-2*(2.-tab$y))
+    tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
+
+    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+    # tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/"))
+
+    options(digits=10)
+    write.csv(tab, "Poiseuille_between_plates_template.csv", row.names=FALSE)
+    for (i in 1:nrow(tab)) {
+        attach(tab[i,,drop=FALSE])
+        print(xml)
+        sink(xml) # save to a .xml file
+?>
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="<?%s output ?>">
+    <Geometry nx="32" ny="<?%f diam ?>"  nz="3">
+        <<?%s collision ?>>
+            <Box/>
+        </<?%s collision ?>>  
+		<FluxMeasurmentZone1> <Box nx="1"/> </FluxMeasurmentZone1>
+
+        <?R
+            if(bb_type=="ibb")
+            {
+                cat(sprintf("<HydroIBB name=\"border\">\n"))
+                cat(sprintf("\t\t<STL file=\"example/data/Plate_128x2x128.stl\" scale=\"1\" Xrot=\"0d\" x=\"-2\" y=\"%f\" z=\"0\" side=\"surface\" />\n",  -y ))
+                cat(sprintf("\t\t<STL file=\"example/data/Plate_128x2x128.stl\" scale=\"1\" Xrot=\"0d\" x=\"-2\" y=\"%f\" z=\"0\" side=\"surface\" />\n", diam -(2.-y) ))
+                cat(sprintf("</HydroIBB>\n"))
+            }
+            else if(bb_type=="bb"){
+                cat(sprintf("<Wall mask=\"ALL\" name=\"border\">\n"))
+                cat(sprintf("\t\t<Box ny=\"1\"/>"))
+                cat(sprintf("\t\t<Box dy=\"-1\"/>"))
+                cat(sprintf("</Wall>"))
+
+            }
+		?>
+
+    </Geometry>
+
+    <Model>
+        <Param name="InitTemperature" value="10"/>
+        <Param name="nu" value="<?%f nu ?>"/>
+        <Param name="nu_buffer" value="<?%f nu ?>"/>
+
+        <Param name="conductivity" value="0.1666666"/>
+
+        <Param name="h_stability_enhancement" value="1."/>
+        <Param name="cp" value="1."/>
+        <Param name="material_density" value="1."/>
+
+	    <Param name="GravitationX" value="<?%e 2*0.01*nu/(0.25*(diam - 2.*(2.-y))*(diam - 2.*(2.-y))) ?>" />
+	    <Param name="BoussinesqCoeff" value="0."/>
+        <!-- gx = 2 * uc * (mu_l + mu_h) / ((rho_l + rho_h) * h * h) -->
+        <!-- we set uc=0.01 - max velocity -->
+    </Model>
+<Failcheck Iterations="10000" nx="32" ny="<?%f diam ?>" nz="3" />
+<!-- <TXT Iterations="50000" what="T,U"/> -->
+<Solve Iterations="1"> <VTK Iterations="1"/> </Solve>
+<Log Iterations="5000"/>
+<Solve Iterations="100000"/>
+<Stop XHydroFLuxChange="1e-10" Times="6" Iterations="10000"/>
+<Solve Iterations="10000000"> <VTK Iterations="20000" what="T,U,Rho"/> </Solve>
+</CLBConfig>
+
+<?R
+    sink()
+    detach()
+}
+?>

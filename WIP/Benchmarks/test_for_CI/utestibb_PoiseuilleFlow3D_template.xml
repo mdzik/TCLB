@@ -1,0 +1,74 @@
+
+<?R
+    tab = expand.grid(nu=c(1e-01), y=c(0.75, 1, 1.25), diam=c(15), collision=c("Cumulants","CM_HIGHER"))
+
+    dir_name <- "batch_IBB_Poiseuille"
+    dir.create(dir_name)
+    tab$name = paste0("ibb_Poiseuille_", tab$collision,"_nu_",tab$nu, "_effdiam_", tab$diam-2*(2.-tab$y))
+    # tab$xml = paste0(tab$name,".xml")
+    tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
+    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+    #tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/"))
+
+    options(digits=10)
+    write.csv(tab, "HotKarman3D_template.csv", row.names=FALSE)
+    for (i in 1:nrow(tab)) {
+        attach(tab[i,,drop=FALSE])
+        print(xml)
+        sink(xml) # save to a .xml file
+?>
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/">
+    <Geometry nx="32" ny="<?%f diam ?>"  nz="3">
+        <<?%s collision ?>>
+            <Box/>
+        </<?%s collision ?>>    
+		<FluxMeasurment> <Box nx="1"/> </FluxMeasurment>
+		<IBB name="border" >
+			<STL file="example/data/Plate_128x2x128.stl" scale="1m" Xrot="0d" x="-2" y="<?%f -y ?>" z="-2" side="surface"/>
+      		<STL file="example/data/Plate_128x2x128.stl" scale="1m" Xrot="0d" x="-2" y="<?%f diam -(2.-y) ?>" z="-2" side="surface"/>
+		</IBB>
+<!-- 
+	     <Wall mask="ALL" name="border" >
+	        <Box ny="1"/>
+	        <Box dy="-1"/>
+	    </Wall> -->
+
+    </Geometry>
+
+    <Model>
+        <Params
+            InitTemperature="10"
+            InitTemperature-dirichlet_hot="11"
+            InitTemperature-dirichlet_cold="10"
+            />
+        <Params/>
+
+        <Params
+            nu="<?%f nu ?>"
+            nu_buffer="<?%f nu ?>"
+            conductivity="0.1666666"
+            conductivity_buffer="0.1666666"
+
+            h_stability_enhancement="1."
+            cp="1"
+            material_density="1"
+            />
+        <Params/>
+	    <Params GravitationX="<?%e 2*0.01*nu/(0.25*(diam - 2.*(2.-y))*(diam - 2.*(2.-y))) ?>" />
+	    <Params BoussinesqCoeff="1"/>
+        <!-- gx = 2 * uc * (mu_l + mu_h) / ((rho_l + rho_h) * h * h) -->
+        <!-- we set uc=0.01 - max velocity -->
+    </Model>
+<Failcheck Iterations="1000" nx="32" ny="<?%f diam ?>" nz="3" />
+<Log Iterations="1000"/>
+<Stop XHydroFLuxChange="1e-6" Times="6" Iterations="1000"/>
+<Solve Iterations="10000"> <VTK Iterations="1000" what="T,U,Rho"/> </Solve>
+</CLBConfig>
+
+<?R
+    sink()
+    detach()
+}
+?>

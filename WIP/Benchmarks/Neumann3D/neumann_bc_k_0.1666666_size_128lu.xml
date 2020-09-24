@@ -1,0 +1,59 @@
+
+
+<!-- 
+	W = kg⋅m2⋅s−3 
+	J = kg⋅m2⋅s−2
+-->
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/batch_ruraWrurze_NeumannBC/test/">
+
+	<Geometry nx="128" ny="128" nz="3" >
+		
+     	<HeaterDirichletTemperature mask="COLLISION" name="dirichlet_cold"> 
+            <Box />
+        </HeaterDirichletTemperature>
+     
+     	<CM>
+     		<Cylinder ny="120" nx="120" dx="4" dy="4"/>
+     	</CM>    
+
+		<None mask="ADDITIONALS_HEAT">
+			<Cylinder ny="120" nx="120" dx="4" dy="4"/>
+		</None>
+
+        <HeaterNeumannHeatFlux mask="COLLISION" name="neumann_hot"> 
+        	<Cylinder ny="32" nx="32" dx="48" dy="48"/>
+        </HeaterNeumannHeatFlux> 
+
+<!--       	<DarcySolid name="darcy_solid_region">
+        	<Cylinder ny="80" nx="80" dx="24" dy="24"/>
+      	</DarcySolid>   -->
+	</Geometry>
+    <Model>
+	    <Params
+	    	h_stability_enhancement="1."
+
+	        conductivity="0.166667" 
+	        cp="1"
+			material_density="1"
+
+	        InitTemperature="0.0"
+	        InitHeatFlux-neumann_hot="0.16666666"
+	        InitTemperature-dirichlet_cold="0.0"
+	        />
+	    <Params />
+	    <Params CylinderCenterX="64"/>
+	    <Params CylinderCenterY="64"/>
+	        <!-- <Params GravitationX="-1.0E-5" /> -->
+    </Model> 
+
+<!-- <Solve Iterations="10" > <VTK Iterations="1"/> </Solve> -->
+	<Failcheck Iterations="10000" nx="128" ny="128" nz="3" />
+	<TXT Iterations="100000" what="T,U" />
+	<Log Iterations="100000" />
+	<Solve Iterations="10000">
+		<VTK Iterations="100" />
+	</Solve>
+</CLBConfig>
+
+

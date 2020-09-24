@@ -1,0 +1,69 @@
+
+
+<?xml version="1.0"?>
+<!-- <CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/batch_HotKarman3D/keep_nu_and_k_sizer_1_Re10_Pr10/"> -->
+<!-- <CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/HotKarman3D_template/"> -->
+<CLBConfig version="2.0" output="output/Neumann3D/">
+    <Units>
+        <!-- <Params size="1m"/> -->
+    </Units>
+    <Geometry nx="600" ny="128" nz="3" > 
+        <CM_HIGHER><Box/></CM_HIGHER>
+        <WVelocity><Inlet/></WVelocity>
+        <!-- <EPressure><Outlet/></EPressure> -->
+        <!-- <EConvect><Outlet/></EConvect> -->
+        <ENeumann><Outlet/></ENeumann>
+
+        <Wall mask="ALL">
+            <!-- <Channel/> -->
+            <Cylinder dx="285" dy="49" nx="30" ny="30" nz="3"/>
+        </Wall>
+<!-- 
+        <HeaterDirichletTemperature  name="dirichlet_hot"> 
+        	<Cylinder dx="285" dy="49" nx="30" ny="30" nz="3"/>
+        </HeaterDirichletTemperature>   -->
+
+
+        <HeaterNeumannHeatFlux name="neumann_hot"> 
+        	<Cylinder dx="285" dy="49" nx="30" ny="30" nz="3"/>
+        </HeaterNeumannHeatFlux>  
+
+        <MeasurmentArea>
+            <!-- <Cylinder dx="285" dy="60" nx="30" ny="30" nz="50"/> -->
+            <Outlet/>
+        </MeasurmentArea>
+    </Geometry>
+
+    <Model>
+        <Params
+            InitTemperature="0"
+            InitTemperature-dirichlet_hot="1"
+            InitTemperature-dirichlet_cold="0"
+
+            InitHeatFlux-neumann_hot="0.5"
+            />
+        <Params/>
+
+        <Params
+            nu="0.03"
+            conductivity="0.003"
+
+            h_stability_enhancement="1."
+            cp="1"
+            material_density="1"
+            />
+        <Params/>
+
+	    <Params CylinderCenterX="300"/>
+	    <Params CylinderCenterY="64"/>
+        <Params VelocityX="0.05" />
+        <!-- <Params VelocityX="1.0E-02" /> -->
+    </Model>
+
+<Failcheck Iterations="10000" nx="600" ny="100" nz="3" />
+<!-- <TXT Iterations="50000" what="T,U"/> -->
+<Log Iterations="1000"/>
+<Solve Iterations="10000"> <VTK Iterations="100"/> </Solve>
+<!-- <Solve Iterations="2000000"> <VTK Iterations="50000"/> </Solve> -->
+</CLBConfig>
+

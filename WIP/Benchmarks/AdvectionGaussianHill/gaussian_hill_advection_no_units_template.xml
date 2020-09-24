@@ -1,0 +1,81 @@
+<?R
+
+    tab = expand.grid(
+        sizer=c(8), 
+        ux=c(0.0, 0.1), 
+        k_material=c(1e-01,1e-02,1e-03,1e-04,1e-05), 
+        collision=c("CM","CM_HIGHER", "Cumulants"), 
+        sigma=c(50, 75, 100))
+ 
+    dir_name <- "batch_GaussianHill_advection"
+    dir.create(dir_name)
+
+    tab$name = paste0(tab$collision, "_ux_", tab$ux,"_k_", tab$k_material, "_sigma_", tab$sigma,  "_size_",32*tab$sizer, "lu")
+    tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
+    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+
+    # tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name,"/"))
+
+    write.csv(tab, "gaussian_hill_k_template.csv", row.names=FALSE)
+    for (i in 1:nrow(tab)) {
+        attach(tab[i,,drop=FALSE])
+        print(xml)
+        sink(xml) # save to a .xml file
+?>
+
+<!-- 
+	W = kg⋅m2⋅s−3 
+	J = kg⋅m2⋅s−2
+-->
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="<?%s output ?>">
+	<Units>
+<!--     
+    <Params conductivity="1.0W/m/K" gauge="1E-0"/> 
+	<Params cp="1.0J/kg/K" gauge="1E-0"/>
+	<Params	material_density="1.0kg/m3" gauge="1E-0"/> -->
+  </Units>
+	<Geometry nx="<?%f 32*sizer ?>" ny="<?%f 32*sizer ?>" nz="3" >
+      <<?%s collision ?>> <Box/> </<?%s collision ?>>    
+ <!--        <None name="init_T_region">
+
+            <Box dx="<?%f 10*sizer ?>" nx="<?%f 12*sizer ?>" dy="<?%f 10*sizer ?>" ny="<?%f 12*sizer ?>" /> 
+        </None>    
+ -->
+	</Geometry>
+    <Model>
+	    <Params
+            nu="0.1666666"
+
+	    	h_stability_enhancement="1."
+
+	        conductivity="<?%f k_material ?>" 
+            Sigma_GH="<?%f sigma ?>" 
+	        cp="1"
+			material_density="1"
+
+	        InitTemperature="1.0"
+	        InitTemperature-init_T_region="5.0"
+
+            CylinderCenterX_GH="<?%f 16*sizer ?>"
+            CylinderCenterY_GH="<?%f 16*sizer ?>"
+	        />
+	    <Params />
+	            <Params VelocityX="<?%f ux ?>" />
+    </Model> 
+
+<!-- <Solve Iterations="10" > <VTK Iterations="1"/> </Solve> -->
+	<Failcheck Iterations="1000" nx="<?%f 32*sizer ?>" ny="<?%f 32*sizer ?>" nz="3" />
+<!-- 	<TXT Iterations="100000" what="T,U" />
+	<Log Iterations="100000" /> -->
+	<Solve Iterations="20000">
+		<VTK Iterations="5000" />
+	</Solve>
+</CLBConfig>
+
+
+<?R
+    sink()
+    detach()
+}
+?>

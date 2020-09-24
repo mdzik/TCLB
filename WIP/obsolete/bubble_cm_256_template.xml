@@ -1,0 +1,68 @@
+
+<?R
+    tab = expand.grid(VelocityX=seq(0.0,0.1,0.005),Viscosity=c(0.001, 0.01, 0.1, 0.1666666, 1.0))
+
+    dir_name <- "batch_test_cm"
+    dir.create(dir_name)
+    tab$name = paste0(dir_name,"/bubble_cm_template", "_Ux_",tab$VelocityX,"_vh_",tab$Viscosity)
+    tab$xml = paste0(tab$name,".xml")
+
+
+    write.csv(tab, "bubble_cm_template.csv", row.names=FALSE)
+    for (i in 1:nrow(tab)) {
+        attach(tab[i,,drop=FALSE])
+        print(xml)
+        sink(xml) # zapis do pliku o nazwie xml 
+        ?>
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/bubble_cm_template/">
+        <Geometry nx="256" ny="256">
+        <CM><Box/></CM>
+        <Smoothing><Box /></Smoothing> 
+        <None name="bubble">
+        <Sphere ny="112" nx="56" dx="100" dy="72"/>
+        </None>     
+<!-- 			<Wall mask="ALL" name="border" >
+                        <Box nx="1"/>
+                        <Box dx="-1"/>
+                        <Box ny="1"/>
+                        <Box dy="-1"/>
+                </Wall> -->            
+        </Geometry>
+    <Model>
+    <Params
+        Density_h="10.0" Density_l="1.0" 
+        Viscosity_h="<?%f Viscosity ?>" Viscosity_l="<?%f Viscosity ?>"
+        PhaseField_h="1.0" PhaseField_l="0.0" 
+        ContactAngle="135" 
+      
+        PhaseField_init="0.0"
+        PhaseField_init-bubble="1.0"
+        PhaseField_init-sciana="0.0"
+
+        W="5" M="0.1666666" sigma="1e-4"
+        />
+    <Params  />
+    <Params VelocityX="<?%f VelocityX ?>" />
+    </Model> 
+    <Solve Iterations="25" >
+ <!--     <VTK Iterations="5"/> -->
+    </Solve>
+<Geometry>
+  <None mask="ADDITIONALS">
+    <Box nx="256" ny="256"/>
+  </None>
+</Geometry>
+<!-- <Solve Iterations="50" > <VTK Iterations="10"/> </Solve> -->
+<Failcheck Iterations="2000" nx="256" ny="256"/>
+<Log Iterations="1000"/>
+<!-- <Solve Iterations="250000" output="output/"> <VTK Iterations="5000"/> </Solve> -->
+<Solve Iterations="1000000" > <VTK Iterations="10000"/> </Solve>
+</CLBConfig>
+
+<?R
+    sink()
+    detach()
+}
+?>

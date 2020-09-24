@@ -1,0 +1,56 @@
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/ruraWrurze3D_cht_k/">
+	<Units>
+    <Params size="1m" gauge="2"/>
+
+  </Units>
+	<Geometry nx="32m" ny="32m" nz="3" >
+      <CM><Box/></CM>    
+     	<HeaterDirichletTemperatureEQ name="dirichlet_hot"> 
+            <Box />
+        </HeaterDirichletTemperatureEQ>
+
+		<None mask="ADDITIONALS_HEAT">
+			<Cylinder ny="30m" nx="30m" dx="1m" dy="1m" nz="3"/>
+		</None>
+
+        <HeaterDirichletTemperatureEQ name="dirichlet_cold"> 
+        	<Cylinder ny="8m" nx="8m" dx="12m" dy="12m" nz="3"/>
+        </HeaterDirichletTemperatureEQ>
+
+  <!--     	<DarcySolid name="darcy_solid_region">
+        	<Cylinder ny="20m" nx="20m" dx="6m" dy="6m" nz="3"/>
+      	</DarcySolid> -->
+        <None name="material_A_region">
+        	<Cylinder ny="20m" nx="20m" dx="6m" dy="6m" nz="3"/>
+        </None>        
+	</Geometry>
+    <Model>
+	    <Params
+	    	nu="0.1"
+	    	h_stability_enhancement="1."
+
+	        conductivity="0.1" 
+	        cp="1"
+			material_density="1"
+
+			conductivity-material_A_region="0.01"
+			cp-material_A_region="1"
+			material_density-material_A_region="1"
+
+	        InitTemperature="10.5"
+	        InitTemperature-dirichlet_hot="11."
+	        InitTemperature-dirichlet_cold="10."
+
+	        />
+	    <Params />
+	        <!-- <Params GravitationX="-1.0E-5" /> -->
+    </Model> 
+
+<Solve Iterations="10" > <VTK Iterations="1"/> </Solve>
+<Failcheck Iterations="100" nx="32m" ny="32m" nz="4m" />
+<!-- <TXT Iterations="1000" what="T,U"/> -->
+<!-- <Log Iterations="1000"/> -->
+<Solve Iterations="10000"> <VTK Iterations="250" what="T,U,Rho"/> </Solve>
+</CLBConfig>

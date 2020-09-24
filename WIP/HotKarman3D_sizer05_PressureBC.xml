@@ -1,0 +1,59 @@
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/HotKarman3D_PressureBC_test/">
+    <Geometry nx="500" ny="75" nz="3" >  
+        <CM_HIGHER><Box/></CM_HIGHER>
+        <!-- <WVelocity name="inlet"><Inlet/></WVelocity> -->
+        <WPressure name="inlet"><Inlet/></WPressure>
+        <EPressure name="outlet"><Outlet/></EPressure>
+        <!-- <EConvect><Outlet/></EConvect> -->
+        <!-- <ENeumann ><Outlet/></ENeumann> -->
+
+        <Wall mask="ALL">
+            <!-- <Channel/> -->
+            <Cylinder dx="142" dy="30" nx="15" ny="15" nz="3"/>
+        </Wall>
+
+        <HeaterDirichletTemperatureEQ mask="COLLISION" name="dirichlet"> 
+        	<Cylinder dx="142" dy="30" nx="15" ny="15" nz="3"/>
+        </HeaterDirichletTemperatureEQ>  
+
+        <FluxMeasurment>
+            <Cylinder dx="142" dy="30" nx="15" ny="15" nz="3"/>
+            <!-- <Outlet/> -->
+        </FluxMeasurment>
+    </Geometry>
+
+    <Model>
+        <Params
+        	InitTemperature="9"
+        	InitTemperature-inlet="10"
+        	InitTemperature-outlet="11"
+            InitTemperature-dirichlet="10.5"
+            />
+        <Params/>
+
+        <Params
+            nu="0.03"
+            nu_buffer="0.1"
+            conductivity="0.03"
+            conductivity_buffer="0.1"
+
+            h_stability_enhancement="1."
+            cp="1"
+            material_density="1"
+            />
+        <Params/>
+        <!-- <Params VelocityX="0.05" /> -->
+		<Params Pressure-inlet="0.01" />
+        <Params Pressure-outlet="0.0" />
+    </Model>
+
+<Failcheck Iterations="2000" nx="500" ny="75" nz="3" />
+<!-- <TXT Iterations="50000" what="T,U"/> -->
+<Log Iterations="2000"/>
+<!-- <Solve Iterations="2000000"> </Solve> -->
+<Stop HeatSourceChange="1e-10" HeatFluxXChange="1e-10" Times="5" Iterations="5000"/>
+<Solve Iterations="100000"> <VTK Iterations="500"/> </Solve>
+</CLBConfig>
+

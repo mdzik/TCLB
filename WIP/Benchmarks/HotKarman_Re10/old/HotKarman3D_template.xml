@@ -1,0 +1,77 @@
+
+<?R
+    tab = expand.grid(nu=c(3e-02,3e-03,3e-04), k=c(3e-02,3e-03,3e-04))
+
+    dir_name <- "batch_HotKarman3D"
+    dir.create(dir_name)
+    # tab$name = paste0(dir_name,"/HotKarman3D_template", "_nu_",tab$nu,"_k_",tab$k)
+    # tab$xml = paste0(tab$name,".xml")
+    tab$name = paste0("HotKarman3D_template", "_nu_",tab$nu,"_k_",tab$k)
+    tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
+    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+    #tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/"))
+
+    write.csv(tab, "HotKarman3D_template.csv", row.names=FALSE)
+    for (i in 1:nrow(tab)) {
+        attach(tab[i,,drop=FALSE])
+        print(xml)
+        sink(xml) # save to a .xml file
+?>
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="<?%s output ?>">
+<!-- <CLBConfig version="2.0" output="/net/scratch/people/plgmuaddieb/output/HotKarman3D_template/"> -->
+<!-- <CLBConfig version="2.0" output="output/HotKarman3D_template/"> -->
+    <Geometry nx="1000" ny="150" nz="50" > 
+        <CM><Box/></CM>
+        <WVelocity><Inlet/></WVelocity>
+        <!-- <EPressure><Outlet/></EPressure> -->
+        <!-- <EConvect><Outlet/></EConvect> -->
+        <ENeumann><Outlet/></ENeumann>
+
+        <Wall mask="ALL">
+            <!-- <Channel/> -->
+            <Cylinder dx="285" dy="60" nx="30" ny="30" nz="50"/>
+        </Wall>
+
+        <HeaterDirichletTemperature  name="dirichlet_hot"> 
+          <Cylinder dx="285" dy="60" nx="30" ny="30" nz="50"/>
+        </HeaterDirichletTemperature>  
+
+        <MeasurmentArea>
+            <!-- <Cylinder dx="285" dy="60" nx="30" ny="30" nz="50"/> -->
+            <Outlet/>
+        </MeasurmentArea>
+    </Geometry>
+
+    <Model>
+        <Params
+            InitTemperature="0"
+            InitTemperature-dirichlet_hot="1"
+            InitTemperature-dirichlet_cold="0"
+            />
+        <Params/>
+
+        <Params
+            nu="<?%f nu ?>"
+            conductivity="<?%f k ?>"
+
+            h_stability_enhancement="1."
+            cp="1"
+            material_density="1"
+            />
+        <Params/>
+        <Params VelocityX="1.0E-02" />
+    </Model>
+
+<Failcheck Iterations="50000" nx="1000" ny="150" nz="50" />
+<TXT Iterations="50000" what="T,U"/>
+<Log Iterations="1000"/>
+<Solve Iterations="750000"> <VTK Iterations="10000"/> </Solve>
+</CLBConfig>
+
+<?R
+    sink()
+    detach()
+}
+?>

@@ -1,0 +1,51 @@
+
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/">
+	<Units>
+    <Params size="1m" gauge="4.000000"/>
+  </Units>
+	<Geometry nx="128.000000" ny="128.000000" nz="3" >  
+     	<HeaterDirichletTemperatureEQ mask="COLLISION" name="dirichlet_cold"> 
+            <Box />
+        </HeaterDirichletTemperatureEQ>
+
+     	<Cumulants_Higher>
+     		<Cylinder ny="120.000000" nx="120.000000" dx="4.000000" dy="4.000000"/>
+     	</Cumulants_Higher>    
+
+		<None mask="ADDITIONALS_HEAT">
+			<Cylinder ny="120.000000" nx="120.000000" dx="4.000000" dy="4.000000"/>
+		</None>
+
+        <HeaterDirichletTemperatureEQ mask="COLLISION" name="dirichlet_hot"> 
+        	<Cylinder ny="32.000000" nx="32.000000" dx="48.000000" dy="48.000000"/>
+        </HeaterDirichletTemperatureEQ> 
+
+<!--       	<DarcySolid name="darcy_solid_region">
+        	<Cylinder ny="20m" nx="20m" dx="6m" dy="6m"/>
+      	</DarcySolid>   -->
+	</Geometry>
+    <Model>
+	    <Params
+	    	h_stability_enhancement="1."
+
+	        conductivity="0.000100" 
+	        cp="1"
+			material_density="1"
+
+	        InitTemperature="10.0"
+	        InitTemperature-dirichlet_hot="11.0"
+	        InitTemperature-dirichlet_cold="10.0"
+	        />
+	    <Params />
+    </Model> 
+
+<!-- <Solve Iterations="10" > <VTK Iterations="1"/> </Solve> -->
+	<Failcheck Iterations="1000" nx="128.000000" ny="128.000000" nz="3" />
+	<Solve Iterations="100000">
+		<VTK Iterations="5000" />
+	</Solve>
+</CLBConfig>
+
+

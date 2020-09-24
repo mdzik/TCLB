@@ -1,0 +1,68 @@
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="/media/grzegorz/Worker/output/chipset_cht/">
+  <Units>
+    <Params size="1m" gauge="100"/>
+  </Units>
+  <Geometry nx="64" ny="64" nz="64">
+    <CM_HIGHER><Box/></CM_HIGHER>    
+    <!-- <Smoothing><Box /></Smoothing>  -->
+
+    <Wall mask="ALL" name="border" >
+      <Box nz="2"/>
+      <Box dz="-2"/>
+    </Wall>
+
+  	<DarcySolid name="material_A_region">
+    	<!-- <Box dx="20" nx="24" dy="20" ny="24" dz="10" nz="32"/> -->
+    	<STL file="example/data/Chipset.stl" scale="0.01m" Xrot="-0d" x="32" y="32" z="3"/>
+  	</DarcySolid>
+
+	<HeaterDirichletTemperatureEQ name="dirichlet_hot"> 
+       <Box dx="30" nx="4" dy="30" ny="4" dz="3" nz="1"/>
+    </HeaterDirichletTemperatureEQ>
+
+<!--     <HeaterDirichletTemperatureEQ name="dirichlet_cold"> 
+        <Box dz="-2"/>
+    </HeaterDirichletTemperatureEQ>  -->
+
+
+  </Geometry>
+    <Model>
+    <Params
+    	nu="0.1"
+    	h_stability_enhancement="1"
+
+        conductivity="0.01666" 
+        cp="5"
+		material_density="1"
+
+		conductivity-material_A_region="0.1666"
+		cp-material_A_region="10"
+		material_density-material_A_region="1"
+
+        InitTemperature="10."
+        InitTemperature-material_A_region="10."
+        InitTemperature-dirichlet_hot="11."
+        InitTemperature-dirichlet_cold="10."
+    />
+    <Params />
+    <Params GravitationZ="1.0E-05" />
+    <Params BoussinesqCoeff="1"/>
+    <!-- <Params VelocityX="-1.0E-01" /> -->
+
+    </Model> 
+<!-- 
+    <Solve Iterations="25" output="output/"> <VTK Iterations="10"/> </Solve>
+<Geometry>
+  <None mask="ADDITIONALS">
+    <Box nx="512" ny="100" nz="100"/>
+  </None>
+</Geometry> -->
+
+<Solve Iterations="5"> <VTK Iterations="1"/> </Solve>
+<Failcheck Iterations="1000" nx="64" ny="64" nz="64"/>
+<Log Iterations="10000"/>
+<Solve Iterations="150000"> <VTK Iterations="250" what="T,U"/> </Solve>
+</CLBConfig>
+

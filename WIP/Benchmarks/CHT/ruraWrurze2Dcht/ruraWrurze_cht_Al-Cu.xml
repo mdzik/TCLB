@@ -1,0 +1,61 @@
+<!-- 
+	W = kg⋅m2⋅s−3 
+	J = kg⋅m2⋅s−2
+-->
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/ruraWrurze_cht_Al-Cu_128lu/">
+	<Units>
+    <Params size="1m" gauge="4"/>
+
+	<!-- <Params nu="20.92e-6m2/s" gauge="1e-6"/> -->
+    <Params conductivity="397W/m/K" gauge="0.1666E-3"/> 
+	<Params cp="1.0J/kg/K" gauge="1E-3"/>
+	<Params	material_density="1.0kg/m3" gauge="1E-2"/>
+  </Units>
+	<Geometry nx="32m" ny="32m" >
+      <CM><Box/></CM>    
+     	<HeaterDirichletTemperature name="dirichlet_hot"> 
+            <Box />
+        </HeaterDirichletTemperature>
+
+		<None mask="ADDITIONALS_HEAT">
+			<Sphere ny="30m" nx="30m" dx="1m" dy="1m"/>
+		</None>
+
+        <HeaterDirichletTemperature name="dirichlet_cold"> 
+        	<Sphere ny="8m" nx="8m" dx="12m" dy="12m"/>
+        </HeaterDirichletTemperature>
+
+      	<DarcySolid name="darcy_solid_region">
+        	<Sphere ny="20m" nx="20m" dx="6m" dy="6m"/>
+      	</DarcySolid>
+        <None name="material_A_region">
+        	<Sphere ny="20m" nx="20m" dx="6m" dy="6m"/>
+        </None>        
+	</Geometry>
+    <Model>
+	    <Params
+	        conductivity="226W/m/K" 
+	        cp="921J/kg/K"
+			material_density="2698kg/m3"
+
+			conductivity-material_A_region="397W/m/K"
+			cp-material_A_region="385J/kg/K"
+			material_density-material_A_region="8940kg/m3"
+
+	        InitTemperature="0.0K"
+	        InitTemperature-dirichlet_hot="1.0K"
+	        InitTemperature-dirichlet_cold="0.0K"
+
+	        h_stability_enhancement="1."
+	        />
+	    <Params />
+	        <!-- <Params GravitationX="-1.0E-5" /> -->
+    </Model> 
+
+<!-- <Solve Iterations="10" > <VTK Iterations="1"/> </Solve> -->
+<Failcheck Iterations="100" nx="32m" ny="32m" />
+<TXT Iterations="100000" what="T,U"/>
+<Log Iterations="100000"/>
+<Solve Iterations="500000"> <VTK Iterations="1000"/> </Solve>
+</CLBConfig>

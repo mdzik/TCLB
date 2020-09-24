@@ -1,0 +1,33 @@
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/">
+	<Geometry nx="128.000000" ny="128.000000" nz="3" >
+      <Cumulants_Higher> <Box/> </Cumulants_Higher>    
+        <None name="init_T_region">
+           <Cylinder ny="32" nx="32" dx="48" dy="48"/>
+        </None>    
+	</Geometry>
+    <Model>
+	    <Params
+            nu="0.1666666"
+
+	    	h_stability_enhancement="1."
+
+	        conductivity="0.000100" 
+	        cp="1"
+			material_density="1"
+
+	        InitTemperature="10.0"
+	        InitTemperature-init_T_region="11.0"
+	        />
+	    <Params />
+	            <Params VelocityX="0.000000" />
+                <Params VelocityY="0.000000" />
+    </Model> 
+	<Failcheck Iterations="1000" nx="128.000000" ny="128.000000" nz="3" />
+	<Solve Iterations="100000">
+		<VTK Iterations="1000" />
+	</Solve>
+</CLBConfig>
+
+

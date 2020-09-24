@@ -1,0 +1,118 @@
+
+<?R
+    tab = expand.grid(
+        nu=c(1e-01),
+        k_material=c(0.1666666, 1e-01, 1e-02),
+        # effdiam=c(120,92,60,46,30), # these dont converge with 2nd order
+        effdiam=c(118,94,66,46,30),
+        collision=c("CM_HIGHER"),
+        bb_type=c("iabb", "abb", "eq")
+    )
+
+    dir_name <- "batch_IABB_ruraWrurze"
+    dir.create(dir_name)
+    tab$name = paste0(tab$bb_type, "_ruraWrurze_Dirichlet_", tab$collision, "_k_", tab$k_material,"_nu_",tab$nu, "_effdiam_", tab$effdiam)
+    # tab$xml = paste0(tab$name,".xml")
+    tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
+    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+    #tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name, "/"))
+
+    tab$stl_pipe_path = paste0("WIP/Benchmarks/Dirichlet3D/pipe_D", tab$effdiam,"_L128.stl")
+    tab$stl_cylinder_path = paste0("WIP/Benchmarks/Dirichlet3D/cylinder_D", tab$effdiam/2,"_L128.stl")
+
+    options(digits=10)
+    write.csv(tab, "HotKarman3D_template.csv", row.names=FALSE)
+    for (i in 1:nrow(tab)) {
+        attach(tab[i,,drop=FALSE])
+        print(xml)
+        sink(xml) # save to a .xml file
+?>
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="<?%s output ?>">
+    <Geometry nx="128" ny="128"  nz="3">
+        <<?%s collision ?>>
+            <Box/>
+        </<?%s collision ?>> 
+        <FluxMeasurmentZone1> <Box nz="1"/> </FluxMeasurmentZone1>
+
+        <Wall mask="ALL" name="border" >
+            <STL file="<?%s stl_pipe_path ?>" scale="1" Xrot="0d" x="0" y="0" z="0" side="in"/>
+        </Wall>
+        <?R
+        if(bb_type=="abb")
+        {
+            cat(sprintf("<HeaterDirichletTemperatureABB mask=\"COLLISION\" name=\"dirichlet_cold\">\n"))
+            cat(sprintf("\t\t<STL file=\"%s\" scale=\"1\" Xrot=\"0d\" x=\"0\" y=\"0\" z=\"0\" side=\"in\" />\n", stl_pipe_path))
+            cat(sprintf("\t</HeaterDirichletTemperatureABB>\n"))
+        }
+        else if(bb_type=="iabb")
+        {
+            cat(sprintf("<HeaterDirichletTemperatureIABB name=\"dirichlet_cold\">\n"))
+            cat(sprintf("\t\t<STL file=\"%s\" scale=\"1\" Xrot=\"0d\" x=\"0\" y=\"0\" z=\"0\" side=\"surface\" />\n", stl_pipe_path))
+            cat(sprintf("\t</HeaterDirichletTemperatureIABB>\n"))
+        }
+        else if(bb_type=="eq")
+        {
+            cat(sprintf("<HeaterDirichletTemperatureEQ mask=\"COLLISION\" name=\"dirichlet_cold\">\n"))
+            cat(sprintf("\t\t<STL file=\"%s\" scale=\"1\" Xrot=\"0d\" x=\"0\" y=\"0\" z=\"0\" side=\"in\" />\n", stl_pipe_path))
+            cat(sprintf("\t</HeaterDirichletTemperatureEQ>\n"))
+        }
+        ?>
+
+        <Wall mask="ALL" name="border" >
+            <STL file="<?%s stl_cylinder_path ?>" scale="1" Xrot="0d" x="0" y="0" z="0" side="in"/>
+        </Wall>        
+        <?R
+        if(bb_type=="abb")
+        {
+            cat(sprintf("<HeaterDirichletTemperatureABB mask=\"COLLISION\" name=\"dirichlet_hot\">\n"))
+            cat(sprintf("\t\t<STL file=\"%s\" scale=\"1\" Xrot=\"0d\" x=\"0\" y=\"0\" z=\"0\" side=\"in\" />\n", stl_cylinder_path))
+            cat(sprintf("\t</HeaterDirichletTemperatureABB>\n"))
+        }
+        else if(bb_type=="iabb")
+        {
+            cat(sprintf("<HeaterDirichletTemperatureIABB name=\"dirichlet_hot\">\n"))
+            cat(sprintf("\t\t<STL file=\"%s\" scale=\"1\" Xrot=\"0d\" x=\"0\" y=\"0\" z=\"0\" side=\"surface\" />\n", stl_cylinder_path))
+            cat(sprintf("\t</HeaterDirichletTemperatureIABB>\n"))
+        }
+        else if(bb_type=="eq")
+        {
+            cat(sprintf("<HeaterDirichletTemperatureEQ mask=\"COLLISION\" name=\"dirichlet_hot\">\n"))
+            cat(sprintf("\t\t<STL file=\"%s\" scale=\"1\" Xrot=\"0d\" x=\"0\" y=\"0\" z=\"0\" side=\"in\" />\n", stl_cylinder_path))
+            cat(sprintf("\t</HeaterDirichletTemperatureEQ>\n"))
+        }
+        ?>
+    </Geometry>
+    <Model>
+    <Param name="InitTemperature" value="10.5"/>
+    <Param name="InitTemperature" value="11" zone="dirichlet_hot"/>
+    <Param name="InitTemperature" value="10" zone="dirichlet_cold"/>
+
+    <Param name="nu" value="<?%f nu ?>"/>
+    <Param name="nu_buffer" value="<?%f nu ?>"/>
+    <Param name="conductivity" value="<?%f k_material ?>"/>
+
+    <Param name="h_stability_enhancement" value="1."/>
+    <Param name="cp" value="1."/>
+    <Param name="material_density" value="1."/>
+
+    <Param name="GravitationZ" value="<?%e 16.*0.01*nu/(effdiam * effdiam) ?>" />
+        <!-- <Params BoussinesqCoeff="1"/> -->
+        <!-- gx = 4 * uz_max * nu / (rho * R * R) -->
+        <!-- we set uz_max=0.01 - max velocity -->
+    </Model>
+<Failcheck Iterations="5000" nx="128" ny="128" nz="3" />
+
+<Solve Iterations="1"> <VTK Iterations="1"/> </Solve>
+<Log Iterations="5000"/>
+<!-- <Solve Iterations="500000"></Solve>
+<Stop XHydroFLuxChange="1e-11" Times="5" Iterations="10000"/> -->
+<Solve Iterations="1000000"><VTK Iterations="100000" what="H,T,U,Rho"/> </Solve>
+</CLBConfig>
+
+<?R
+    sink()
+    detach()
+}
+?>

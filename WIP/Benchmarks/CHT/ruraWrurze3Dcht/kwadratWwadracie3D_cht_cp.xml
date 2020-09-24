@@ -1,0 +1,64 @@
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/kwadratWwadracie3D_cht_cp/">
+	<Geometry nx="64" ny="64" nz="3" >
+      <CM_HIGHER><Box/></CM_HIGHER>    
+     	<HeaterDirichletTemperatureEQ name="dirichlet_hot"> 
+            <!-- <Box /> -->
+            <Box nx="1" nz="3"/>
+            <Box dx="-1" nz="3"/>
+            <Box ny="1" nz="3"/>
+            <Box dy="-1" nz="3"/>
+        </HeaterDirichletTemperatureEQ>
+
+<!-- 		<None mask="ADDITIONALS_HEAT">
+			<Cylinder ny="60" nx="60" dx="1" dy="1" nz="3"/>
+			<Box ny="60" nx="60" dx="1" dy="1" nz="3"/>
+		</None> -->
+
+        <None name="material_A_region">
+        	<Box dx="12" nx="40" dy="12" ny="40" nz="3"/>
+			<!-- <Box dx="12" nx="40" nz="3"/> -->
+        	<!-- <Cylinder ny="40" nx="40" dx="12" dy="12" nz="3"/> -->
+        </None> 
+
+        <HeaterDirichletTemperatureEQ name="dirichlet_cold"> 
+        	<Box dx="30" nx="4" dy="30" ny="4" nz="3"/>
+        	<!-- <Box dx="25" nx="12" nz="3"/> -->
+        	<!-- <Cylinder ny="16" nx="16" dx="24" dy="24" nz="3"/> -->
+        </HeaterDirichletTemperatureEQ>
+
+  <!--     	<DarcySolid name="darcy_solid_region">
+        	<Cylinder ny="40" nx="40" dx="12" dy="12" nz="3"/>
+      	</DarcySolid> -->
+       
+	</Geometry>
+    <Model>
+	    <Params
+	    	nu="0.1"
+	    	h_stability_enhancement="1"
+
+	        conductivity="0.1666" 
+	        cp="10"
+			material_density="1"
+
+			conductivity-material_A_region="0.1666"
+			cp-material_A_region="1000"
+			cp-dirichlet_cold="1000"
+			material_density-material_A_region="1"
+
+	        InitTemperature="10.5"
+	        InitTemperature-dirichlet_hot="11."
+	        InitTemperature-dirichlet_cold="10."
+
+	        />
+	    <Params />
+	        <!-- <Params GravitationX="-1.0E-5" /> -->
+    </Model> 
+
+<Solve Iterations="100" > <VTK Iterations="1"/> </Solve>
+<Failcheck Iterations="1000" nx="64" ny="64" nz="3" />
+<!-- <TXT Iterations="1000" what="T,U"/> -->
+<!-- <Log Iterations="1000"/> -->
+<Solve Iterations="100000"> <VTK Iterations="100"/> </Solve>
+</CLBConfig>

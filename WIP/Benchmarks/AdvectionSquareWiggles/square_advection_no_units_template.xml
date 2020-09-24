@@ -1,0 +1,66 @@
+<?R
+    tab = expand.grid(
+        sizer=c(4), 
+        ux=c(0.0, 0.1), 
+        k_material=c(1e-02,1e-03,1e-04,1e-05), 
+        collision=c("CM", "BGK")
+        # collision=c("Cumulants", "CM_HIGHER", "CM", "BGK")
+        )
+ 
+    dir_name <- "batch_square_advection"
+    dir.create(dir_name)
+
+    tab$name = paste0("d3q7_", tab$collision, "_ux_", tab$ux, "_k_", tab$k_material, "_size_",32*tab$sizer, "lu")
+    tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
+    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+
+    # tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name,"/"))
+
+    write.csv(tab, "ruraWrurze_variable_k_template.csv", row.names=FALSE)
+    for (i in 1:nrow(tab)) {
+        attach(tab[i,,drop=FALSE])
+        print(xml)
+        sink(xml) # save to a .xml file
+?>
+
+<!-- 
+	W = kg⋅m2⋅s−3 
+	J = kg⋅m2⋅s−2
+-->
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="<?%s output ?>">
+	<Geometry nx="<?%f 32*sizer ?>" ny="<?%f 32*sizer ?>" nz="3" >
+      <<?%s collision ?>> <Box/> </<?%s collision ?>>    
+        <None name="init_T_region">
+            <Box dx="<?%f 10*sizer ?>" nx="<?%f 12*sizer ?>" dy="<?%f 10*sizer ?>" ny="<?%f 12*sizer ?>" /> 
+        </None>    
+
+	</Geometry>
+    <Model> 
+        <Param name="nu" value="0.1666666" />
+	    <Param name="h_stability_enhancement" value="1."/>
+
+	    <Param name="conductivity" value="<?%f k_material ?>" />
+	    <Param name="cp" value="1" />
+		<Param name="material_density" value="1"/>
+
+	    <Param name="InitTemperature" value="10"/>
+	    <Param name="InitTemperature" value="11" zone="init_T_region"/>
+	        
+        <Param name="VelocityX" value="<?%f ux ?>" />
+        <Param name="VelocityY" value="0" />
+        <Param name="GravitationY" value="-0.0E-5" /> 
+    </Model> 
+
+    <Solve Iterations="3">  <VTK Iterations="1"/> </Solve > 
+
+    <Failcheck Iterations="1000" nx="<?%f 32*sizer ?>" ny="<?%f 32*sizer ?>" nz="3" />
+    <Solve Iterations="10000"> <VTK Iterations="1000" what="H,T,U,Rho"/> </Solve>
+</CLBConfig>
+
+
+<?R
+    sink()
+    detach()
+}
+?>
