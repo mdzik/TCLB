@@ -286,6 +286,7 @@ AddDescription = function(short, long) {
 
 AddNodeType("BGK","COLLISION")
 AddNodeType("MRT","COLLISION")
+AddNodeType("CM","COLLISION")
 # AddNodeType("MR","COLLISION")
 # AddNodeType("Entropic","COLLISION")
 AddNodeType("Wall","BOUNDARY")

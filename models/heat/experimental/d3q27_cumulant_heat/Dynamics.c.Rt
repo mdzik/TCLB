@@ -172,9 +172,13 @@ CudaDeviceFunction void EPressure()
  real_t uz = Jz/rho;
  real_t uy = Jy/rho;
  real_t rhoT = rho*Temperature;	
- rho =2*g1 + g0 + g3 + g4 + g5 + g6;
+//  rho =2*g1 + g0 + g3 + g4 + g5 + g6;
+//  rho = rho/(1.+ux);
+//  g2 = g1 - rho*ux;
+
+ rho =2*g100 + g000 + g010 + g020 + g001 + g002;
  rho = rho/(1.+ux);
- g2 = g1 - rho*ux;
+ g200 = g100 - rho*ux;
 
 }
 CudaDeviceFunction void NSymmetry()
@@ -267,7 +271,7 @@ CudaDeviceFunction void SetEquilibrum(real_t rho, real_t Jx, real_t Jy, real_t J
 }
 
 CudaDeviceFunction void Init() {
-	vector_t ST = SyntheticTurbulence(0);
+	vector_t ST = SyntheticTurbulence(0,0,0);
 	ST.x = Turbulence*ST.x;
 	ST.y = Turbulence*ST.y;
 	ST.z = Turbulence*ST.z; 
@@ -281,7 +285,7 @@ CudaDeviceFunction void Init() {
 CudaDeviceFunction void WVelocityTurbulent() {
         real_t k_aa = exp(-1/constContainer.ST.TimeWN);
         real_t k_bb =  sqrt(1 - k_aa*k_aa);
-       	vector_t ST = SyntheticTurbulence(0);
+       	vector_t ST = SyntheticTurbulence(0,0,0);
         ST.x = Turbulence*ST.x*k_bb + SynthTX*k_aa;
         ST.y = Turbulence*ST.y*k_bb + SynthTY*k_aa;
        	ST.z = Turbulence*ST.z*k_bb + SynthTZ*k_aa; 

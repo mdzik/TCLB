@@ -4,11 +4,11 @@
     tab = expand.grid(
         t_SI=c(10.0),
         k_SI=c(2.0), 
-        iterations=2*10*c(6,10,100,1000),
+        iterations=2*10*c(6,10,100,1000,10000),
         domain_size_SI=c(256.0), 
         lattice_size=c(256), 
-        ux=c(0.0), 
-        collision=c("CM", "CM_HIGHER", "Cumulants"), # collision=c("CM", "CM_HIGHER", "Cumulants"), 
+        ux=c(0.0, 0.1), 
+        collision=c("BGK", "CM", "CM_HIGHER", "Cumulants"),
         sigma=c(100) # sigma=c(50, 75, 100)
         )
  
@@ -22,6 +22,7 @@
         tab$collision, 
         "_ux_", formatC(tab$ux, digits = 2, format = "e"),
         "_k_", gsub("/","o", fractions(tab$k)),
+        "_iterations_", formatC(tab$iterations, format = "d"),
         "_sigma_", tab$sigma, 
         "_size_",tab$lattice_size, "lu")
 
@@ -77,7 +78,7 @@
 <!-- 	<TXT Iterations="100000" what="T,U" />
 	<Log Iterations="100000" /> -->
 	<Solve Iterations="<?%d iterations ?>">
-		<VTK Iterations="<?%d iterations/10 ?>" />
+		<VTK Iterations="<?%d iterations/2 ?>" />
 	</Solve>
 </CLBConfig>
 

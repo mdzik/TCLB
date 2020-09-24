@@ -19,6 +19,9 @@ wiki
 p
 *.pyc
 .Rproj.user
+.idea/*
+batch*
+models/.vscode/
 /*.vtu
 /*.txt
 .idea/*

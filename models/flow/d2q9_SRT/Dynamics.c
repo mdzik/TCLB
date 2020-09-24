@@ -81,6 +81,8 @@ CudaDeviceFunction void CollisionBGK() {
             f[i] = f[i] + omega*(f_eq[i]-f[i]);	
 	}
 }
+
+
 CudaDeviceFunction void BounceBack() {
 // Method to reverse distribution functions along the bounding nodes.
      	real_t uf;

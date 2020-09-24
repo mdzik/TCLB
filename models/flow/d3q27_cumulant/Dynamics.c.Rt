@@ -30,24 +30,29 @@ CudaDeviceFunction real_t getP(){
 CudaDeviceFunction vector_t getU_(){
         real_t d = getRho();
         vector_t u;
-<?R C(PV(c("u.x","u.y", "u.z")), f %*% U) ?>
-    if((NodeType & NODE_BOUNDARY) == NODE_Wall){
-        u.x = 0;
-        u.y = 0;
-        u.z = 0;
+        <?R C(PV(c("u.x","u.y", "u.z")), f %*% U) ?>
+        if((NodeType & NODE_BOUNDARY) == NODE_Wall){
+                u.x = 0;
+                u.y = 0;
+                u.z = 0;
         }
         else{
                 u.x = (u.x + ForceX/2.)/d;
-        u.y = (u.y + ForceY/2.)/d;
-        u.z = (u.z + ForceZ/2.)/d;
-    }
+                u.y = (u.y + ForceY/2.)/d;
+                u.z = (u.z + ForceZ/2.)/d;
+        }
+        
         return u;
 }
 
 CudaDeviceFunction vector_t getU(){
-	RunBoundaries();
-	return getU_();
+        // Use this function is only for vtk output.
+        // Nodes are created using streamed, post-collision DF.
+        // RunBoundaries are called in orded to assign the desired value at the boundary.
+        // It can make a difference in convergence study and nicer preview.
 
+        RunBoundaries();
+        return getU_();
 }
 
 #ifdef OPTIONS_AVG
@@ -384,7 +389,6 @@ if ((NodeType & NODE_BOUNDARY) != 0) w[0] = 1.0/(3*nubuffer+0.5);
 #endif
 ///////
        real_t dxu,dyv,dzw;
-      // vector_t u = getU();
        dxu = - w[0]/(2.)*(2*c200 - c020 - c002) - w[1]/(2.)*(c200 + c020 + c002 - 1.);
        dyv = dxu + 3.*w[0]/2.*(c200 - c020);
        dzw = dxu + 3.*w[0]/2.*(c200 - c002);

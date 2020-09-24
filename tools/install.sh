@@ -249,11 +249,11 @@ rinside)
 	fi
 	;;
 cuda)
-	test -z "$1" && error Version number needed for cuda install
+	test -z "$1" && error Version number needed for cuda install, try: \$ tools/install.sh cuda 10.0.130-1
 	get_PMS
 	CUDA=$1
 	shift
-	echo "#### Installing CUDA library ####"
+	echo "#### Installing CUDA library version: ${CUDA} ####"
 	
 	if test "x$PMS" == "xyum"
 	then
@@ -263,13 +263,13 @@ cuda)
 	
 	if test "x$PMS" == "xapt-get"
 	then
-	    try "Downloading CUDA dist" wget $WGETOPT http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1204/x86_64/cuda-repo-ubuntu1204_${CUDA}_amd64.deb
-	    try "Installing CUDA dist" dpkg -i cuda-repo-ubuntu1204_${CUDA}_amd64.deb
-	    try "Updating APT" apt-get update -qq
-	    CUDA_APT=${CUDA%-*}
-	    CUDA_APT=${CUDA_APT/./-}
-	    try "Installing CUDA form APT" apt-get install -y cuda-drivers cuda-core-${CUDA_APT} cuda-cudart-dev-${CUDA_APT}
-	    try "Clean APT" apt-get clean
+		try "Downloading CUDA dist" wget $WGETOPT http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_${CUDA}_amd64.deb
+  		try "Installing CUDA dist" sudo dpkg -i cuda-repo-ubuntu1604_${CUDA}_amd64.deb
+		try "Fectching nvidia keys.pub" sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
+ 		try "Installing cuda form APT" sudo apt-get install cuda-10-1 -y
+		try "Installing cuda-toolkit form APT" sudo apt-get install cuda-toolkit-10-1 -y
+		try "Updating APT" apt-get update -qq
+		try "Clean APT" apt-get clean
 	fi
 	;;
 openmpi)
