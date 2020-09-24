@@ -180,7 +180,7 @@ CudaDeviceFunction float2 Color() {
 	float2 ret;
 	
 	ret.x = getT_();
-	ret.x -= 10;  // hack for better preview.
+	ret.x -= 10;  // HACK: for better preview. Cumulants cannot be 0, so lets set the reference level to 10.
 	ret.y = ret.x;
 
 
@@ -263,6 +263,7 @@ CudaDeviceFunction void Init() {
 		real_t dy = Y - CylinderCenterY_GH;
 		real_t L = dx*dx + dy*dy;
 		H *= exp(-L/(2*Sigma_GH));
+		H += 10.; // HACK: for better preview. Cumulants cannot be 0, so lets set the reference level to 10.
 	}
 
 	SetEquilibriumHeat(H,rho,u);
