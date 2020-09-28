@@ -21,7 +21,7 @@
     tab$stl_cylinder_path = paste0("WIP/Benchmarks/Dirichlet3D/cylinder_D", tab$effdiam/2,"_L128.stl")
 
     options(digits=10)
-    write.csv(tab, "HotKarman3D_template.csv", row.names=FALSE)
+    write.csv(tab, "IABB_ruraWrurze_template.csv", row.names=FALSE)
     for (i in 1:nrow(tab)) {
         attach(tab[i,,drop=FALSE])
         print(xml)

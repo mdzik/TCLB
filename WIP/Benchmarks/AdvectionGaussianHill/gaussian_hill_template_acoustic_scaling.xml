@@ -2,9 +2,9 @@
     library(MASS)  # lib which converts decimal -> fraction
 
     tab = expand.grid(
-        t_SI=c(10.0),
-        k_SI=c(2.0), 
-        iterations=2*10*c(6,10,100,1000,10000),
+        t_SI=c(100.0),
+        k_SI=c(4.0), 
+        iterations=4*100*c(6,10,100,1000,10000),
         domain_size_SI=c(256.0), 
         lattice_size=c(256), 
         ux=c(0.0, 0.1), 
@@ -12,7 +12,15 @@
         sigma=c(100) # sigma=c(50, 75, 100)
         )
  
-    dir_name <- "batch_GaussianHill_acoustic_scalling"
+    # dir_name <- "batch_GaussianHill_acoustic_scalling"
+
+    dir_name = paste0(
+       "batch_GaussianHill_acoustic_scalling_",
+       formatC(min(tab$iterations), format="d"),
+       "-",
+       formatC(max(tab$iterations), format="d")
+       )
+    
     dir.create(dir_name)
 
     tab$dx=tab$domain_size_SI/tab$lattice_size
