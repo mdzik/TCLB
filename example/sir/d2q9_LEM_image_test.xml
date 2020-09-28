@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/lem_image_test/">
+	<!-- <Geometry nx="32" ny="32"> -->
+	<!-- <Geometry nx="128" ny="128"> -->
+		<Geometry nx="256" ny="256">
+	<!-- <Geometry nx="512" ny="512"> -->
+	<!-- <Geometry nx="1024" ny="1024"> -->
+		<MRT><Box/></MRT> 
+		<!-- <CROSSMRT><Box/></CROSSMRT> -->
+		<!-- <CROSSMRT_FOI><Box/></CROSSMRT_FOI> -->
+		<Smoothing><Box/></Smoothing>
+
+
+        <ImageReader> 
+      		<!-- <ImageBMP file="example/experimental/smile_32x32.bmp" /> -->
+      		<!-- <ImageBMP file="example/experimental/input_128x128.bmp" /> -->
+      		<ImageBMP file="example/experimental/input_256x256.bmp" 
+              min_range="1"
+              max_range="100"
+			  wall_value="50"
+              />
+      		<!-- <ImageBMP file="example/experimental/input_512x512.bmp" /> -->
+      		<!-- <ImageBMP file="example/experimental/input_1024x1024.bmp" /> -->
+        </ImageReader> 
+
+		<None name="epicenter">
+			<Box dx="80" dy="120" nx="10" ny="10"/>
+			<Box dx="20" dy="60" nx="10" ny="10"/>
+		</None>
+
+
+	</Geometry>
+	<Model>
+		<Param name="diffusivity_s" value="0.333333"/>
+		<Param name="diffusivity_i" value="0.333333"/>
+		<Param name="diffusivity_r" value="0.333333"/>
+
+		<!-- <Param name="diffusivity_s" value="0.00001666"/>
+		<Param name="diffusivity_i" value="0.00001666"/>
+		<Param name="diffusivity_r" value="0.00001666"/> -->
+
+		<!-- <Param name="diffusivity_s" value="0.0001666"/>
+		<Param name="diffusivity_i" value="0.0001666"/>
+		<Param name="diffusivity_r" value="0.1666"/> -->
+
+		<!-- <Param name="infectious_radius" value="0.4082482"/> -->
+		<Param name="infectious_radius" value="3266"/>  <!-- np.sqrt(1/6)*8*1e3 =  3266-->
+        <Param name="omega_turb_multiplicator" value="0.0"/>
+		<Param name="sir_beta" value="1e-3"/><!-- s2i constant ->  infection rate -->
+		<Param name="sir_gamma" value="1e-6"/><!-- i2r constant -> 1/gamma is the mean infective period -->
+		<Param name="sigma2_tweaker" value="1."/>
+
+		<Param name="Init_S_Fraction" value="1" />		
+		<Param name="Init_I_Fraction" value="0" />
+		<Param name="Init_R_Fraction" value="0" />
+
+		<Param name="Init_S_Fraction" zone="epicenter" value="0.9"/>		
+		<Param name="Init_I_Fraction" zone="epicenter" value="0.1" />
+
+		<Param name="population_smoothing" value="0.1"/>
+    </Model>
+
+	<Solve Iterations="100"><VTK Iterations="10"/></Solve>	<!-- Smoothing the population -->
+	<Geometry><None mask="ADDITIONALS"><Box nx="256" ny="256"/></None></Geometry>
+	<Solve Iterations="100000"><VTK Iterations="5000"/></Solve>
+</CLBConfig>

@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="output/lem_m/">
+	<Geometry nx="256" ny="256">
+		<MRT><Box/></MRT>
+		<Smoothing><Box/></Smoothing>
+		<None name="epicenter">
+			<Box nx="10" ny="10"/>
+			<Box dx="80" dy="120" nx="10" ny="10"/>
+			<Box dx="40" dy="20" nx="10" ny="10"/>
+			<Box dx="10" dy="190" nx="10" ny="10"/>
+
+		</None>
+		<None name="city">
+			<!-- <Sphere dx="40" dy="40" nx="50" ny="50"/> -->
+			<Box dx="40" dy="40" nx="50" ny="50"/>
+		</None>
+		<None name="desert">
+			<!-- <Sphere dx="100" dy="140" nx="50" ny="50"/> -->
+			<Box dx="100" dy="140" nx="50" ny="50"/>
+		</None>
+	</Geometry>
+	<Model>
+		<Param name="diffusivity" value="0.1666"/>
+		<Param name="sir_beta" value="0.1"/><!-- s2i constant ->  infection rate -->
+		<Param name="sir_gamma" value="0.01"/><!-- i2r constant -> 1/gamma is the mean infective period -->
+		<Param name="stability_enhancement" value="10."/>
+
+		<Param name="Init_S_Fraction" value="1" />		
+		<Param name="Init_I_Fraction" value="0" />
+		<Param name="Init_R_Fraction" value="0" />
+
+		<Param name="Init_S_Fraction" zone="epicenter" value="0.97"/>		
+		<Param name="Init_I_Fraction" zone="epicenter" value="0.03" />
+
+		<Param name="Init_PopulationDensity" value="50" />
+		<Param name="Init_PopulationDensity" zone="city" value="100" />
+		<Param name="Init_PopulationDensity" zone="desert" value="10" /> 
+
+		<!-- <Param name="population_smoothing" value="0.1"/>
+		<Param name="Init_PopulationDensity" value="2" />
+		<Param name="Init_PopulationDensity" zone="city" value="3" />
+		<Param name="Init_PopulationDensity" zone="desert" value="1" /> -->
+    </Model>
+
+	<Solve Iterations="500"><VTK Iterations="100"/></Solve>	<!-- Smoothing the population -->
+	<Geometry><None mask="ADDITIONALS"><Box nx="256" ny="256"/></None></Geometry>
+	<Solve Iterations="3000"><VTK Iterations="10"/></Solve>
+</CLBConfig>
