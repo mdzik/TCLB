@@ -69,3 +69,7 @@ AddNodeType(name="WPressure", group="BOUNDARY")
 AddNodeType(name="WVelocity", group="BOUNDARY")
 AddNodeType(name="BGK", group="COLLISION")
 AddNodeType(name="MRT", group="COLLISION")
+
+AddNodeType("SolidBoundary1","OBJECTIVE")
+AddNodeType("SolidBoundary2","OBJECTIVE")
+AddNodeType("SolidBoundary3","OBJECTIVE")
