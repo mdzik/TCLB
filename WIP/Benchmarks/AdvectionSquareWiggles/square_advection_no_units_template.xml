@@ -3,14 +3,14 @@
         sizer=c(4), 
         ux=c(0.0, 0.1), 
         k_material=c(1e-02,1e-03,1e-04,1e-05), 
-        collision=c("CM", "BGK")
-        # collision=c("Cumulants", "CM_HIGHER", "CM", "BGK")
+        # collision=c("CM", "BGK")
+        collision=c("Cumulants", "CM_HIGHER", "CM", "BGK")
         )
  
     dir_name <- "batch_square_advection"
     dir.create(dir_name)
 
-    tab$name = paste0("d3q7_", tab$collision, "_ux_", tab$ux, "_k_", tab$k_material, "_size_",32*tab$sizer, "lu")
+    tab$name = paste0("d3q27_", tab$collision, "_ux_", tab$ux, "_k_", tab$k_material, "_size_",32*tab$sizer, "lu")
     tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
     tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
 
@@ -52,10 +52,11 @@
         <Param name="GravitationY" value="-0.0E-5" /> 
     </Model> 
 
-    <Solve Iterations="3">  <VTK Iterations="1"/> </Solve > 
+    <!-- <Solve Iterations="3">  <VTK Iterations="1"/> </Solve >  -->
 
     <Failcheck Iterations="1000" nx="<?%f 32*sizer ?>" ny="<?%f 32*sizer ?>" nz="3" />
-    <Solve Iterations="10000"> <VTK Iterations="1000" what="H,T,U,Rho"/> </Solve>
+   <!--  <Solve Iterations="10000"> <VTK Iterations="1000" what="H,T,U,Rho"/> </Solve> -->
+    <Solve Iterations="12800"> <VTK Iterations="12800" what="H,T,U,Rho"/> </Solve>
 </CLBConfig>
 
 
