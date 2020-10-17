@@ -29,14 +29,13 @@ AddAction(name="InitFromFields", "InitFromFieldsStage")
 
 # AddQuantity(name="Random", unit="1.")
 
-
-
 #	Boundary things:
 AddNodeType(name="DirichletEQ",     group="BOUNDARY")
 AddNodeType(name="ImageReader",     group="IMAGE")
-AddNodeType(name="SRT_SOI_DF",	    group="COLLISION")
-AddNodeType(name="SRT_SOI",	        group="COLLISION")
-AddNodeType(name="TRT_SOI",	        group="COLLISION")
+AddNodeType(name="SRT_DF_SOI",	    group="COLLISION")
+AddNodeType(name="SRT_M_SOI",	    group="COLLISION")
+AddNodeType(name="TRT_M_SOI",	    group="COLLISION")
+AddNodeType(name="TRT_CM_SOI",	    group="COLLISION")
 AddNodeType(name="Wall",	        group="BOUNDARY")
 
 # 	Inputs: Flow Properties
@@ -44,6 +43,8 @@ AddSetting(name="diffusivity_phi",      default=0.02, comment='Mobility')
 AddSetting(name="magic_parameter",      default=1./4., comment='to control relaxation frequency of even moments in TRT collision kernel')
 AddSetting(name="lambda", default=1.0, comment="to control intensity of the source term")
 
+AddSetting(name="Init_UX", default=0., comment="free stream x-velocity", zonal=TRUE)
+AddSetting(name="Init_UY", default=0., comment="free stream y-velocity", zonal=TRUE)
 AddSetting(name="Init_PhaseField",   zonal=TRUE)
 AddSetting(name="Init_From_PhaseField_External",   zonal=TRUE)
 

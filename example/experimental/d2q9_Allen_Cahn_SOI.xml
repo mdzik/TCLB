@@ -1,48 +1,28 @@
-<?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/allen_cahn/">
-	<Geometry nx="512" ny="512">
-		<!-- <SRT_SOI_DF><Box/></SRT_SOI_DF> -->
-		<!-- <SRT_SOI><Box/></SRT_SOI>	 -->
-		<TRT_SOI><Box/></TRT_SOI>
-		<Smoothing><Box/></Smoothing>
-
-		<None name="city">
-			<!-- <Sphere dx="40" dy="40" nx="150" ny="150"/> -->
-			<Box dx="0" dy="0" nx="50" ny="50"/>
-			<Box dx="0" dy="60" nx="50" ny="50"/>
-			<Box dx="60" dy="0" nx="50" ny="50"/>
-			<Box dx="120" dy="0" nx="50" ny="50"/>
-			<Box dx="0" dy="120" nx="50" ny="50"/>
-			<Box dx="200" dy="200" nx="50" ny="50"/>
-
-		</None>
-
-		<None name="desert">
-			<!-- <Sphere dx="300" dy="340" nx="100" ny="100"/> -->
-			<Box dx="300" dy="340" nx="100" ny="100"/>
-		</None>
-	</Geometry>
-	<Model>
-		<Param name="diffusivity_phi" value="0.1666"/>
-		<Param name="magic_parameter" value="0.1666"/>
-		
-		<Param name="lambda" value="1."/>
-
-		<Param name="Init_PhaseField" value="0.0" />	
-		<!-- <Param name="Init_PhaseField" zone="city" value="1." />
-		<Param name="Init_PhaseField" zone="desert" value="-1." /> -->
-		<Param name="Init_From_PhaseField_External" value="1" />
-
-		<Param name="phase_field_smoothing_coeff" value="0.1"/>
-    </Model>
-	<RunR>
-		x = Solver$Geometry$X
-		x = x / max(max(x)) * 2 * pi
-		y = Solver$Geometry$Y		
-		Solver$Fields$Init_PhaseField_External[] = sin(x)	
-		Solver$Actions$InitFromFields() 
-	</RunR>
-	<!-- Smoothing the population -->
-	<VTK/>
-
+<CLBConfig version="2.0" output="output/run/">
+  <Geometry predef="none" nx="256" ny="256">
+    <!-- <SRT_DF_SOI><Box/></SRT_DF_SOI>  -->
+    <!-- <SRT_M_SOI><Box/></SRT_M_SOI> -->
+    <TRT_M_SOI><Box/></TRT_M_SOI>
+    <!-- <TRT_CM_SOI><Box/></TRT_CM_SOI> -->
+    <None name="up">
+      <Box dx="37" dy="107" nx="50" ny="50"/>
+    </None>
+    <None name="down">
+      <Box dx="12" dy="72" nx="50" ny="50"/>
+    </None>
+  </Geometry>
+  <Model>
+    <Param name="diffusivity_phi" value="0.01666666"/>
+    <Param name="magic_parameter" value="0.25"/>
+    <Param name="lambda" value="0.01"/>
+    <Param name="Init_PhaseField" value="0."/>
+    <Param name="phase_field_smoothing_coeff" value="0.1"/>
+    <Param name="Init_PhaseField" value="0.9" zone="up"/>
+    <Param name="Init_PhaseField" value="-0.9" zone="down"/>
+    <Param name="Init_UX" value="0.1"/>
+    <Param name="Init_UY" value="0."/>
+  </Model>
+  <Solve Iterations="10"><VTK Iterations="1"/></Solve>
+  <Solve Iterations="12800"><VTK Iterations="640"/></Solve>
+  <VTK/>
 </CLBConfig>
