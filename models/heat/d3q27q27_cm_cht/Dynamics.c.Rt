@@ -280,6 +280,45 @@ CudaDeviceFunction void Init() {
 	#endif
 }
 
+#ifdef OPTIONS_fields
+CudaDeviceFunction void InitFromFields() {
+	real_t pressure = Pressure;
+	vector_t u; u.x = VelocityX; u.y = VelocityY; u.z = VelocityZ;
+
+	if((NodeType & NODE_BOUNDARY) == NODE_Wall){
+		u.x = 0; u.y = 0; u.z = 0;
+		pressure = 0;
+	}
+	
+	real_t rho = 1.0*material_density + pressure * 3.0;
+	real_t H = rho*cp*InitTemperature;
+
+	SetEquilibriumHydro(rho, u.x, u.y, u.z);
+
+	// if(CylinderCenterX_GH > 0 && CylinderCenterY_GH > 0 && Sigma_GH > 0){ 
+	// 	// Gaussian Hill Benchmark
+	// 	real_t dx = X - CylinderCenterX_GH;
+	// 	real_t dy = Y - CylinderCenterY_GH;
+	// 	real_t L = dx*dx + dy*dy;
+	// 	H *= exp(-L/(2*Sigma_GH));
+	// 	H += 10.; // HACK: for better preview. Cumulants cannot be 0, so lets set the reference level to 10.
+	// }
+
+	SetEquilibriumHeat(Init_H_External,rho,u);
+
+	#ifdef OPTIONS_OutFlowConvective
+	if ((NodeType & NODE_BOUNDARY) == NODE_EConvective){
+			<?R if (Options$OutFlowConvective)
+				{
+					C(f_old, f)
+					C(h_old, h)     
+				}       
+			?>
+	}
+	#endif
+}
+#endif
+
 CudaDeviceFunction void HydroBounceBack()
 {
 	<?R 
