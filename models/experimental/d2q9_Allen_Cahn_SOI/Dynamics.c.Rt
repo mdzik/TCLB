@@ -404,7 +404,7 @@ CudaDeviceFunction void relax_and_collide_TRT_M_SOI(real_t omega_ade)
 	// "Optimal Stability of Advection-Diffusion Lattice Boltzmann Models 
 	//  with Two Relaxation Times for Positive/Negative Equilibrium"
 	// by I. Ginzburg, D. d’Humières, A. Kuzmin, 2010
-	real_t omega_even = (-1.0 + 2.0/omega_ade)/(2.0*magic_parameter + 1.0);
+	real_t omega_even = 2.*(2.-omega_ade)/(omega_ade*(4.*magic_parameter-1.)+2.);
 	// real_t omega_even = 2. - omega_ade;  // to jakby gorsze
 	// real_t omega_even = 1.; // to jakby najlepsze
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
@@ -477,6 +477,7 @@ CudaDeviceFunction void relax_and_collide_TRT_CM_SOI(real_t omega_ade)
 	u.y = Init_UY;
 
 	// real_t omega_even = omega_ade;
+	// real_t omega_even = 2.*(2.-omega_ade)/(omega_ade*(4.*magic_parameter-1.)+2.);
 	real_t omega_even = 1.;
 	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
 	real_t uxuy = u.x*u.y;
@@ -641,7 +642,7 @@ CudaDeviceFunction void relax_and_collide_TRT_M_SOI_obsolete_without_u(real_t om
 	// "Optimal Stability of Advection-Diffusion Lattice Boltzmann Models 
 	//  with Two Relaxation Times for Positive/Negative Equilibrium"
 	// by I. Ginzburg, D. d’Humières, A. Kuzmin, 2010
-	real_t omega_even = (-1.0 + 2.0/omega_ade)/(2.0*magic_parameter + 1.0);
+	real_t omega_even = 2.*(2.-omega_ade)/(omega_ade*(4.*magic_parameter-1.)+2.);
 	// real_t omega_even = 2. - omega_ade;  // to jakby gorsze
 	
 	real_t Q = getQ();
