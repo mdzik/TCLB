@@ -30,12 +30,6 @@ AddDensity(
 
 for (h in hname) AddField(h,dx=0,dy=0,dz=0) # Make h accessible also in present node (not only streamed)
 
-if (Options$fields) {
-	AddDensity(name="Init_H_External", group="init", dx=0,dy=0,dz=0, parameter=TRUE)
-	AddStage(name="InitFromFieldsStage", load.densities=TRUE, save.fields=TRUE)
-	AddAction(name="InitFromFields", "InitFromFieldsStage")
-}
-
 
 #	Inputs: Flow Properties
 AddSetting(name="VelocityX", 	default="0m/s",		comment='inlet/outlet/init x-velocity component', zonal=TRUE)
@@ -226,3 +220,8 @@ AddNodeType(name="WVelocity", group="BOUNDARY")
 AddNodeType(name="BGK", group="COLLISION")
 AddNodeType(name="Body", group="BODY")
 
+if (Options$fields) {
+	AddDensity(name="Init_H_External", group="init", dx=0,dy=0,dz=0, parameter=TRUE)
+	AddStage(name="InitFromFieldsStage", load.densities=TRUE, save.fields=TRUE)
+	AddAction(name="InitFromFields", "InitFromFieldsStage")
+}

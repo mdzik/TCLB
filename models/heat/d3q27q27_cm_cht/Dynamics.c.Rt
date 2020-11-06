@@ -281,7 +281,7 @@ CudaDeviceFunction void Init() {
 }
 
 #ifdef OPTIONS_fields
-CudaDeviceFunction void InitFromFields() {
+CudaDeviceFunction void InitFromFieldsStage() {
 	real_t pressure = Pressure;
 	vector_t u; u.x = VelocityX; u.y = VelocityY; u.z = VelocityZ;
 
