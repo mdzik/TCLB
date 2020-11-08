@@ -5,6 +5,7 @@
 		<Param name="diff_coeff" value="0.01"/>
 	</Model>
 	<VTK Iterations="1000"/>
+	<!-- <RunR interactive="true"> -->
 	<RunR>
 		library(png)
 		tab = readPNG("example/data/japan.png")

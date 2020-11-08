@@ -257,12 +257,12 @@ CudaDeviceFunction void Init() {
 
 	SetEquilibriumHydro(rho, u.x, u.y, u.z);
 
-	if(CylinderCenterX_GH > 0 && CylinderCenterY_GH > 0 && Sigma_GH > 0){ 
+	if(CylinderCenterX_GH > 0 && CylinderCenterY_GH > 0 && Sigma2_GH > 0){ 
 		// Gaussian Hill Benchmark
 		real_t dx = X - CylinderCenterX_GH;
 		real_t dy = Y - CylinderCenterY_GH;
-		real_t L = dx*dx + dy*dy;
-		H *= exp(-L/(2*Sigma_GH));
+		real_t L2 = dx*dx + dy*dy;
+		H *= exp(-L2/(2*Sigma2_GH));
 		H += 10.; // HACK: for better preview. Cumulants cannot be 0, so lets set the reference level to 10.
 	}
 
@@ -294,16 +294,6 @@ CudaDeviceFunction void InitFromFieldsStage() {
 	real_t H = rho*cp*InitTemperature;
 
 	SetEquilibriumHydro(rho, u.x, u.y, u.z);
-
-	// if(CylinderCenterX_GH > 0 && CylinderCenterY_GH > 0 && Sigma_GH > 0){ 
-	// 	// Gaussian Hill Benchmark
-	// 	real_t dx = X - CylinderCenterX_GH;
-	// 	real_t dy = Y - CylinderCenterY_GH;
-	// 	real_t L = dx*dx + dy*dy;
-	// 	H *= exp(-L/(2*Sigma_GH));
-	// 	H += 10.; // HACK: for better preview. Cumulants cannot be 0, so lets set the reference level to 10.
-	// }
-
 	SetEquilibriumHeat(Init_H_External,rho,u);
 
 	#ifdef OPTIONS_OutFlowConvective

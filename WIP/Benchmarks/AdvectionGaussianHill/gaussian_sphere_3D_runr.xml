@@ -1,0 +1,130 @@
+<?R
+    library(MASS)  # lib which converts decimal -> fraction
+
+    t_SI=100.0
+    k_SI=4.0
+    dimensions=3
+    domain_size_SI=c(256.0)
+    lattice_size=c(256)
+    dx=domain_size_SI/lattice_size
+
+    tab = expand.grid(
+        #iterations=k_SI*t_SI*c(6,10,100,1000,10000),
+        iterations=k_SI*t_SI*c(10000),
+        ux=c(0.0, 0.1), 
+        collision=c("CM_HIGHER"),
+        #collision=c("BGK", "CM", "CM_HIGHER", "Cumulants"),
+        sigma2=c(100) # sigma2=c(50, 75, 100)
+        )
+
+
+    tab$k=(t_SI*k_SI)/(tab$iterations*dx*dx)
+
+    # dir_name <- "batch_Gaussian_same_SI_time"
+    dir_name = paste0(
+       "batch_Gaussian_same_SI_time_",
+       formatC(min(tab$iterations), format="d"),
+       "-",
+       formatC(max(tab$iterations), format="d")
+       )
+    
+    dir.create(dir_name)
+
+    tab$name = paste0(
+        tab$collision, 
+        "_ux_", formatC(tab$ux, digits = 2, format = "e"),
+        "_k_", gsub("/","o", fractions(tab$k, max.denom=1000000)),
+        "_iterations_", formatC(tab$iterations, format = "d"),
+        "_sigma2_", tab$sigma2, 
+        "_size_",tab$lattice_size, "lu")
+
+    tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
+    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+
+    # tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name,"/"))
+
+    write.csv(tab, "gaussian_hill_t_template.csv", row.names=FALSE)
+    for (i in 1:nrow(tab)) {
+        attach(tab[i,,drop=FALSE])
+        print(xml)
+        sink(xml) # save to a .xml file
+?>
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="<?%s output ?>">
+    <?R
+        if(dimensions == 2 )
+        {
+            cat(sprintf(" <Geometry nx=\"%d\" ny=\"%d\" nz=\"3\" >", lattice_size , lattice_size))
+        } else if (dimensions == 3)
+        {
+            cat(sprintf(" <Geometry nx=\"%d\" ny=\"%d\" nz=\"%d\" >", lattice_size, lattice_size, lattice_size))
+        }  
+    ?>   
+      <<?%s collision ?>> <Box/> </<?%s collision ?>>    
+	</Geometry>
+    <Model>
+      <Param name="nu" value="0.1666666"/>
+	  <Param name="h_stability_enhancement" value="1."/>
+	  <Param name="conductivity" value="<?%f k ?>"/>
+	  <Param name="cp" value="1."/>
+	  <Param name="material_density" value="1."/>
+	  <Param name="InitTemperature" value="1."/>
+	  <Param name="VelocityX" value="<?%f ux ?>"/>
+    </Model> 
+    <Solve Iterations="1"><VTK Iterations="1" what="T,U"/></Solve>
+    <!-- <RunR interactive="true"> -->
+    	<RunR >
+		X = Solver$Geometry$X
+		nx = dim(X)[1]
+		ny = dim(X)[2]
+		nz = dim(X)[3]
+
+		x_center = nx/2
+		y_center = ny/2
+		z_center = nz/2
+		
+		dx = Solver$Geometry$X - x_center
+		dy = Solver$Geometry$Y - y_center
+		dz = Solver$Geometry$Z - z_center
+
+        <?R
+          if(dimensions == 2 )
+          {
+            cat(sprintf("L2 = dx*dx + dy*dy"))
+          } else if (dimensions == 3)
+          {
+            cat(sprintf("L2 = dx*dx + dy*dy + dz*dz"))
+          }
+        ?>  
+
+		C0 = 1 # initial concentration
+		Sigma2 = <?%f sigma2 ?> # initial variance
+
+        H0 = C0
+
+        # H0 = H0/(2*pi*Sigma2)^(<?%f dimensions /2. ?>) # the usual formula
+        # H0 = H0*(2*pi*Sigma2)^(<?%f dimensions /2. ?>) # lets normalize, so actually it's just C0 at time = 0
+
+
+		H0 = H0*exp(-L2/(2*Sigma2))
+		H0 = H0 + 10 # HACK: for better preview. Cumulants cannot be 0, so lets set the reference level to 10.
+
+		Solver$Fields$Init_H_External[] = H0
+		Solver$Actions$InitFromFields() # Initiate H from H0
+	</RunR>
+    
+<!-- <Solve Iterations="10" > <VTK Iterations="1"/> </Solve> -->
+<!-- <Log Iterations="100000" /> -->
+	<Failcheck Iterations="1000" nx="<?%d lattice_size ?>" ny="<?%d lattice_size ?>" nz="3" />
+    <TXT Iterations="<?%d iterations/2 ?>" what="T,U" />
+    <VTK Iterations="<?%d iterations/2 ?>" what="T,U"/>
+	<Solve Iterations="<?%d iterations ?>"></Solve>
+</CLBConfig>
+
+
+<?R
+    sink()
+    detach()
+}
+?>

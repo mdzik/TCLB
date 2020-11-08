@@ -123,7 +123,7 @@ AddSetting(name="CylinderCenterY", 		default="0", comment='Y coord of cylinder w
 
 AddSetting(name="CylinderCenterX_GH",	default="0", comment='X coord of Gaussian Hill')
 AddSetting(name="CylinderCenterY_GH",	default="0", comment='Y coord of Gaussian Hill')
-AddSetting(name="Sigma_GH", 		 	default="1", comment='Initial width of the Gaussian Hill', zonal=T)
+AddSetting(name="Sigma2_GH", 		 	default="1", comment='Initial width (variance) of the Gaussian Hill', zonal=T)
 
 ########## OPTIONAL COMPILATION ##########
 
