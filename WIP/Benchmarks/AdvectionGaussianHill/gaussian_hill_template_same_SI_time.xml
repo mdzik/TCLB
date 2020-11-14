@@ -1,0 +1,88 @@
+<?R
+    library(MASS)  # lib which converts decimal -> fraction
+
+    t_SI=50.0
+    k_SI=7.0 
+    domain_size_SI=250.0
+    lattice_size=250.0
+    dx=domain_size_SI/lattice_size
+
+    tab = expand.grid(
+        iterations=k_SI*t_SI*c(6,10,100,1000,10000,100000),
+        ux=c(0.0, 0.1), 
+        collision=c("BGK", "CM", "CM_HIGHER", "Cumulants"),
+        sigma=c(100) # sigma=c(50, 75, 100)
+        )
+ 
+    tab$k=(t_SI*k_SI)/(tab$iterations*dx*dx)
+
+    # dir_name <- "batch_GaussianHill_same_SI_time"
+    dir_name = paste0(
+       "batch_GaussianHill_same_SI_time_",
+       formatC(min(tab$iterations), format="d"),
+       "-",
+       formatC(max(tab$iterations), format="d")
+       )
+    
+    dir.create(dir_name)
+
+    tab$name = paste0(
+        tab$collision, 
+        "_ux_", formatC(tab$ux, digits = 2, format = "e"),
+        "_k_", gsub("/","o", fractions(tab$k, max.denom=1000000)),
+        "_iterations_", formatC(tab$iterations, format = "d"),
+        "_sigma_", tab$sigma, 
+        "_size_",lattice_size, "lu")
+
+    tab$xml = paste0(paste0(dir_name,"/",tab$name),".xml")
+    tab$output = paste0(paste0("output/",dir_name,"/",tab$name,"/"))
+
+    # tab$output = paste0(paste0("/net/scratch/people/plgmuaddieb/output/",dir_name,"/",tab$name,"/"))
+
+    write.csv(tab, "gaussian_hill_t_template.csv", row.names=FALSE)
+    for (i in 1:nrow(tab)) {
+        attach(tab[i,,drop=FALSE])
+        print(xml)
+        sink(xml) # save to a .xml file
+?>
+
+<?xml version="1.0"?>
+<CLBConfig version="2.0" output="<?%s output ?>">
+	<Geometry nx="<?%d lattice_size ?>" ny="<?%d lattice_size ?>" nz="3" >
+      <<?%s collision ?>> <Box/> </<?%s collision ?>>    
+	</Geometry>
+    <Model>
+	    <Params
+            nu="0.1666666"
+
+	    	h_stability_enhancement="1."
+
+	        conductivity="<?%f k ?>" 
+            Sigma_GH="<?%f sigma ?>" 
+	        cp="1"
+			material_density="1"
+
+	        InitTemperature="1.0"
+
+            CylinderCenterX_GH="<?%f lattice_size/2 ?>"
+            CylinderCenterY_GH="<?%f lattice_size/2 ?>"
+	        />
+	    <Params />
+	    <Params VelocityX="<?%f ux ?>" />
+    </Model> 
+
+<!-- <Solve Iterations="10" > <VTK Iterations="1"/> </Solve> -->
+	<Failcheck Iterations="1000" nx="<?%d lattice_size ?>" ny="<?%d lattice_size ?>" nz="3" />
+<!-- 	<TXT Iterations="100000" what="T,U" />
+	<Log Iterations="100000" /> -->
+	<Solve Iterations="<?%d iterations ?>">
+		<VTK Iterations="<?%d iterations/2 ?>" what="T,U"/>
+	</Solve>
+</CLBConfig>
+
+
+<?R
+    sink()
+    detach()
+}
+?>
