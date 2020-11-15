@@ -1,6 +1,6 @@
 library(polyAlgebra);
-setwd("TCLB");
-source("./CLB/d2q9_ShanChen_Tau1/Dynamics.c-debug.R")
+setwd("/home/mdzik/projekty/TCLB");
+source("./CLB/auto_scmpTau1_d2q9/Dynamics.c.code.R")
 
 # D2Q9
 Force = PV(c("F.x","F.y"));
@@ -58,6 +58,7 @@ for (i in seq(1,9))
     C(R[-1] , (R * R * A + R * R[1] * (A*(-2)+1))[-1],float=F)
     C(Force , Force -(0.666666666666666666)*(R*gs) %*% U)
 
+for (i in seq(1,9)){
 
     rho_i = PV(paste("rho(",-U[i,1],",",-U[i,2],")"))
     Jx = (PV(paste("Jx(",-U[i,1],",",-U[i,2],")")) + Force[1])*rho_i^-1
