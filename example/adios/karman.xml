@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <CLBConfig version="2.0" output="output/" permissive="true">
-	<Geometry nx="800" ny="800" nz="50">
+	<Geometry nx="800" ny="800" >
 		<MRT>
 			<Box/>
 		</MRT>
