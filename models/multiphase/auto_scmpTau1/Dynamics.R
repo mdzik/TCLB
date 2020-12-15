@@ -1,6 +1,6 @@
 
 # # Fluid Density Populations
-AddDensity( name="f[0]", dx= 0, dy= 0, group="f")
+#AddDensity( name="f[0]", dx= 0, dy= 0, group="f")
 #AddDensity( name="f[1]", dx= 1, dy= 0, group="f")
 # AddDensity( name="f[2]", dx= 0, dy= 1, group="f")
 # AddDensity( name="f[3]", dx=-1, dy= 0, group="f")
