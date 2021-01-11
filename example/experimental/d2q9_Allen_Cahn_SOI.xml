@@ -1,4 +1,4 @@
-<CLBConfig version="2.0" output="output/run/">
+<CLBConfig version="2.0" output="output/AC_TRT/">
   <Geometry predef="none" nx="256" ny="256">
     <!-- <SRT_DF_SOI><Box/></SRT_DF_SOI>  -->
     <!-- <SRT_M_SOI><Box/></SRT_M_SOI> -->
@@ -13,10 +13,12 @@
   </Geometry>
   <Model>
     <Param name="diffusivity_phi" value="0.01666666"/>
+
     <Param name="magic_parameter" value="0.08333333333333333"/>
     <!-- <Param name="magic_parameter" value="0.16666666"/> -->
     <!-- <Param name="magic_parameter" value="0.1875"/>  -->
     <!-- <Param name="magic_parameter" value="0.25"/>  -->
+
     <Param name="lambda" value="0.01"/>
     <Param name="Init_PhaseField" value="0."/>
     <Param name="phase_field_smoothing_coeff" value="0.1"/>

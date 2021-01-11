@@ -13,6 +13,9 @@ AddDensity(
 	comment=paste("LB density fields",1:9-1),
 	group="f"
 )
+
+AddDensity(name="Init_UX_External", group="init", comment="free stream velocity", parameter=TRUE)
+AddDensity(name="Init_UY_External", group="init", comment="free stream velocity", parameter=TRUE)
 AddDensity(name="Init_PhaseField_External", group="init", dx=0,dy=0,dz=0, parameter=TRUE)
 
 AddField(name="phaseField",                 stencil2d=1)
@@ -46,8 +49,6 @@ AddSetting(name="lambda", default=1.0, comment="to control intensity of the sour
 AddSetting(name="Init_UX", default=0., comment="free stream x-velocity", zonal=TRUE)
 AddSetting(name="Init_UY", default=0., comment="free stream y-velocity", zonal=TRUE)
 AddSetting(name="Init_PhaseField",   zonal=TRUE)
-AddSetting(name="Init_From_PhaseField_External",   zonal=TRUE)
-
 
 #	Benchmark things
 AddSetting(name="CylinderCenterX_GH",	default="0", comment='X coord of Gaussian Hill')

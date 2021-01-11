@@ -15,7 +15,7 @@ CudaDeviceFunction real_t getPhi() {
 
 CudaDeviceFunction void Init() {
     phi = Value;
-    #ifdef OPTIONs_fields
+    #ifdef OPTIONS_fields
       ux=0;
       uy=0;
     #endif
