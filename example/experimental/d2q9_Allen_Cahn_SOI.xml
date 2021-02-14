@@ -12,9 +12,9 @@
     </None>
   </Geometry>
   <Model>
-    <Param name="diffusivity_phi" value="0.01666666"/>
+    <Param name="diffusivity_phi" value="0.01666666"/> <!-- compare SRT with TRT for diffusivity_phi = 0.001666666  -->
 
-    <Param name="magic_parameter" value="0.08333333333333333"/>
+    <Param name="magic_parameter" value="0.08333333333333333"/> 
     <!-- <Param name="magic_parameter" value="0.16666666"/> -->
     <!-- <Param name="magic_parameter" value="0.1875"/>  -->
     <!-- <Param name="magic_parameter" value="0.25"/>  -->

@@ -18,7 +18,7 @@ AddDensity(name="Init_UX_External", group="init", comment="free stream velocity"
 AddDensity(name="Init_UY_External", group="init", comment="free stream velocity", parameter=TRUE)
 AddDensity(name="Init_PhaseField_External", group="init", dx=0,dy=0,dz=0, parameter=TRUE)
 
-AddField(name="phaseField",                 stencil2d=1)
+AddField(name="phaseField_tilde",                 stencil2d=1)
 
 #	Globals - table of global integrals that can be monitored and optimized
 AddGlobal(name="PhaseFieldIntegral", comment='Total amount of phasefield', unit="1.")
@@ -34,7 +34,6 @@ AddAction(name="InitFromFields", "InitFromFieldsStage")
 
 #	Boundary things:
 AddNodeType(name="DirichletEQ",     group="BOUNDARY")
-AddNodeType(name="ImageReader",     group="IMAGE")
 AddNodeType(name="SRT_DF_SOI",	    group="COLLISION")
 AddNodeType(name="SRT_M_SOI",	    group="COLLISION")
 AddNodeType(name="TRT_M_SOI",	    group="COLLISION")

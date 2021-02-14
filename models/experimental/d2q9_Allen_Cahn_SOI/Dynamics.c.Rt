@@ -1,7 +1,7 @@
 // Model for solving the spatial Allen Cahn equation.
 // This model is to compare first (Euler) and second (Trapezoidal) integration scheme for the source term, Q=lambda*phi*(1-phi^2)
 // phi' =  M*lap(phi) + lambda*phi*(1-phi^2)
-// phi' =  M *(phi_xx + phi_yy) + lambda*phi*(1-phi^2)
+// phi_t =  M *(phi_xx + phi_yy) + lambda*phi*(1-phi^2)
 // maintainer: Grzegorz Gruszczynski @ggruszczynski
 
 
@@ -45,9 +45,12 @@ CudaDeviceFunction real_t getQ()
 	phi = -1.0/3.0*x0*(x0*x1*x2 + pow(x3, 2))/x3 ;  
 	real_t Q;
 	Q = lambda*phi*(1 - pow(phi, 2));
-	// Q = lambda*tilde_phi*(1 - pow(tilde_phi, 2)) ; // approximate
+	// Q = lambda*tilde_phi*(1 - pow(tilde_phi, 2)) ; // approximate (naive implementation)
 	return Q; 
 }
+
+// ------------------------ END OF PARAVIEW OUTPUT BLOCK ------------------------
+
 
 // future
 // CudaDeviceFunction real_t getRandomCPU() {
@@ -73,11 +76,10 @@ CudaDeviceFunction real_t getQ()
 
 // 	 return result;
 // }
-// ------------------------ END OF PARAVIEW OUTPUT BLOCK ------------------------
 
 CudaDeviceFunction void RunBoundaries(vector_t u)
 {	
-	phaseField = phaseField(0,0);
+	phaseField_tilde = phaseField_tilde(0,0);
 	
 	switch (NodeType & NODE_BOUNDARY) {
 		case NODE_Wall:
@@ -87,20 +89,20 @@ CudaDeviceFunction void RunBoundaries(vector_t u)
 			// equilibrium scheme for BC - don`t care and impose rho*Teq
 			// see chapter 5.3.4.2, eq 5.34, p191 from The Lattice Boltzmann Method: Principles and Practice
 			// by T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva, E.M. Viggen
-			Init_eq(phaseField,u); 
+			Init_eq(phaseField_tilde,u); 
 			break; 
 	}
 }
 
 CudaDeviceFunction void PhaseFieldSmoothing(vector_t u){
 	// this function is to smooth the boundaries after initialization.
-	real_t lap_pf = phaseField(-1,0) + phaseField(1,0) + phaseField(0,-1) + phaseField(0,1) - 4*phaseField(0,0);
+	real_t lap_pf = phaseField_tilde(-1,0) + phaseField_tilde(1,0) + phaseField_tilde(0,-1) + phaseField_tilde(0,1) - 4*phaseField_tilde(0,0);
 	real_t grad_phi[2];
-	grad_phi[0] = (phaseField(1,0)-phaseField(-1,0))/2;
-	grad_phi[1] = (phaseField(0,1)-phaseField(0,-1))/2;
+	grad_phi[0] = (phaseField_tilde(1,0)-phaseField_tilde(-1,0))/2;
+	grad_phi[1] = (phaseField_tilde(0,1)-phaseField_tilde(0,-1))/2;
 
 	real_t temp = phase_field_smoothing_coeff * phase_field_smoothing_coeff * lap_pf - u.x*grad_phi[0] - u.y*grad_phi[1];
-	phaseField = phaseField(0,0) + temp;
+	phaseField_tilde = phaseField_tilde(0,0) + temp;
 }
 
 
@@ -111,31 +113,22 @@ CudaDeviceFunction void InitFromFieldsStage() {
 
 	// u.x = Init_UX_External;
 	// u.y = Init_UY_External;
-
-	Init_eq(Init_PhaseField_External,u);
+	real_t ipfe = Init_PhaseField_External;
+	real_t pf_tilde  = ipfe - lambda*ipfe*(1-ipfe*ipfe)/2.; 
+	Init_eq(pf_tilde,u);
 }
 
 CudaDeviceFunction void Init() { 
 	vector_t u;
 	u.x = Init_UX;
 	u.y = Init_UY;
-	phaseField = Init_PhaseField;
-	
-	if ((NodeType & NODE_IMAGE) == NODE_ImageReader){
-		// phaseField = (real_t)gray_scale_intensity*Init_PhaseField;
-		phaseField = (real_t)gray_scale_intensity;
-	}
 
-	if(CylinderCenterX_GH > 0 && CylinderCenterY_GH > 0 && Sigma_GH > 0){ 
-		// Gaussian Hill Benchmark
-		real_t dx = X - CylinderCenterX_GH;
-		real_t dy = Y - CylinderCenterY_GH;
-		real_t L = dx*dx + dy*dy;
-		phaseField *= exp(-L/(2*Sigma_GH));
-	}
-	
-	//phaseField = getRandom();
-	Init_eq(phaseField,u);
+	real_t ipfe = Init_PhaseField;
+	real_t pf_tilde  = ipfe - lambda*ipfe*(1-ipfe*ipfe)/2.; 
+	phaseField_tilde = pf_tilde;
+		
+	//phaseField_tilde = getRandom();
+	Init_eq(phaseField_tilde,u);
 }
 
 CudaDeviceFunction void Run() {
@@ -147,7 +140,7 @@ CudaDeviceFunction void Run() {
 	//RunBoundaries(u);
 	if ((NodeType & NODE_ADDITIONALS) == NODE_Smoothing){
 		PhaseFieldSmoothing(u);
-		Init_eq(phaseField, u);
+		Init_eq(phaseField_tilde, u);
 	}
 	else{
 		real_t omega_phi_soi=1.0/(3*diffusivity_phi+0.5);
@@ -168,7 +161,7 @@ CudaDeviceFunction void Run() {
 				break;
 		}
 
-		AddToPhaseFieldIntegral(<?R C(sum(f)) ?>);   
+		AddToPhaseFieldIntegral(getPhaseField());   
 	}
  }
 
