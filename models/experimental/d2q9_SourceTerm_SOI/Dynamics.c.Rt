@@ -35,19 +35,36 @@ CudaDeviceFunction real_t getPhaseField() {
 CudaDeviceFunction real_t getQ() 
 {	
 	real_t tilde_phi = f000 + f010 + f020 + f100 + f110 + f120 + f200 + f210 + f220;
-
-	const real_t dt = 1.;
-	real_t phi;
-	const real_t  x0 = cbrt(3.) ; 
-	const real_t  x1 = 1/(dt*lambda) ; 
-	const real_t  x2 = dt*lambda - 2 ; 
-	const real_t  x3 = cbrt(-9*tilde_phi*x1 + sqrt(3.)*sqrt((27*pow(tilde_phi, 2) - x1*pow(x2, 3))/(pow(dt, 2)*pow(lambda, 2)))) ; 
-	phi = -1.0/3.0*x0*(x0*x1*x2 + pow(x3, 2))/x3 ;  
 	real_t Q;
-	Q = lambda*phi*(1 - pow(phi, 2));
-	// Q = lambda*tilde_phi*(1 - pow(tilde_phi, 2)) ; // approximate (naive implementation)
+	real_t phi;
+	#ifdef OPTIONS_AllenCahn
+		const real_t dt = 1.;
+		
+		const real_t  x0 = cbrt(3.) ; 
+		const real_t  x1 = 1/(dt*lambda) ; 
+		const real_t  x2 = dt*lambda - 2 ; 
+		const real_t  x3 = cbrt(-9*tilde_phi*x1 + sqrt(3.)*sqrt((27*pow(tilde_phi, 2) - x1*pow(x2, 3))/(pow(dt, 2)*pow(lambda, 2)))) ; 
+		phi = -1.0/3.0*x0*(x0*x1*x2 + pow(x3, 2))/x3 ;  
+		
+		Q = lambda*phi*(1 - pow(phi, 2));
+		// Q = lambda*tilde_phi*(1 - pow(tilde_phi, 2)) ; // approximate (naive implementation)
+	#elif OPTIONS_ExpotentialDecay
+		// https://en.wikipedia.org/wiki/Exponential_decay
+		phi = tilde_phi/(1.-lambda/2.);
+		Q=lambda*phi;
+	#elif OPTIONS_FisherKPP
+		// https://en.wikipedia.org/wiki/Fisher%27s_equation
+		Q=0;
+	#endif
+	
 	return Q; 
 }
+
+
+
+
+
+
 
 // ------------------------ END OF PARAVIEW OUTPUT BLOCK ------------------------
 
