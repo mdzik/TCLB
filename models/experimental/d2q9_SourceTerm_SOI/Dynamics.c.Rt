@@ -51,7 +51,8 @@ CudaDeviceFunction real_t getQ()
 	#elif OPTIONS_ExpotentialDecay
 		// https://en.wikipedia.org/wiki/Exponential_decay
 		phi = tilde_phi/(1.-lambda/2.);
-		Q=lambda*phi;
+		Q = -lambda*phi;
+		Q = 0; // HACK: 
 	#elif OPTIONS_FisherKPP
 		// https://en.wikipedia.org/wiki/Fisher%27s_equation
 		Q=0;
@@ -122,6 +123,24 @@ CudaDeviceFunction void PhaseFieldSmoothing(vector_t u){
 	phaseField_tilde = phaseField_tilde(0,0) + temp;
 }
 
+CudaDeviceFunction real_t CalcInit_pf_tilde(real_t ipfe)
+{
+	// ipfe - init phase field external (runr/xml)
+	// pf_tilde = ipfe - Q/2.;
+
+	real_t Q;
+	#ifdef OPTIONS_AllenCahn
+		Q = lambda*ipfe*(1-ipfe*ipfe);
+	#elif OPTIONS_ExpotentialDecay
+		// Q = -lambda*tilde_phi/(1.-lambda/2.);
+		Q = 0;  // HACK:
+	#elif OPTIONS_FisherKPP
+		Q = 0;
+	#endif
+
+	real_t pf_tilde  = ipfe - Q/2.;
+	return pf_tilde;
+}
 
 CudaDeviceFunction void InitFromFieldsStage() { 
 	vector_t u;
@@ -131,7 +150,8 @@ CudaDeviceFunction void InitFromFieldsStage() {
 	// u.x = Init_UX_External;
 	// u.y = Init_UY_External;
 	real_t ipfe = Init_PhaseField_External;
-	real_t pf_tilde  = ipfe - lambda*ipfe*(1-ipfe*ipfe)/2.; 
+	real_t pf_tilde = CalcInit_pf_tilde(ipfe);
+
 	Init_eq(pf_tilde,u);
 }
 
@@ -141,7 +161,7 @@ CudaDeviceFunction void Init() {
 	u.y = Init_UY;
 
 	real_t ipfe = Init_PhaseField;
-	real_t pf_tilde  = ipfe - lambda*ipfe*(1-ipfe*ipfe)/2.; 
+	real_t pf_tilde = CalcInit_pf_tilde(ipfe);
 	phaseField_tilde = pf_tilde;
 		
 	//phaseField_tilde = getRandom();
