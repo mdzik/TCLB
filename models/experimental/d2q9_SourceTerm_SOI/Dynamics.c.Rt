@@ -50,9 +50,8 @@ CudaDeviceFunction real_t getQ()
 		// Q = lambda*tilde_phi*(1 - pow(tilde_phi, 2)) ; // approximate (naive implementation)
 	#elif OPTIONS_ExpotentialDecay
 		// https://en.wikipedia.org/wiki/Exponential_decay
-		phi = tilde_phi/(1.-lambda/2.);
+		phi = 2.*tilde_phi/(2.0+lambda);
 		Q = -lambda*phi;
-		Q = 0; // HACK: 
 	#elif OPTIONS_FisherKPP
 		// https://en.wikipedia.org/wiki/Fisher%27s_equation
 		Q=0;
@@ -125,15 +124,15 @@ CudaDeviceFunction void PhaseFieldSmoothing(vector_t u){
 
 CudaDeviceFunction real_t CalcInit_pf_tilde(real_t ipfe)
 {
-	// ipfe - init phase field external (runr/xml)
+	// ipfe - init phase field external (i.e. place runr/xml raw pf, the Dynamics.c will convert it for initialization).
 	// pf_tilde = ipfe - Q/2.;
 
 	real_t Q;
 	#ifdef OPTIONS_AllenCahn
 		Q = lambda*ipfe*(1-ipfe*ipfe);
 	#elif OPTIONS_ExpotentialDecay
-		// Q = -lambda*tilde_phi/(1.-lambda/2.);
-		Q = 0;  // HACK:
+		real_t phi = 2.*ipfe/(2.0+lambda);
+		Q = -lambda*phi;
 	#elif OPTIONS_FisherKPP
 		Q = 0;
 	#endif
