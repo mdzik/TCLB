@@ -1,2 +1,3 @@
+OPT="fields"
 ADJOINT=0
 TEST=FALSE

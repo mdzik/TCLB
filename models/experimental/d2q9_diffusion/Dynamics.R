@@ -16,10 +16,29 @@ AddDensity(
 
 # 	Outputs:
 AddQuantity(name="PhaseField", unit="1.")
-
-#	Boundary things:
-AddNodeType(name="SRT",	        group="COLLISION")
+AddQuantity(name="GradPhaseField",unit="1.",vector=T)
 
 # Inputs: Flow Properties
 AddSetting(name="diffusivity_phi",	default=0.02, comment='Mobility')
-AddSetting(name="Init_PhaseField",		zonal=TRUE)
+AddSetting(name="Init_PhaseField",	zonal=TRUE)
+
+AddSetting(name="PhaseField_h", default=1, comment='PhaseField max') # TODO: remove
+AddSetting(name="PhaseField_l", default=0, comment='PhaseField min') # TODO: remove
+AddSetting(name="W", default=4,    comment='Anti-diffusivity coeff (phase interfacial thickness) ') # TODO: remove
+
+# Fields are variables (for instance flow-variables, displacements, etc) that are stored in all mesh nodes. 
+# Model Dynamics can access these fields with an offset (e.g. field_name(-1,0)).
+AddField('PhaseF', stencil2d=1, group="PF") #	Phase-field stencil for finite differences
+
+if (Options$fields){
+	AddDensity(name="Init_PhaseField_R", group="init", comment="initial phi", parameter=TRUE)
+	AddStage(name="InitFromFieldsStage", main="InitFromFields", load.densities=TRUE, save.fields=TRUE)
+	AddAction(name="InitFromFields", "InitFromFieldsStage")
+} 
+
+# DEBUG	Outputs:
+AddQuantity(name="PhaseF", unit="1.")  # TODO: remove
+
+#	Boundary things:
+AddNodeType(name="SRT_diffusion",	       group="COLLISION")
+AddNodeType(name="MRT_no_diffusion",	   group="COLLISION")

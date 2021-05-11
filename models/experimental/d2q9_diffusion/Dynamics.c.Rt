@@ -31,17 +31,51 @@ CudaDeviceFunction real_t getPhaseField() {
 	return <?R C(sum(f)) ?>;
 }
 
+CudaDeviceFunction real_t getPhaseF() {
+	return PhaseF(0,0);
+}
+
+CudaDeviceFunction vector_t getGradPhaseField(){
+	vector_t gradPhi = calcGradPhi();
+	return gradPhi;
+}
+
 // ------------------------ END OF PARAVIEW OUTPUT BLOCK ------------------------
 
 CudaDeviceFunction void Init() { 
+	PhaseF = Init_PhaseField;// read initial PhaseField distribution from config.xml file
+	
 	real_t pf = Init_PhaseField;
 	Init_eq(pf);
 }
 
+#ifdef OPTIONS_fields
+CudaDeviceFunction void InitFromFields() {
+    PhaseF = Init_PhaseField_R;
+
+	real_t pf = Init_PhaseField_R;
+	Init_eq(pf);
+}
+#endif
+
+
 CudaDeviceFunction void Run() {
 	real_t omega_phi_soi=1.0/(3*diffusivity_phi+0.5);
-	SRT(omega_phi_soi);
+	
+
+	switch (NodeType & NODE_COLLISION) {    
+		case NODE_SRT_diffusion:
+			SRT_diffusion(omega_phi_soi);
+			break;
+		case NODE_MRT_no_diffusion:
+			MRT_no_diffusion(omega_phi_soi);
+			break;
+	}
+
+	PhaseF = <?R C(sum(f)) ?>;
  }
+
+
 
  CudaDeviceFunction void Init_eq(real_t Init_Phi) 
  {
@@ -56,7 +90,7 @@ CudaDeviceFunction void Run() {
 	 f220 = Init_Phi*1./36.;
  }
 
-CudaDeviceFunction void SRT(real_t omega_ade) 
+CudaDeviceFunction void SRT_diffusion(real_t omega_ade) 
 {
 	real_t tilde_phi = f000 + f010 + f020 + f100 + f110 + f120 + f200 + f210 + f220;
 	
@@ -79,4 +113,118 @@ CudaDeviceFunction void SRT(real_t omega_ade)
 	f210 = f210 + omega_ade*(feq210-f210);
 	f120 = f120 + omega_ade*(feq120-f120);
 	f220 = f220 + omega_ade*(feq220-f220);
+}
+
+
+// 	HELPER FUNCTIONS:
+CudaDeviceFunction vector_t calcGradPhi(){
+	vector_t gradPhi;
+	// eq 34 from "Improved locality of the phase-field lattice Boltzmann 
+	//	model for immiscible fluids at high density ratios"
+
+
+	// implementation from models/multiphase/d2q9_pf_velocity
+
+	// if ((NodeType & NODE_BOUNDARY) == NODE_Wall){
+	// 	gradPhi.x = (PhaseF(1,0) - PhaseF(-1,0))/3.0 + (PhaseF(1,1) - PhaseF(-1,-1) + PhaseF(1,-1) - PhaseF(-1,1))/12.0;
+	// 	gradPhi.y = (PhaseF(0,1) - PhaseF(0,-1))/3.0 + (PhaseF(1,1) - PhaseF(-1,-1) + PhaseF(-1,1) - PhaseF(1,-1))/12.0;
+	// } else if (NodeType & NODE_BOUNDARY){
+	// 	gradPhi.x = 0.0;
+	// 	gradPhi.y = 0.0;
+	// } else { 
+		gradPhi.x = (PhaseF(1,0) - PhaseF(-1,0))/3.0 + (PhaseF(1,1) - PhaseF(-1,-1) + PhaseF(1,-1) - PhaseF(-1,1))/12.0;
+		gradPhi.y = (PhaseF(0,1) - PhaseF(0,-1))/3.0 + (PhaseF(1,1) - PhaseF(-1,-1) + PhaseF(-1,1) - PhaseF(1,-1))/12.0;
+	// }
+// #endif
+	gradPhi.z = sqrt(gradPhi.x*gradPhi.x + gradPhi.y*gradPhi.y + 1e-12); // length
+	return gradPhi;
+}
+
+CudaDeviceFunction vector_t calcF_phi_xy(vector_t gradPhi, real_t myPhaseF, real_t pfavg){	
+	// eq 7 from "Improved locality of the phase-field lattice Boltzmann 
+	// model for immiscible fluids at high density ratios"
+
+	// this method calculates F_phi in x,y coordinates
+	real_t nx = gradPhi.x/gradPhi.z;  // GradPhi normalized in x, y direction
+	real_t ny = gradPhi.y/gradPhi.z;
+	
+	real_t F_phi_coeff = (1.0 - 4.0*(myPhaseF - pfavg)*(myPhaseF - pfavg))/(3.0*W);
+
+	vector_t f_phi;	
+	f_phi.x=F_phi_coeff*nx;
+	f_phi.y=F_phi_coeff*ny;
+	return f_phi;
+}
+
+CudaDeviceFunction void MRT_no_diffusion(real_t omega_ade) 
+{
+	vector_t u;
+	u.x=0;
+	u.y=0;
+	u.z=0;
+
+	//=== THIS IS AUTOMATICALLY GENERATED CODE ===
+	real_t uxuy = u.x*u.y;
+	real_t ux2 = u.x*u.x;
+	real_t uy2 = u.y*u.y;
+
+	real_t Sigma2 = 0.3333333333333333;
+	real_t tilde_phi = f000 + f010 + f020 + f100 + f110 + f120 + f200 + f210 + f220;
+
+	//raw moments from density-probability functions
+	real_t m000 = f000 + f010 + f020 + f100 + f110 + f120 + f200 + f210 + f220;
+	real_t m100 = f100 + f110 + f120 - f200 - f210 - f220;
+	real_t m010 = f010 - f020 + f110 - f120 + f210 - f220;
+	real_t m200 = f100 + f110 + f120 + f200 + f210 + f220;
+	real_t m020 = f010 + f020 + f110 + f120 + f210 + f220;
+	real_t m110 = f110 - f120 - f210 + f220;
+	real_t m210 = f110 - f120 + f210 - f220;
+	real_t m120 = f110 + f120 - f210 - f220;
+	real_t m220 = f110 + f120 + f210 + f220;
+
+	//raw equilibrium moments 
+	real_t mf_eq_000 = tilde_phi;
+	real_t mf_eq_100 = tilde_phi*u.x;
+	real_t mf_eq_010 = tilde_phi*u.y;
+	real_t mf_eq_200 = tilde_phi*(Sigma2 + ux2);
+	real_t mf_eq_020 = tilde_phi*(Sigma2 + uy2);
+	real_t mf_eq_110 = tilde_phi*uxuy;
+	real_t mf_eq_210 = tilde_phi*u.y*(Sigma2 + ux2);
+	real_t mf_eq_120 = tilde_phi*u.x*(Sigma2 + uy2);
+	real_t mf_eq_220 = tilde_phi*(Sigma2*Sigma2 + Sigma2*ux2 + Sigma2*uy2 + ux2*uy2);
+
+
+	//calc Force
+	real_t pfavg = 0.5*(PhaseField_l+PhaseField_h); // TODO: remove
+	vector_t gradPhi = calcGradPhi(); // Phase field gradient
+	real_t myPhaseF = PhaseF(0,0);
+	vector_t F_phi_vect = calcF_phi_xy(gradPhi,  myPhaseF,  pfavg);
+
+	// F_phi_vect.x=0;
+	// F_phi_vect.y=0;
+
+	F_phi_vect.x=gradPhi.x;
+	F_phi_vect.y=gradPhi.y;
+	//collide eq: (eye(9)-S)*cm + S*cm_eq + (eye(9)-S/2.)*force_in_cm_space // SOI
+	//collide
+	real_t m_star_000 = -m000*(omega_ade - 1.) + mf_eq_000*omega_ade;
+	real_t m_star_100 = -m100*(omega_ade - 1.) + mf_eq_100*omega_ade + (1. - omega_ade/2.)*F_phi_vect.x;
+	real_t m_star_010 = -m010*(omega_ade - 1.) + mf_eq_010*omega_ade + (1. - omega_ade/2.)*F_phi_vect.y;
+	real_t m_star_200 = -m200*(omega_ade - 1.) + mf_eq_200*omega_ade;
+	real_t m_star_020 = -m020*(omega_ade - 1.) + mf_eq_020*omega_ade;
+	real_t m_star_110 = -m110*(omega_ade - 1.) + mf_eq_110*omega_ade;
+	real_t m_star_210 = -m210*(omega_ade - 1.) + mf_eq_210*omega_ade + (1. - omega_ade/2.)*F_phi_vect.y;
+	real_t m_star_120 = -m120*(omega_ade - 1.) + mf_eq_120*omega_ade + (1. - omega_ade/2.)*F_phi_vect.x;
+	real_t m_star_220 = -m220*(omega_ade - 1.) + mf_eq_220*omega_ade;
+
+	//back to density-probability functions
+	f000 = m_star_000 - m_star_020 - m_star_200 + m_star_220;
+	f100 = 1/2.*m_star_100 - 1/2.*m_star_120 + 1/2.*m_star_200 - 1/2.*m_star_220;
+	f200 = -1/2.*m_star_100 + 1/2.*m_star_120 + 1/2.*m_star_200 - 1/2.*m_star_220;
+	f010 = 1/2.*m_star_010 + 1/2.*m_star_020 - 1/2.*m_star_210 - 1/2.*m_star_220;
+	f110 = 1/4.*m_star_110 + 1/4.*m_star_120 + 1/4.*m_star_210 + 1/4.*m_star_220;
+	f210 = -1/4.*m_star_110 - 1/4.*m_star_120 + 1/4.*m_star_210 + 1/4.*m_star_220;
+	f020 = -1/2.*m_star_010 + 1/2.*m_star_020 + 1/2.*m_star_210 - 1/2.*m_star_220;
+	f120 = -1/4.*m_star_110 + 1/4.*m_star_120 - 1/4.*m_star_210 + 1/4.*m_star_220;
+	f220 = 1/4.*m_star_110 - 1/4.*m_star_120 - 1/4.*m_star_210 + 1/4.*m_star_220;
 }
