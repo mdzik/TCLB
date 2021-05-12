@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
-<CLBConfig version="2.0" output="output/diffusion/">
+<CLBConfig version="2.0" output="output/diffusion-test/">
 	<Geometry nx="512" ny="512">
 		<!-- <SRT_diffusion><Box/></SRT_diffusion> -->
-		<MRT_no_diffusion><Box/></MRT_no_diffusion>
+		<!-- <MRT_no_diffusion_grad_FD><Box/></MRT_no_diffusion_grad_FD> -->
+		<MRT_no_diffusion_grad_moments><Box/></MRT_no_diffusion_grad_moments>
+		<!-- <MRT_no_diffusion_lp_FD><Box/></MRT_no_diffusion_lp_FD> -->
 		<None name="special">
 			<!-- <Box dx="400" dy="400" nx="25" ny="25"/> -->
 			<!-- <Box dx="40" dy="40" nx="150" ny="150"/> -->
@@ -47,8 +49,8 @@
 		C0 = 1 # initial concentration
 		Sigma2 = 250 # initial variance
 
-        phi0 = C0*100
-		phi0 = phi0/(2*pi*Sigma2)^(D/3)
+        phi0 = C0
+		#phi0 = phi0/(2*pi*Sigma2)^(D/3)
 		phi0 = phi0*exp(-L/(2*Sigma2))
 		# phi0 = phi0 + 10 # HACK: for better preview. Cumulants cannot be 0, so lets set the reference level to 10.
 

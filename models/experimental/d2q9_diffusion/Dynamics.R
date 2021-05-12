@@ -40,5 +40,7 @@ if (Options$fields){
 AddQuantity(name="PhaseF", unit="1.")  # TODO: remove
 
 #	Boundary things:
-AddNodeType(name="SRT_diffusion",	       group="COLLISION")
-AddNodeType(name="MRT_no_diffusion",	   group="COLLISION")
+AddNodeType(name="SRT_diffusion",	       		group="COLLISION")
+AddNodeType(name="MRT_no_diffusion_grad_FD",		group="COLLISION")
+AddNodeType(name="MRT_no_diffusion_lp_FD",		group="COLLISION")
+AddNodeType(name="MRT_no_diffusion_grad_moments",	group="COLLISION")
