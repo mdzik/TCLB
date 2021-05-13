@@ -36,7 +36,7 @@ CudaDeviceFunction real_t getPhaseF() {
 }
 
 CudaDeviceFunction vector_t getGradPhaseField(){
-	vector_t gradPhi = calcGradPhi();
+	vector_t gradPhi = calcGradPhi_FD();
 	return gradPhi;
 }
 
@@ -64,8 +64,6 @@ CudaDeviceFunction void Run() {
 	real_t lpPhi = 0;
 	vector_t F_phi_vect; F_phi_vect.x=0; F_phi_vect.y=0; F_phi_vect.z=0;
 
-
-
 	switch (NodeType & NODE_COLLISION) {    
 		case NODE_SRT_diffusion:
 		{
@@ -76,27 +74,51 @@ CudaDeviceFunction void Run() {
 		{
 			real_t m100 = f100 + f110 + f120 - f200 - f210 - f220;
 			real_t m010 = f010 - f020 + f110 - f120 + f210 - f220;
-			F_phi_vect.x = -m100;
-			F_phi_vect.y = -m010;
+			// F_phi_vect.x = -m100/3.0;
+			// F_phi_vect.y = -m010/3.0;
+
+			F_phi_vect.x = -1.*m100; // TODO: hmm...
+			F_phi_vect.y = -1.*m010;
+			MRT_no_diffusion(omega_phi_soi, F_phi_vect, lpPhi);
+			break;	
+		}
+		case NODE_MRT_no_diffusion_mix_grad:
+		{
+			real_t m100 = f100 + f110 + f120 - f200 - f210 - f220;
+			real_t m010 = f010 - f020 + f110 - f120 + f210 - f220;
+			real_t len_n =  sqrt(m100*m100 + m010*m010 + 1e-12);
+			real_t nx = -m100/len_n;
+			real_t ny = -m010/len_n;
+
+			vector_t gradPhi_FD = calcGradPhi_FD(); // Phase field gradient
+
+			F_phi_vect.x = nx*gradPhi_FD.z/3.0;
+			F_phi_vect.y = ny*gradPhi_FD.z/3.0;
 			MRT_no_diffusion(omega_phi_soi, F_phi_vect, lpPhi);
 			break;	
 		}
 		case NODE_MRT_no_diffusion_grad_FD:
 		{
+			vector_t gradPhi_FD = calcGradPhi_FD(); // Phase field gradient
+			F_phi_vect.x=gradPhi_FD.x/3.0;
+			F_phi_vect.y=gradPhi_FD.y/3.0;
+			MRT_no_diffusion(omega_phi_soi, F_phi_vect, lpPhi);
+			break;
+		}
+		case NODE_MRT_AllenCahn:
+		{
 			//calc Force
 			real_t pfavg = 0.5*(PhaseField_l+PhaseField_h); // TODO: remove
-			vector_t gradPhi = calcGradPhi(); // Phase field gradient
+			vector_t gradPhi = calcGradPhi_FD(); // Phase field gradient
 			real_t myPhaseF = PhaseF(0,0);
 			vector_t F_phi_vect = calcF_phi_xy(gradPhi,  myPhaseF,  pfavg);
-			F_phi_vect.x=gradPhi.x;
-			F_phi_vect.y=gradPhi.y;
 			MRT_no_diffusion(omega_phi_soi, F_phi_vect, lpPhi);
 			break;
 		}
 		case NODE_MRT_no_diffusion_lp_FD:
 		{
 			real_t myPhaseF = PhaseF(0,0);
-			real_t lpPhi = get_lpPhi(myPhaseF); 
+			real_t lpPhi = calc_lpPhi_FD(myPhaseF); 
 			MRT_no_diffusion(omega_phi_soi, F_phi_vect, lpPhi);
 		}
 	}
@@ -146,7 +168,7 @@ CudaDeviceFunction void SRT_diffusion(real_t omega_ade)
 
 
 // 	HELPER FUNCTIONS:
-CudaDeviceFunction vector_t calcGradPhi(){
+CudaDeviceFunction vector_t calcGradPhi_FD(){
 	vector_t gradPhi;
 	// eq 34 from "Improved locality of the phase-field lattice Boltzmann 
 	//	model for immiscible fluids at high density ratios"
@@ -165,11 +187,14 @@ CudaDeviceFunction vector_t calcGradPhi(){
 		gradPhi.y = (PhaseF(0,1) - PhaseF(0,-1))/3.0 + (PhaseF(1,1) - PhaseF(-1,-1) + PhaseF(-1,1) - PhaseF(1,-1))/12.0;
 	// }
 // #endif
+
+	// gradPhi.x = PhaseF(1,0) - PhaseF(0,0);
+	// gradPhi.y = PhaseF(0,1) - PhaseF(0,0);
 	gradPhi.z = sqrt(gradPhi.x*gradPhi.x + gradPhi.y*gradPhi.y + 1e-12); // length
 	return gradPhi;
 }
 
-CudaDeviceFunction real_t get_lpPhi(real_t myPhase){
+CudaDeviceFunction real_t calc_lpPhi_FD(real_t myPhase){
 	// input myPhase - PhaseF at given node (usually 0,0 or the one from BC)
 
 	// lpPhi - eq 35 from "Improved locality of the phase-field lattice Boltzmann 

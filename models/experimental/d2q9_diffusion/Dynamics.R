@@ -44,3 +44,6 @@ AddNodeType(name="SRT_diffusion",	       		group="COLLISION")
 AddNodeType(name="MRT_no_diffusion_grad_FD",		group="COLLISION")
 AddNodeType(name="MRT_no_diffusion_lp_FD",		group="COLLISION")
 AddNodeType(name="MRT_no_diffusion_grad_moments",	group="COLLISION")
+AddNodeType(name="MRT_no_diffusion_mix_grad",	group="COLLISION")
+AddNodeType(name="MRT_AllenCahn",	group="COLLISION")
+
