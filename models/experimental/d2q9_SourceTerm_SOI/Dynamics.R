@@ -18,6 +18,10 @@ AddDensity(name="Init_UX_External", group="init", comment="free stream velocity"
 AddDensity(name="Init_UY_External", group="init", comment="free stream velocity", parameter=TRUE)
 AddDensity(name="Init_PhaseField_External", group="init", dx=0,dy=0,dz=0, parameter=TRUE)
 
+if (Options$VariableLambda) {
+	AddDensity(name="lambda", group="lambda", dx=0,dy=0,dz=0, parameter=TRUE)
+}
+
 AddField(name="phaseField_tilde",                 stencil2d=1)
 
 #	Globals - table of global integrals that can be monitored and optimized
@@ -30,6 +34,10 @@ AddQuantity(name="Q", unit="1.")
 AddStage(name="InitFromFieldsStage", load.densities=TRUE, save.fields=TRUE)
 AddAction(name="InitFromFields", "InitFromFieldsStage")
 
+if (Options$VariableLambda) {
+	AddStage("BaseIteration", "Run", load.densities=TRUE, save.fields=TRUE) 
+	AddAction("Iteration", c("BaseIteration"))
+}
 # AddQuantity(name="Random", unit="1.")
 
 #	Boundary things:
@@ -43,8 +51,9 @@ AddNodeType(name="Wall",	        group="BOUNDARY")
 # 	Inputs: Flow Properties
 AddSetting(name="diffusivity_phi",      default=0.02, comment='Mobility')
 AddSetting(name="magic_parameter",      default=1./4., comment='to control relaxation frequency of even moments in TRT collision kernel')
-AddSetting(name="lambda", default=1.0, comment="to control intensity of the source term")
-
+if (Options$VariableLambda == FALSE) {
+	AddSetting(name="lambda", default=1.0, comment="to control intensity of the source term")
+}
 AddSetting(name="Init_UX", default=0., comment="free stream x-velocity", zonal=TRUE)
 AddSetting(name="Init_UY", default=0., comment="free stream y-velocity", zonal=TRUE)
 AddSetting(name="Init_PhaseField",   zonal=TRUE)

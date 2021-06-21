@@ -1,3 +1,3 @@
 ADJOINT=0
 TEST=FALSE
-OPT="AllenCahn+ExpotentialDecay+FisherKPP"
+OPT="(AllenCahn+ExpotentialDecay+FisherKPP+FisherKPPNewtonIteration)*(DropToFirstOrder+VariableLambda)"
