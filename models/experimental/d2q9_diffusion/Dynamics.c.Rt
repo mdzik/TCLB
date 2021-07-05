@@ -1,82 +1,203 @@
-// Model for solving the spatial Allen Cahn equation.
-// This model is to compare first (Euler) and second (Trapezoidal) integration scheme for the source term, Q=lambda*phi*(1-phi^2)
-// phi' =  M*lap(phi) + lambda*phi*(1-phi^2)
-// phi' =  M *(phi_xx + phi_yy) + lambda*phi*(1-phi^2)
-// maintainer: Grzegorz Gruszczynski @ggruszczynski
-
 <?R  
 	source("conf.R")
 	c_header();
 	source("lib/boundary.R")
+	source("lib/feq.R")
 
-  	f = PV(DensityAll$name[DensityAll$group=="f"])
+
+	if (NumberOfDREs > 0){
+		i = 1
+		gname = paste("dre",i,sep="_")
+		dre_gnames = c(gname)
+		fs = list( PV(DensityAll$name[DensityAll$group==gname]) )	
+		while (i < NumberOfDREs + 1 ) {
+		# declaration of densities
+			gname =  paste("dre",i,sep="_")
+			dre_gnames = append(dre_gnames, gname)
+			fs = append( fs, list(PV(DensityAll$name[DensityAll$group==gname]) ))
+			i = i + 1
+		}	
+	}
+
+	if (NumberOfODEs > 0){
+		i = 1
+		gname = paste("ode",i,sep="_")
+		ode_gnames = c(gname)
+		odes = list( PV(Fields$name[Fields$group==gname]) )	
+		while (i < NumberOfODEs + 1) {
+		# declaration of densities
+			gname =  paste("ode",i,sep="_")
+			ode_gnames = append(ode_gnames, gname)
+			odes = append( odes, PV(Fields$name[Fields$group==gname]) )
+			i = i + 1
+		}	
+	}
+
+	f_tmp = c(PV(paste('f_tmp[',seq(0,8),']', sep='')))
+	qs = c(PV(paste('q[',seq(0,NumberOfODEs + NumberOfDREs),']', sep='')))
 
 ?>
+//this is object-wide variable
+real_t f_tmp[9];
+real_t q[<?%s NumberOfODEs + NumberOfDREs ?>];
+real_t phi[<?%s NumberOfODEs + NumberOfDREs ?>];
 
 
 CudaDeviceFunction float2 Color() {
   float2 ret;
   ret.x = 0;
-  ret.y = <?R C(sum(f)) ?>;
+  ret.y = <?R C(sum(fs[[1]])) ?>;
   return ret;
 }
 
 // ------------------------ PARAVIEW OUTPUT BLOCK ------------------------
 // Use this functions is only for vtk output.
-// Nodes are created using streamed, post-collision DF.
-// RunBoundaries are called in orded to assign the desired value at the boundary.
-// It can make a difference in convergence study and nicer preview.
 
-CudaDeviceFunction real_t getPhaseField() {
-	return <?R C(sum(f)) ?>;
+<?R
+dre_loop( function(i) {
+?>
+CudaDeviceFunction real_t getDRE_<?%s i ?>() {
+	return <?R C(sum(fs[[i]])) ?>;
 }
+<?R
+})
+?>
+
+<?R
+ode_loop( function(i) {
+?>
+CudaDeviceFunction real_t getODE_<?%s i ?>() {
+	return <?R C(odes[[i]]) ?>;
+}
+<?R
+})
+?>
+
+
 
 // ------------------------ END OF PARAVIEW OUTPUT BLOCK ------------------------
 
 CudaDeviceFunction void Init() { 
-	real_t pf = Init_PhaseField;
-	Init_eq(pf);
+	<?R
+
+
+	dre_loop( function(i) {
+		?>
+		phi[<?%s i-1 ?>] = Init_DRE_<?%s i ?>;
+		<?R
+	})
+
+	ode_loop( function(i) {
+		?>
+		phi[<?%s NumberOfDREs+i ?>] = Init_ODE_<?%s i ?>;
+		<?R		
+	})
+
+	?>
+
+	CalcQ();
+
+	<?R
+
+
+	dre_loop( function(i) {
+		?>
+		Init_eq(Init_DRE_<?%s i ?> - 0.5*q[<?%s i-1 ?>]);
+		<?R
+		C(fs[[i]], f_tmp)
+	})
+
+	ode_loop( function(i) {
+		C(odes[[i]], PV(paste('Init_ODE_',i,sep='')) - 0.5*qs[NumberOfDREs+i] );
+	})
+
+	?>
+
 }
 
-CudaDeviceFunction void Run() {
-	real_t omega_phi_soi=1.0/(3*diffusivity_phi+0.5);
-	SRT(omega_phi_soi);
- }
 
- CudaDeviceFunction void Init_eq(real_t Init_Phi) 
- {
-	 f000 = Init_Phi*4./9.;
-	 f100 = Init_Phi*1./9.;
-	 f200 = Init_Phi*1./9.;
-	 f010 = Init_Phi*1./9.;
-	 f110 = Init_Phi*1./36.;
-	 f210 = Init_Phi*1./36.;
-	 f020 = Init_Phi*1./9.;
-	 f120 = Init_Phi*1./36.;
-	 f220 = Init_Phi*1./36.;
- }
-
-CudaDeviceFunction void SRT(real_t omega_ade) 
-{
-	real_t tilde_phi = f000 + f010 + f020 + f100 + f110 + f120 + f200 + f210 + f220;
 	
-	real_t feq000 = tilde_phi*4./9.;
-	real_t feq100 = tilde_phi*1./9.;
-	real_t feq200 = tilde_phi*1./9.;
-	real_t feq010 = tilde_phi*1./9.;
-	real_t feq110 = tilde_phi*1./36.;
-	real_t feq210 = tilde_phi*1./36.;
-	real_t feq020 = tilde_phi*1./9.;
-	real_t feq120 = tilde_phi*1./36.;
-	real_t feq220 = tilde_phi*1./36.;
+CudaDeviceFunction void Run() {
+	CalcPhi();
+	CalcQ();
+	
+	<?R
 
-	f000 = f000 + omega_ade*(feq000-f000);
-	f100 = f100 + omega_ade*(feq100-f100);
-	f010 = f010 + omega_ade*(feq010-f010);
-	f200 = f200 + omega_ade*(feq200-f200);
-	f020 = f020 + omega_ade*(feq020-f020);
-	f110 = f110 + omega_ade*(feq110-f110);
-	f210 = f210 + omega_ade*(feq210-f210);
-	f120 = f120 + omega_ade*(feq120-f120);
-	f220 = f220 + omega_ade*(feq220-f220);
+	dre_loop( function(i) {
+		C(f_tmp,fs[[i]])
+		?>
+		SRT(Diffusivity_DRE_<?%s i ?>, q[<?%s i-1 ?>]);
+		<?R
+		C(fs[[i]], f_tmp)
+	})
+
+	ode_loop( function(i) {
+		C(odes[[i]], odes[[i]] + qs[NumberOfDREs+i] );
+	})
+
+	?>
+
+ }
+
+ CudaDeviceFunction void Init_eq(real_t Init_Phi_Tilde) 
+ {
+
+	<?R
+		Init_Phi_Tilde = PV('Init_Phi_Tilde')
+		U = as.matrix(Density[Density$group=='dre_1',c("dx","dy")])
+		feq = MRT_feq(U, Init_Phi_Tilde, c(0,0))
+		q = PV('q')		
+		C(f_tmp, feq)
+
+	?>
+
+ }
+
+CudaDeviceFunction void SRT(real_t diffusivity, const real_t q) 
+{
+
+
+	real_t omega_ade = 1.0/(3*diffusivity+0.5);
+	real_t tilde_phi = <?%s  C(sum(f_tmp)) ?>;
+
+	<?R
+		omega = PV('omega_ade')
+		tilde_phi = PV('tilde_phi')
+		q = PV('q')
+
+		U = as.matrix(Density[Density$group=='dre_1',c("dx","dy")])
+		feq = MRT_feq(U, tilde_phi, c(0,0))
+		qeq = MRT_feq(U, q, c(0,0))
+
+		C(f_tmp, f_tmp - omega*(f_tmp-feq) + qeq)
+
+	?>
 }
+
+
+
+<?R 
+	if (Qname == 'Allen-Cahn') {
+?>
+
+
+	CudaDeviceFunction void CalcPhi() 
+	{	
+		real_t tilde_phi = <?%s  C(sum(fs[[1]])) ?>;
+
+		const real_t dt = 1.;
+		const real_t lambda = C_1;
+		const real_t  x0 = cbrt(3.) ; 
+		const real_t  x1 = 1/(dt*lambda) ; 
+		const real_t  x2 = dt*lambda - 2 ; 
+		const real_t  x3 = cbrt(-9*tilde_phi*x1 + sqrt(3.)*sqrt((27*pow(tilde_phi, 2) - x1*pow(x2, 3))/(pow(dt, 2)*pow(lambda, 2)))) ; 
+		phi[0] = -1.0/3.0*x0*(x0*x1*x2 + pow(x3, 2))/x3 ;  
+	}
+	CudaDeviceFunction void CalcQ() 
+	{	
+		const real_t lambda = C_1;
+		q[0] = lambda*phi[0]*(1 - pow(phi[0], 2)) ;
+	}
+<?R		
+	}
+?>
