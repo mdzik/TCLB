@@ -12,10 +12,10 @@
 		fs = list( PV(DensityAll$name[DensityAll$group==gname]) )	
 		while (i < NumberOfDREs + 1 ) {
 		# declaration of densities
+			i = i + 1
 			gname =  paste("dre",i,sep="_")
 			dre_gnames = append(dre_gnames, gname)
 			fs = append( fs, list(PV(DensityAll$name[DensityAll$group==gname]) ))
-			i = i + 1
 		}	
 	}
 
@@ -26,10 +26,10 @@
 		odes = list( PV(Fields$name[Fields$group==gname]) )	
 		while (i < NumberOfODEs + 1) {
 		# declaration of densities
+			i = i + 1
 			gname =  paste("ode",i,sep="_")
 			ode_gnames = append(ode_gnames, gname)
 			odes = append( odes, PV(Fields$name[Fields$group==gname]) )
-			i = i + 1
 		}	
 	}
 
@@ -120,7 +120,6 @@ CudaDeviceFunction void Init() {
 CudaDeviceFunction void Run() {
 	CalcPhi();
 	CalcQ();
-	
 	<?R
 
 	dre_loop( function(i) {
@@ -201,3 +200,77 @@ CudaDeviceFunction void SRT(real_t diffusivity, const real_t q)
 <?R		
 	}
 ?>
+
+
+
+<?R 
+	if (Qname == 'SIR_SimpleLaplace') {
+?>
+
+
+	CudaDeviceFunction void CalcPhi() 
+	{	
+		const real_t x0 = <?%s  C(sum(fs[[1]])) ?>;
+		const real_t x1 = <?%s  C(sum(fs[[2]])) ?>;
+		const real_t x2 = <?%s  C(sum(fs[[3]])) ?>;
+
+		//x0 = S^\star
+		//x1 = I^\star
+		//x2 = R^\star
+		const real_t x3 = C_1;
+		const real_t x4 = 1;
+
+		// Opers0 =  356
+		const real_t  x5 = 4*x4 ; // 1
+		const real_t  x6 = pow(x4, 2) ; // 1
+		const real_t  x7 = x0*x3 ; // 1
+		const real_t  x8 = x1*x3 ; // 1
+		const real_t  x9 = 2*x6 ; // 1
+		const real_t  x10 = pow(x3, 2)*x6 ; // 2
+		const real_t  x11 = sqrt(x10*(pow(x0, 2) + 2*x0*x1 + pow(x1, 2)) - x5*x7 + x5*x8 + x5 + x6 - x7*x9 + x8*x9 + 4) ; // 20
+		const real_t  x12 = x4 + 2 ; // 1
+		const real_t  x13 = x11 + x12 ; // 1
+		const real_t  x14 = x3*x4 ; // 1
+		const real_t  x15 = x0*x14 ; // 1
+		const real_t  x16 = x1*x14 ; // 1
+		const real_t  x17 = x15 + x16 ; // 1
+		const real_t  x18 = 1.0/x3 ; // 1
+		const real_t  x19 = x18/x4 ; // 1
+		const real_t  x20 = (1.0/2.0)*x19 ; // 1
+		const real_t  x21 = 1.0/x12 ; // 1
+		const real_t  x22 = x19*x21 ; // 1
+		const real_t  x23 = -x11 + x17 ; // 1
+		const real_t  x24 = -x4 - 2 ; // 2
+		const real_t  x25 = 2*x2*(x14 + 2*x3) ; // 4
+		const real_t  x26 = (1.0/2.0)*x18*x21 ; // 2
+		const real_t  x27 = x11 + x17 + x24 ; // 2
+		const real_t Sp = x20*(x13 + x17) ; // 2
+		const real_t Ip = x22*(-x13 + x15 + x16) ; // 3
+		const real_t Rp = x26*(x23 + x24 + x25) ; // 3
+		const real_t Sm = x20*(x12 + x23) ; // 2
+		const real_t Im = x22*x27 ; // 1
+		const real_t Rm = x26*(x25 + x27) ; // 2
+		// Opers =  91
+
+
+		phi[0] = Sp >=0 ? Sp : Sm;
+		phi[1] = Ip >=0 ? Ip : Im;
+		phi[2] = Rp >=0 ? Rp : Rm;
+
+
+	}
+	CudaDeviceFunction void CalcQ() 
+	{	
+		const real_t R0 = C_1;
+
+		const real_t  x0 = R0*phi[0] ; 
+		q[0] = -phi[1]*x0 ; 
+		q[1] =  phi[1]*(x0 - 1.) ;
+		q[2] =  phi[1] ; 
+
+	}
+<?R		
+	}
+?>
+
+

@@ -1,11 +1,14 @@
 
 
-Qname = 'Allen-Cahn'
-NumberOfDREs = 1
+# Qname = 'Allen-Cahn'
+# NumberOfDREs = 1
+# NumberOfODEs = 0
+# NumberOfAdditionalParams = 1
+
+Qname = 'SIR_SimpleLaplace'
+NumberOfDREs = 3
 NumberOfODEs = 0
 NumberOfAdditionalParams = 1
-
-
 
 
 ##END MANUAL CONFIG
